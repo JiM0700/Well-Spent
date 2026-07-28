@@ -23,7 +23,8 @@ The browser/PWA implementation is currently at **v1.0.0-alpha**. The Flutter imp
 - Add expenses with category, date, and simple `+`/`-` amount formulas.
 - Track recurring base income by pay day and add one-off income entries from the same entry form.
 - Weekly, monthly, and yearly spending views with configurable monthly cycle start day.
-- Budget progress, daily velocity, end-of-period forecast, and category breakdown.
+- Budget progress remains spending-versus-budget focused, with earned income, budgeted/spent totals, net remaining, and savings-target context.
+- Daily velocity, end-of-period forecast, and category breakdown.
 - Day-wise and month-wise spending trend chart.
 - Category filters, delete actions, CSV export/import, responsive layout, and installable PWA support.
 

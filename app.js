@@ -250,6 +250,10 @@ function render() {
   const fc = calculatePeriodForecast();
   const range = fc.range;
   const remaining = range.targetBudget - fc.periodTotal;
+  const netRemaining = fc.totalIncome - fc.periodTotal;
+  const savingsRate = fc.totalIncome > 0
+    ? Math.round(((fc.totalIncome - range.targetBudget) / fc.totalIncome) * 100)
+    : 0;
 
   // ── Mode Switcher UI ──────────────────────────────────────────────────────
   document.querySelectorAll('#viewModeSwitcher .segment-btn').forEach(btn => {
@@ -262,16 +266,31 @@ function render() {
   setText('heroEyebrow', range.label);
   setText('monthlyTotalDisplay', inr(fc.periodTotal));
   setText('monthlyBudgetDisplay', inr(range.targetBudget));
-  setText('incomeBaselineDisplay', inr(fc.totalIncome));
-  setText('incomeMetricDisplay', inr(fc.totalIncome));
-  setText('todayTotalDisplay',   inr(fc.todayTotal));
-  setText('dailyAvgDisplay',     inr(fc.velocity));
+  setText('totalEarnedDisplay', inr(fc.totalIncome));
+  setText('budgetedSpentDisplay', `${inr(range.targetBudget)} / ${inr(fc.periodTotal)}`);
+  setText('netRemainingDisplay', inr(netRemaining));
+
+  const contextEl = document.getElementById('budgetIncomeContext');
+  if (contextEl) {
+    if (fc.totalIncome > 0 && savingsRate >= 0) {
+      contextEl.textContent = `You've budgeted ${inr(range.targetBudget)} of your ${inr(fc.totalIncome)} ${range.modeName.toLowerCase()} income (${savingsRate}% Savings Target).`;
+      contextEl.classList.remove('budget-income-context--warning');
+    } else if (fc.totalIncome > 0) {
+      contextEl.textContent = `Your ${range.modeName.toLowerCase()} budget exceeds income by ${inr(Math.abs(fc.totalIncome - range.targetBudget))}.`;
+      contextEl.classList.add('budget-income-context--warning');
+    } else {
+      contextEl.textContent = 'Set a base monthly income to see your savings target.';
+      contextEl.classList.remove('budget-income-context--warning');
+    }
+  }
 
   const remEl = document.getElementById('remainingBudgetDisplay');
   if (remEl) {
     remEl.textContent = inr(remaining);
     remEl.style.color = remaining < 0 ? 'var(--text-danger)' : '';
   }
+  const netEl = document.getElementById('netRemainingDisplay');
+  if (netEl) netEl.style.color = netRemaining < 0 ? 'var(--text-danger)' : '#34d399';
 
   // Progress Bar & Glow Knob
   const pct = Math.min(100, Math.max(0, range.targetBudget > 0 ? (fc.periodTotal / range.targetBudget) * 100 : 0));

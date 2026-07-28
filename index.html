@@ -72,7 +72,8 @@
         <section class="lg-card hero-card" aria-label="Summary">
           <p class="eyebrow" id="heroEyebrow">Monthly Summary</p>
           <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
-          <p class="hero-sub">of <strong id="monthlyBudgetDisplay">₹25,000</strong> budget · <strong id="incomeBaselineDisplay">₹0.00</strong> income</p>
+          <p class="hero-sub">Spent against your <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
+          <p class="budget-income-context" id="budgetIncomeContext" aria-live="polite">Set a base monthly income to see your savings target.</p>
 
           <div class="progress-wrap">
             <div class="progress-track" role="progressbar"
@@ -88,20 +89,16 @@
 
           <div class="metric-strip">
             <div class="metric-pill glass-pill-sm">
-              <span class="metric-pill__label">Today</span>
-              <span class="metric-pill__val" id="todayTotalDisplay">₹0.00</span>
+              <span class="metric-pill__label">Total Earned</span>
+              <span class="metric-pill__val metric-pill__val--income" id="totalEarnedDisplay">₹0.00</span>
             </div>
             <div class="metric-pill glass-pill-sm">
-              <span class="metric-pill__label">Remaining</span>
-              <span class="metric-pill__val" id="remainingBudgetDisplay">₹25,000</span>
+              <span class="metric-pill__label">Budgeted / Spent</span>
+              <span class="metric-pill__val" id="budgetedSpentDisplay">₹25,000 / ₹0.00</span>
             </div>
-            <div class="metric-pill glass-pill-sm">
-              <span class="metric-pill__label">Daily avg.</span>
-              <span class="metric-pill__val" id="dailyAvgDisplay">₹0.00</span>
-            </div>
-            <div class="metric-pill glass-pill-sm metric-pill--income">
-              <span class="metric-pill__label">Income</span>
-              <span class="metric-pill__val" id="incomeMetricDisplay">₹0.00</span>
+            <div class="metric-pill glass-pill-sm metric-pill--net">
+              <span class="metric-pill__label">Net Remaining / Saved</span>
+              <span class="metric-pill__val" id="netRemainingDisplay">₹0.00</span>
             </div>
           </div>
         </section>

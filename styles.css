@@ -409,6 +409,14 @@ button { cursor: pointer; font-family: inherit; }
 }
 .hero-sub strong { color: var(--text); font-weight: 600; }
 
+.budget-income-context {
+  margin: -12px 0 18px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.budget-income-context--warning { color: var(--text-danger); }
+
 /* Progress */
 .progress-wrap { margin-bottom: 22px; }
 
@@ -956,7 +964,8 @@ button { cursor: pointer; font-family: inherit; }
   box-shadow: 0 3px 12px rgba(59,130,246,0.35);
 }
 
-.metric-pill--income .metric-pill__val { color: #34d399; }
+.metric-pill__val--income,
+.metric-pill--net .metric-pill__val { color: #34d399; }
 
 .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
 
