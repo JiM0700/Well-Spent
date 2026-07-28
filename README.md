@@ -26,6 +26,7 @@ The browser/PWA implementation is currently at **v1.0.0-alpha**. The Flutter imp
 - Budget progress remains spending-versus-budget focused, with earned income, budgeted/spent totals, net remaining, and savings-target context.
 - Savings-rate tracking, payday-based safe daily burn, and fixed-versus-variable expense insights.
 - Configurable in-app spending summaries for yesterday, the last 7 days, or the current month, with period comparisons and top-category breakdowns.
+- Progressive-disclosure dashboard: budget status and activity stay prominent while forecasts, charts, summaries, and filters expand on demand.
 - Daily velocity, end-of-period forecast, and category breakdown.
 - Day-wise and month-wise spending trend chart.
 - Category filters, delete actions, CSV export/import, responsive layout, and installable PWA support.

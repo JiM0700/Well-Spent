@@ -70,14 +70,15 @@
 
         <!-- Hero summary card -->
         <section class="lg-card hero-card" aria-label="Summary">
-          <p class="eyebrow" id="heroEyebrow">Monthly Summary</p>
-          <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
-          <p class="hero-sub">Spent against your <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
-          <p class="budget-income-context" id="budgetIncomeContext" aria-live="polite">Set a base monthly income to see your savings target.</p>
-          <div class="insight-row">
-            <span class="insight-badge"><span id="savingsRateBadge">—</span> Savings Rate</span>
-            <span class="fixed-expense-insight" id="fixedExpenseInsight">₹0 fixed · ₹0 variable</span>
+          <div class="hero-card__header">
+            <div>
+              <p class="eyebrow" id="heroEyebrow">Monthly Cycle</p>
+              <p class="cycle-date" id="heroCycleDate">—</p>
+            </div>
+            <button class="info-tooltip" id="cycleInfo" type="button" aria-label="View cycle details" data-tooltip="Income, savings, and expense details">i</button>
           </div>
+          <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
+          <p class="hero-sub">Spent of <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
 
           <div class="progress-wrap">
             <div class="progress-track" role="progressbar"
@@ -91,28 +92,14 @@
             </div>
           </div>
 
-          <div class="metric-strip">
-            <div class="metric-pill glass-pill-sm">
-              <span class="metric-pill__label">Total Earned</span>
-              <span class="metric-pill__val metric-pill__val--income" id="totalEarnedDisplay">₹0.00</span>
-            </div>
-            <div class="metric-pill glass-pill-sm">
-              <span class="metric-pill__label">Budgeted / Spent</span>
-              <span class="metric-pill__val" id="budgetedSpentDisplay">₹25,000 / ₹0.00</span>
-            </div>
-            <div class="metric-pill glass-pill-sm metric-pill--net">
-              <span class="metric-pill__label">Net Remaining / Saved</span>
-              <span class="metric-pill__val" id="netRemainingDisplay">₹0.00</span>
-            </div>
-          </div>
         </section>
 
-        <!-- Spending summary -->
+        <!-- Spending summary: keeps the most useful recent activity visible -->
         <section class="lg-card spending-summary-card" id="spendingSummaryCard" aria-label="Spending summary">
           <div class="summary-card-header">
             <div>
               <p class="eyebrow">🧾 Spending Summary</p>
-              <p class="summary-card-title" id="summaryPeriodLabel">Yesterday</p>
+              <p class="summary-card-title" id="summaryPeriodLabel">Today</p>
             </div>
             <span class="summary-range" id="summaryRangeLabel">—</span>
           </div>
@@ -137,7 +124,15 @@
           </div>
         </section>
 
-        <!-- Forecast card -->
+        <!-- Categories follow the summary so spending patterns are easy to scan. -->
+        <section class="lg-card breakdown-card" aria-label="Spending by category">
+          <p class="eyebrow">Spending by Category</p>
+          <div id="categoryBreakdownList" class="cat-list">
+            <div class="empty-msg">Add your first expense to see the breakdown.</div>
+          </div>
+        </section>
+
+        <!-- Forecast card: supporting context after the core spending information -->
         <section class="lg-card forecast-card" id="forecastCard" aria-label="Forecast">
           <div class="forecast-header">
             <div>
@@ -158,18 +153,8 @@
             </div>
           </div>
 
-          <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">
-            Calculating velocity…
-          </div>
+          <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">Calculating velocity…</div>
           <div class="safe-burn-meta" id="safeBurnMeta">Calculated from income remaining until payday.</div>
-        </section>
-
-        <!-- Category breakdown -->
-        <section class="lg-card breakdown-card" aria-label="Spending by category">
-          <p class="eyebrow">Spending by Category</p>
-          <div id="categoryBreakdownList" class="cat-list">
-            <div class="empty-msg">Add your first expense to see the breakdown.</div>
-          </div>
         </section>
 
       </div><!-- /col-left -->
@@ -215,6 +200,8 @@
             <span class="tx-count" id="txCount">0 entries</span>
           </div>
 
+          <details class="activity-filters" open>
+            <summary>Categories <span id="filterSummaryLabel">All entries</span></summary>
           <nav class="filter-row" id="categoryFilterChips" aria-label="Filter by category">
             <button class="fchip active" data-cat="all"           aria-pressed="true" >All</button>
             <button class="fchip"        data-cat="food"          aria-pressed="false">🍔 Food</button>
@@ -226,6 +213,7 @@
             <button class="fchip"        data-cat="invest"        aria-pressed="false">💰 Investment</button>
             <button class="fchip"        data-cat="other"         aria-pressed="false">🌐 Other</button>
           </nav>
+          </details>
 
           <div class="tx-list" id="transactionsList" aria-live="polite">
             <!-- Populated by JS -->

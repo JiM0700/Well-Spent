@@ -246,21 +246,22 @@ function getSummaryWindow(mode, now = new Date()) {
   const dayMs = 1000 * 60 * 60 * 24;
   const endOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
   const startOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
-  const currentEnd = new Date(now);
+  let currentEnd = new Date(now);
   let currentStart;
   let previousStart;
   let previousEnd;
 
   if (mode === 'daily') {
-    currentStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-    currentEnd = endOfDay(currentStart);
+    currentStart = startOfDay(now);
     previousStart = startOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
     previousEnd = endOfDay(previousStart);
   } else if (mode === 'weekly') {
-    currentEnd = endOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-    currentStart = startOfDay(new Date(currentEnd.getFullYear(), currentEnd.getMonth(), currentEnd.getDate() - 6));
+    const dayOfWeek = now.getDay();
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    currentStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday));
+    const elapsedDays = Math.max(1, Math.ceil((currentEnd - currentStart + 1) / dayMs));
     previousEnd = endOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
-    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - 6));
+    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - elapsedDays + 1));
   } else {
     const period = getCurrentPeriodRange(now);
     currentStart = period.startDate;
@@ -302,7 +303,7 @@ function renderSpendingSummary() {
   if (!summaryEnabled) return;
 
   const stats = getSummaryStats(summaryPeriod);
-  const labels = { daily: 'Yesterday', weekly: 'Last 7 Days', monthly: 'This Month' };
+  const labels = { daily: 'Today', weekly: 'This Week', monthly: 'This Cycle' };
   setText('summaryPeriodLabel', labels[summaryPeriod]);
   setText('summaryTotalDisplay', inr(stats.total));
   setText('summaryTopCategory', stats.topCategory);
@@ -393,41 +394,16 @@ function render() {
   });
 
   // ── Header Summary Card ───────────────────────────────────────────────────
-  setText('heroEyebrow', range.label);
+  setText('heroEyebrow', `${range.modeName} Cycle`);
+  setText('heroCycleDate', `${formatDateShort(range.startDate)} – ${formatDateShort(range.endDate)}`);
   setText('monthlyTotalDisplay', inr(fc.periodTotal));
   setText('monthlyBudgetDisplay', inr(range.targetBudget));
-  setText('totalEarnedDisplay', inr(fc.totalIncome));
-  setText('budgetedSpentDisplay', `${inr(range.targetBudget)} / ${inr(fc.periodTotal)}`);
-  setText('netRemainingDisplay', inr(netRemaining));
-  setText('savingsRateBadge', savingsRate === null ? '—' : `${savingsRate.toFixed(0)}%`);
-  const savingsBadge = document.querySelector('.insight-badge');
-  if (savingsBadge) savingsBadge.classList.toggle('insight-badge--warning', savingsRate !== null && savingsRate < 0);
-  setText('fixedExpenseInsight', fc.totalIncome > 0
-    ? `${inr(fc.fixedTotal)} fixed · ${inr(fc.variableTotal)} variable (${((fc.fixedTotal / fc.totalIncome) * 100).toFixed(0)}% of income locked in)`
-    : `${inr(fc.fixedTotal)} fixed · ${inr(fc.variableTotal)} variable`);
-
-  const contextEl = document.getElementById('budgetIncomeContext');
-  if (contextEl) {
-    const savingsTarget = fc.totalIncome > 0 ? ((fc.totalIncome - range.targetBudget) / fc.totalIncome) * 100 : 0;
-    if (fc.totalIncome > 0 && savingsTarget >= 0) {
-      contextEl.textContent = `You've budgeted ${inr(range.targetBudget)} of your ${inr(fc.totalIncome)} ${range.modeName.toLowerCase()} income (${savingsTarget.toFixed(0)}% Savings Target).`;
-      contextEl.classList.remove('budget-income-context--warning');
-    } else if (fc.totalIncome > 0) {
-      contextEl.textContent = `Your ${range.modeName.toLowerCase()} budget exceeds income by ${inr(Math.abs(fc.totalIncome - range.targetBudget))}.`;
-      contextEl.classList.add('budget-income-context--warning');
-    } else {
-      contextEl.textContent = 'Set a base monthly income to see your savings target.';
-      contextEl.classList.remove('budget-income-context--warning');
-    }
+  const cycleInfo = document.getElementById('cycleInfo');
+  if (cycleInfo) {
+    const details = `Budget remaining: ${inr(remaining)} · Income: ${inr(fc.totalIncome)} · Net saved: ${inr(netRemaining)} · Fixed: ${inr(fc.fixedTotal)} · Variable: ${inr(fc.variableTotal)}${savingsRate === null ? '' : ` · Savings rate: ${savingsRate.toFixed(0)}%`}`;
+    cycleInfo.dataset.tooltip = details;
+    cycleInfo.title = details;
   }
-
-  const remEl = document.getElementById('remainingBudgetDisplay');
-  if (remEl) {
-    remEl.textContent = inr(remaining);
-    remEl.style.color = remaining < 0 ? 'var(--text-danger)' : '';
-  }
-  const netEl = document.getElementById('netRemainingDisplay');
-  if (netEl) netEl.style.color = netRemaining < 0 ? 'var(--text-danger)' : '#34d399';
 
   // Progress Bar & Glow Knob
   const pct = Math.min(100, Math.max(0, range.targetBudget > 0 ? (fc.periodTotal / range.targetBudget) * 100 : 0));
@@ -991,6 +967,7 @@ document.getElementById('categoryFilterChips').addEventListener('click', e => {
   chip.classList.add('active');
   chip.setAttribute('aria-pressed', 'true');
   currentFilter = chip.dataset.cat;
+  setText('filterSummaryLabel', chip.textContent.trim());
   renderTransactions();
 });
 
