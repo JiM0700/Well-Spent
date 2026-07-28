@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Well Spent – Free, private, offline-first personal expense tracker with budget forecasting.">
+  <title>Well Spent – Expense Tracker &amp; Budget Forecast</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0c12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Well Spent">
+  <link rel="apple-touch-icon" href="icon.jpg">
+  <link rel="icon" type="image/jpeg" href="icon.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Ambient background orbs -->
+  <div class="bg-orb bg-orb--blue"   aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--indigo" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--teal"   aria-hidden="true"></div>
+
+  <div class="app-shell">
+
+    <!-- ── Sticky top bar ──────────────────────────────────────────────── -->
+    <header class="topbar glass-bar">
+      <div class="topbar__brand">
+        <span class="topbar__icon" aria-hidden="true">💳</span>
+        <span class="topbar__name">Well Spent</span>
+        <span class="alpha-badge" aria-label="Alpha build">ALPHA</span>
+      </div>
+      <nav class="topbar__actions">
+        <span class="privacy-mark" data-tooltip="Private &amp; Offline" tabindex="0" role="img" aria-label="Private and offline">🔒</span>
+        <div class="data-menu-wrap">
+          <button class="glass-pill" id="dataMenuBtn" aria-label="Import or export expenses" aria-expanded="false" aria-haspopup="true">
+            ⇅&nbsp; Data
+          </button>
+          <div class="data-menu" id="dataMenu" role="menu">
+            <button type="button" id="exportCsvBtn" role="menuitem">📥&nbsp; Export CSV</button>
+            <button type="button" id="importCsvBtn" role="menuitem">📤&nbsp; Import CSV</button>
+          </div>
+        </div>
+        <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
+        <button class="glass-pill" id="openSettingsBtn" aria-label="Budget &amp; Cycle Settings">
+          ⚙️&nbsp; Budget &amp; Cycle
+        </button>
+      </nav>
+    </header>
+
+    <!-- ── Main two-column grid ────────────────────────────────────────── -->
+    <main class="main-grid">
+
+      <!-- ╔══════════════════╗ -->
+      <!-- ║   LEFT COLUMN    ║ -->
+      <!-- ╚══════════════════╝ -->
+      <div class="col-left">
+
+        <!-- Period view switcher -->
+        <nav class="glass-segmented" id="viewModeSwitcher" aria-label="Select period">
+          <button class="segment-btn"        data-mode="weekly"  aria-pressed="false">📅 Weekly</button>
+          <button class="segment-btn active" data-mode="monthly" aria-pressed="true" >📆 Monthly</button>
+          <button class="segment-btn"        data-mode="yearly"  aria-pressed="false">🗓️ Yearly</button>
+        </nav>
+
+        <!-- Hero summary card -->
+        <section class="lg-card hero-card" aria-label="Summary">
+          <p class="eyebrow" id="heroEyebrow">Monthly Summary</p>
+          <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
+          <p class="hero-sub">of <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
+
+          <div class="progress-wrap">
+            <div class="progress-track" role="progressbar"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+              <div class="progress-fill" id="budgetProgressBar"></div>
+              <div class="progress-glow"  id="budgetProgressGlow"></div>
+            </div>
+            <div class="progress-labels">
+              <span id="progressSpentLabel">₹0 spent</span>
+              <span id="progressPct">0% used</span>
+            </div>
+          </div>
+
+          <div class="metric-strip">
+            <div class="metric-pill glass-pill-sm">
+              <span class="metric-pill__label">Today</span>
+              <span class="metric-pill__val" id="todayTotalDisplay">₹0.00</span>
+            </div>
+            <div class="metric-pill glass-pill-sm">
+              <span class="metric-pill__label">Remaining</span>
+              <span class="metric-pill__val" id="remainingBudgetDisplay">₹25,000</span>
+            </div>
+            <div class="metric-pill glass-pill-sm">
+              <span class="metric-pill__label">Daily avg.</span>
+              <span class="metric-pill__val" id="dailyAvgDisplay">₹0.00</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Forecast card -->
+        <section class="lg-card forecast-card" id="forecastCard" aria-label="Forecast">
+          <div class="forecast-header">
+            <div>
+              <p class="eyebrow">📈 Forecast</p>
+              <p class="forecast-title">End-of-Period Projection</p>
+            </div>
+            <span class="chip-days" id="daysLeftChip">— days left</span>
+          </div>
+
+          <div class="forecast-body">
+            <div class="forecast-stat">
+              <p class="forecast-stat__label">Projected Total</p>
+              <p class="forecast-stat__val" id="projectedTotalDisplay" aria-live="polite">₹0.00</p>
+            </div>
+            <div class="forecast-stat forecast-stat--right">
+              <p class="forecast-stat__label">Daily Velocity</p>
+              <p class="forecast-stat__val forecast-stat__val--sm" id="velocityDisplay">₹0.00 / day</p>
+            </div>
+          </div>
+
+          <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">
+            Calculating velocity…
+          </div>
+        </section>
+
+        <!-- Category breakdown -->
+        <section class="lg-card breakdown-card" aria-label="Spending by category">
+          <p class="eyebrow">Spending by Category</p>
+          <div id="categoryBreakdownList" class="cat-list">
+            <div class="empty-msg">Add your first expense to see the breakdown.</div>
+          </div>
+        </section>
+
+      </div><!-- /col-left -->
+
+      <!-- ╔══════════════════╗ -->
+      <!-- ║   RIGHT COLUMN   ║ -->
+      <!-- ╚══════════════════╝ -->
+      <div class="col-right">
+
+        <!-- Visual Chart Card -->
+        <section class="lg-card chart-card" aria-label="Spending chart">
+          <div class="chart-card__header">
+            <div>
+              <p class="eyebrow">Visual Analytics</p>
+              <h2 class="chart-title">Spending Trends</h2>
+            </div>
+            <nav class="chart-mode-toggle" id="chartModeToggle" aria-label="Chart mode">
+              <button class="cchip active" data-chartmode="daywise"   aria-pressed="true" >📊 Day-wise</button>
+              <button class="cchip"        data-chartmode="monthwise" aria-pressed="false">📈 Month-wise</button>
+            </nav>
+          </div>
+
+          <div class="chart-wrap" id="chartContainer">
+            <svg id="chartSvg" class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMax meet">
+            </svg>
+            <div class="chart-tooltip" id="chartTooltip" role="tooltip" aria-hidden="true"></div>
+          </div>
+
+          <div class="chart-footer">
+            <span class="chart-stat-pill" id="chartPeakLabel">Peak: —</span>
+            <span class="chart-stat-pill" id="chartAvgLabel">Average: —</span>
+            <span class="chart-stat-pill" id="chartTotalLabel">Total: —</span>
+          </div>
+        </section>
+
+        <!-- Transaction feed -->
+        <section class="lg-card tx-card" aria-label="Recent Transactions">
+          <div class="tx-card__header">
+            <div>
+              <p class="eyebrow">Recent Transactions</p>
+              <h2 class="tx-card-title">Activity Feed</h2>
+            </div>
+            <span class="tx-count" id="txCount">0 entries</span>
+          </div>
+
+          <nav class="filter-row" id="categoryFilterChips" aria-label="Filter by category">
+            <button class="fchip active" data-cat="all"           aria-pressed="true" >All</button>
+            <button class="fchip"        data-cat="food"          aria-pressed="false">🍔 Food</button>
+            <button class="fchip"        data-cat="transport"     aria-pressed="false">🚗 Transport</button>
+            <button class="fchip"        data-cat="bills"         aria-pressed="false">📄 Bills</button>
+            <button class="fchip"        data-cat="shopping"      aria-pressed="false">🛍️ Shopping</button>
+            <button class="fchip"        data-cat="healthcare"    aria-pressed="false">🏥 Health</button>
+            <button class="fchip"        data-cat="entertainment" aria-pressed="false">🎬 Fun</button>
+            <button class="fchip"        data-cat="invest"        aria-pressed="false">💰 Investment</button>
+            <button class="fchip"        data-cat="other"         aria-pressed="false">🌐 Other</button>
+          </nav>
+
+          <div class="tx-list" id="transactionsList" aria-live="polite">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+      </div><!-- /col-right -->
+
+    </main>
+
+    <!-- FAB -->
+    <button class="fab" id="openAddModalBtn" aria-label="Add new expense">
+      <span class="fab__icon">＋</span>
+      <span class="fab__label">Add Expense</span>
+    </button>
+
+  </div><!-- /app-shell -->
+
+  <!-- ── Add Expense Modal ──────────────────────────────────────────────── -->
+  <div class="modal-veil" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-sheet">
+      <div class="modal-drag-handle" aria-hidden="true"></div>
+      <div class="modal-head">
+        <h2 id="modalTitle" class="modal-title">Quick Add Expense</h2>
+        <button class="modal-close" id="closeModalBtn" aria-label="Close">✕</button>
+      </div>
+      <form id="expenseForm" class="modal-form" novalidate>
+        <div class="field">
+          <label class="field__label" for="expTitle">Description</label>
+          <input class="field__input" type="text" id="expTitle"
+            placeholder="e.g. Lunch at office" required autocomplete="off" maxlength="80">
+        </div>
+        <div class="field">
+          <label class="field__label" for="expAmount">
+            Amount (₹)
+            <span class="field__hint">Supports formulas · e.g. 250 + 75</span>
+          </label>
+          <input class="field__input" type="text" id="expAmount"
+            placeholder="350 or 200 + 150" required autocomplete="off" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label class="field__label">Category</label>
+          <div class="cat-radio-group" role="radiogroup">
+            <label class="cat-chip"><input type="radio" name="category" value="food"          checked> 🍔 Food</label>
+            <label class="cat-chip"><input type="radio" name="category" value="transport">         🚗 Transport</label>
+            <label class="cat-chip"><input type="radio" name="category" value="bills">             📄 Bills</label>
+            <label class="cat-chip"><input type="radio" name="category" value="shopping">          🛍️ Shopping</label>
+            <label class="cat-chip"><input type="radio" name="category" value="healthcare">        🏥 Health</label>
+            <label class="cat-chip"><input type="radio" name="category" value="entertainment">     🎬 Fun</label>
+            <label class="cat-chip"><input type="radio" name="category" value="invest">             💰 Investment</label>
+            <label class="cat-chip"><input type="radio" name="category" value="other">             🌐 Other</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="expDate">Date</label>
+          <input class="field__input" type="date" id="expDate" required>
+        </div>
+        <button type="submit" class="submit-btn">Save Expense</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
+  <div class="modal-veil" id="settingsModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-sheet">
+      <div class="modal-drag-handle" aria-hidden="true"></div>
+      <div class="modal-head">
+        <h2 id="settingsModalTitle" class="modal-title">Budget &amp; Cycle Settings</h2>
+        <button class="modal-close" id="closeSettingsModalBtn" aria-label="Close">✕</button>
+      </div>
+      <form id="settingsForm" class="modal-form" novalidate>
+        <div class="field">
+          <label class="field__label" for="settingMonthlyBudget">Monthly Budget Target (₹)</label>
+          <input class="field__input" type="number" id="settingMonthlyBudget"
+            placeholder="25000" min="0" step="100" required inputmode="numeric">
+        </div>
+        <div class="field">
+          <label class="field__label" for="settingCycleStartDay">
+            Spending Cycle Start Day
+            <span class="field__hint">e.g. 5 for salary date</span>
+          </label>
+          <select class="field__input field__select" id="settingCycleStartDay">
+            <option value="1">1st – Calendar month</option>
+            <option value="2">2nd</option>
+            <option value="3">3rd</option>
+            <option value="4">4th</option>
+            <option value="5">5th</option>
+            <option value="6">6th</option>
+            <option value="7">7th</option>
+            <option value="8">8th</option>
+            <option value="9">9th</option>
+            <option value="10">10th</option>
+            <option value="11">11th</option>
+            <option value="12">12th</option>
+            <option value="13">13th</option>
+            <option value="14">14th</option>
+            <option value="15">15th – Mid-month</option>
+            <option value="16">16th</option>
+            <option value="17">17th</option>
+            <option value="18">18th</option>
+            <option value="19">19th</option>
+            <option value="20">20th</option>
+            <option value="21">21st</option>
+            <option value="22">22nd</option>
+            <option value="23">23rd</option>
+            <option value="24">24th</option>
+            <option value="25">25th – Payday</option>
+            <option value="26">26th</option>
+            <option value="27">27th</option>
+            <option value="28">28th</option>
+          </select>
+        </div>
+        <button type="submit" class="submit-btn">Save Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(r => console.log('[PWA] SW registered:', r.scope))
+          .catch(e => console.log('[PWA] SW failed:', e));
+      });
+    }
+  </script>
+</body>
+</html>

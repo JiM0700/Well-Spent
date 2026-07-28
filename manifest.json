@@ -1,0 +1,25 @@
+{
+  "name": "Well Spent – Personal Expense Tracker",
+  "short_name": "Well Spent",
+  "description": "Free, private, offline-first personal expense tracker with monthly budget forecasting.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0c12",
+  "theme_color": "#0a0c12",
+  "orientation": "any",
+  "categories": ["finance", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "./icon.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

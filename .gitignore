@@ -1,0 +1,28 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Platform build output
+android/.gradle/
+android/app/build/
+ios/Pods/
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# JavaScript tooling
+node_modules/
+dist/
+.parcel-cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
