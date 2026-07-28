@@ -107,6 +107,36 @@
           </div>
         </section>
 
+        <!-- Spending summary -->
+        <section class="lg-card spending-summary-card" id="spendingSummaryCard" aria-label="Spending summary">
+          <div class="summary-card-header">
+            <div>
+              <p class="eyebrow">🧾 Spending Summary</p>
+              <p class="summary-card-title" id="summaryPeriodLabel">Yesterday</p>
+            </div>
+            <span class="summary-range" id="summaryRangeLabel">—</span>
+          </div>
+          <nav class="summary-period-switcher" id="summaryPeriodSwitcher" aria-label="Summary period">
+            <button type="button" class="summary-period-btn active" data-summary-period="daily" aria-pressed="true">Daily</button>
+            <button type="button" class="summary-period-btn" data-summary-period="weekly" aria-pressed="false">Weekly</button>
+            <button type="button" class="summary-period-btn" data-summary-period="monthly" aria-pressed="false">Monthly</button>
+          </nav>
+          <div class="summary-card-body">
+            <div>
+              <p class="summary-stat-label">Total spent</p>
+              <p class="summary-total" id="summaryTotalDisplay">₹0.00</p>
+            </div>
+            <div class="summary-side-stat">
+              <p class="summary-stat-label">Top category</p>
+              <p class="summary-stat-value" id="summaryTopCategory">No spending yet</p>
+            </div>
+          </div>
+          <div class="summary-footer">
+            <span class="summary-difference" id="summaryDifference">— 0% vs previous period</span>
+            <button type="button" class="summary-breakdown-btn" id="viewBreakdownBtn">View Breakdown →</button>
+          </div>
+        </section>
+
         <!-- Forecast card -->
         <section class="lg-card forecast-card" id="forecastCard" aria-label="Forecast">
           <div class="forecast-header">
@@ -346,6 +376,13 @@
             <option value="28">28th</option>
           </select>
         </div>
+        <label class="summary-setting-row" for="settingSummaryEnabled">
+          <span>
+            <strong>Spending Summaries &amp; Reminders</strong>
+            <small>Show the in-app summary card on your dashboard.</small>
+          </span>
+          <input type="checkbox" id="settingSummaryEnabled">
+        </label>
         <button type="submit" class="submit-btn">Save Settings</button>
       </form>
     </div>

@@ -5,6 +5,8 @@ const BUDGET_KEY           = 'well_spent_budget_v1';
 const CYCLE_START_DAY_KEY  = 'well_spent_cycle_start_day_v1';
 const BASE_INCOME_KEY      = 'well_spent_base_income_v1';
 const PAY_DAY_KEY          = 'well_spent_pay_day_v1';
+const SUMMARY_ENABLED_KEY  = 'well_spent_summary_enabled_v1';
+const SUMMARY_PERIOD_KEY   = 'well_spent_summary_period_v1';
 const VIEW_MODE_KEY        = 'well_spent_view_mode_v1';
 const CHART_MODE_KEY       = 'well_spent_chart_mode_v1';
 
@@ -87,6 +89,9 @@ const storedBaseIncome = parseFloat(localStorage.getItem(BASE_INCOME_KEY));
 let baseMonthlyIncome = Number.isFinite(storedBaseIncome) && storedBaseIncome >= 0 ? storedBaseIncome : 0;
 const storedPayDay = parseInt(localStorage.getItem(PAY_DAY_KEY), 10);
 let payDay = Number.isInteger(storedPayDay) && storedPayDay >= 1 && storedPayDay <= 28 ? storedPayDay : 1;
+let summaryEnabled = localStorage.getItem(SUMMARY_ENABLED_KEY) !== 'false';
+let summaryPeriod = ['daily', 'weekly', 'monthly'].includes(localStorage.getItem(SUMMARY_PERIOD_KEY))
+  ? localStorage.getItem(SUMMARY_PERIOD_KEY) : 'daily';
 let currentViewMode = localStorage.getItem(VIEW_MODE_KEY) || 'monthly'; // 'weekly' | 'monthly' | 'yearly'
 let currentChartMode = localStorage.getItem(CHART_MODE_KEY) || 'daywise';
 let currentFilter   = 'all';
@@ -97,6 +102,8 @@ function save() {
   localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay.toString());
   localStorage.setItem(BASE_INCOME_KEY, baseMonthlyIncome.toString());
   localStorage.setItem(PAY_DAY_KEY, payDay.toString());
+  localStorage.setItem(SUMMARY_ENABLED_KEY, String(summaryEnabled));
+  localStorage.setItem(SUMMARY_PERIOD_KEY, summaryPeriod);
   localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
   localStorage.setItem(CHART_MODE_KEY, currentChartMode);
   render();
@@ -233,6 +240,93 @@ function calculatePeriodForecast() {
     totalDays,
     daysElapsed
   };
+}
+
+function getSummaryWindow(mode, now = new Date()) {
+  const dayMs = 1000 * 60 * 60 * 24;
+  const endOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  const startOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+  const currentEnd = new Date(now);
+  let currentStart;
+  let previousStart;
+  let previousEnd;
+
+  if (mode === 'daily') {
+    currentStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    currentEnd = endOfDay(currentStart);
+    previousStart = startOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
+    previousEnd = endOfDay(previousStart);
+  } else if (mode === 'weekly') {
+    currentEnd = endOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    currentStart = startOfDay(new Date(currentEnd.getFullYear(), currentEnd.getMonth(), currentEnd.getDate() - 6));
+    previousEnd = endOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
+    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - 6));
+  } else {
+    const period = getCurrentPeriodRange(now);
+    currentStart = period.startDate;
+    currentEnd = now < period.endDate ? now : period.endDate;
+    const elapsedDays = Math.max(1, Math.ceil((currentEnd - currentStart + 1) / dayMs));
+    previousEnd = new Date(currentStart.getTime() - 1);
+    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - elapsedDays + 1));
+  }
+
+  return { currentStart, currentEnd, previousStart, previousEnd };
+}
+
+function getSummaryStats(mode) {
+  const window = getSummaryWindow(mode);
+  const totalBetween = (start, end) => expenses
+    .filter(entry => entry.type === 'expense' && new Date(entry.date) >= start && new Date(entry.date) <= end)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const currentEntries = expenses.filter(entry => {
+    const date = new Date(entry.date);
+    return entry.type === 'expense' && date >= window.currentStart && date <= window.currentEnd;
+  });
+  const total = currentEntries.reduce((sum, entry) => sum + entry.amount, 0);
+  const previousTotal = totalBetween(window.previousStart, window.previousEnd);
+  const categoryTotals = {};
+  currentEntries.forEach(entry => {
+    categoryTotals[entry.category] = (categoryTotals[entry.category] || 0) + entry.amount;
+  });
+  const topCategoryKey = Object.keys(categoryTotals).sort((a, b) => categoryTotals[b] - categoryTotals[a])[0];
+  const topCategory = topCategoryKey
+    ? `${CATEGORY_MAP[topCategoryKey].icon} ${CATEGORY_MAP[topCategoryKey].name}` : 'No spending yet';
+  const difference = previousTotal === 0 ? (total > 0 ? null : 0) : ((total - previousTotal) / previousTotal) * 100;
+  return { ...window, total, previousTotal, difference, topCategory };
+}
+
+function renderSpendingSummary() {
+  const card = document.getElementById('spendingSummaryCard');
+  if (!card) return;
+  card.hidden = !summaryEnabled;
+  if (!summaryEnabled) return;
+
+  const stats = getSummaryStats(summaryPeriod);
+  const labels = { daily: 'Yesterday', weekly: 'Last 7 Days', monthly: 'This Month' };
+  setText('summaryPeriodLabel', labels[summaryPeriod]);
+  setText('summaryTotalDisplay', inr(stats.total));
+  setText('summaryTopCategory', stats.topCategory);
+  setText('summaryRangeLabel', `${formatDateShort(stats.currentStart)} – ${formatDateShort(stats.currentEnd)}`);
+
+  const differenceEl = document.getElementById('summaryDifference');
+  if (differenceEl) {
+    differenceEl.classList.remove('summary-difference--up', 'summary-difference--down');
+    if (stats.difference === null) {
+      differenceEl.textContent = 'New spending vs previous period';
+      differenceEl.classList.add('summary-difference--up');
+    } else if (stats.difference === 0) {
+      differenceEl.textContent = '— 0% vs previous period';
+    } else {
+      const increase = stats.difference > 0;
+      differenceEl.textContent = `${increase ? '↑' : '↓'} ${Math.abs(stats.difference).toFixed(0)}% vs previous period`;
+      differenceEl.classList.add(increase ? 'summary-difference--up' : 'summary-difference--down');
+    }
+  }
+  document.querySelectorAll('#summaryPeriodSwitcher .summary-period-btn').forEach(button => {
+    const active = button.dataset.summaryPeriod === summaryPeriod;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
 }
 
 function getPaydayDate(year, month, day) {
@@ -379,6 +473,7 @@ function render() {
   renderChart(fc);
 
   // ── Transactions List ─────────────────────────────────────────────────────
+  renderSpendingSummary();
   renderTransactions();
 }
 
@@ -577,6 +672,7 @@ function openSettingsModal() {
   document.getElementById('settingCycleStartDay').value = cycleStartDay;
   document.getElementById('settingBaseIncome').value = baseMonthlyIncome || '';
   document.getElementById('settingPayDay').value = payDay;
+  document.getElementById('settingSummaryEnabled').checked = summaryEnabled;
   document.getElementById('settingsModalBackdrop').classList.add('active');
 }
 
@@ -620,6 +716,17 @@ document.getElementById('expenseKindSwitcher').addEventListener('click', event =
 
 document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
 document.getElementById('closeSettingsModalBtn').addEventListener('click', closeSettingsModal);
+
+document.getElementById('summaryPeriodSwitcher').addEventListener('click', event => {
+  const button = event.target.closest('.summary-period-btn');
+  if (!button) return;
+  summaryPeriod = button.dataset.summaryPeriod;
+  save();
+});
+
+document.getElementById('viewBreakdownBtn').addEventListener('click', () => {
+  document.querySelector('.breakdown-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 document.getElementById('modalBackdrop').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
@@ -678,6 +785,7 @@ document.getElementById('settingsForm').addEventListener('submit', e => {
   const newStartDay = parseInt(document.getElementById('settingCycleStartDay').value, 10);
   const newBaseIncome = parseFloat(document.getElementById('settingBaseIncome').value);
   const newPayDay = parseInt(document.getElementById('settingPayDay').value, 10);
+  summaryEnabled = document.getElementById('settingSummaryEnabled').checked;
 
   if (!isNaN(newBudget) && newBudget >= 0) {
     monthlyBudget = newBudget;
