@@ -60,6 +60,7 @@ function loadExpenses() {
       .map(item => ({
         id: Number(item.id) || Date.now() + Math.random(),
         type: item.type === 'income' ? 'income' : 'expense',
+        expenseKind: item.expenseKind === 'fixed' ? 'fixed' : 'variable',
         title: String(item.title || '').trim(),
         amount: Number(item.amount),
         category: CATEGORY_MAP[item.category] ? item.category : 'other',
@@ -193,6 +194,8 @@ function calculatePeriodForecast() {
   });
 
   const periodTotal = periodExp.reduce((s, e) => s + e.amount, 0);
+  const fixedTotal = periodExp.filter(e => e.expenseKind === 'fixed').reduce((s, e) => s + e.amount, 0);
+  const variableTotal = periodTotal - fixedTotal;
   const oneOffIncome = periodIncome.reduce((s, e) => s + e.amount, 0);
   const recurringIncome = getRecurringIncomeForRange(range);
   const totalIncome = recurringIncome + oneOffIncome;
@@ -205,6 +208,7 @@ function calculatePeriodForecast() {
 
   const velocity     = periodTotal / daysElapsed;
   const projected    = periodTotal + (velocity * daysLeft);
+  const safeBurn = calculateSafeBurnRate(now);
 
   const todayStr     = localDateKey(now);
   const todayTotal   = expenses
@@ -214,6 +218,8 @@ function calculatePeriodForecast() {
   return {
     range,
     periodTotal,
+    fixedTotal,
+    variableTotal,
     periodExp,
     periodIncome,
     recurringIncome,
@@ -221,10 +227,42 @@ function calculatePeriodForecast() {
     totalIncome,
     todayTotal,
     velocity,
+    safeBurn,
     projected,
     daysLeft,
     totalDays,
     daysElapsed
+  };
+}
+
+function getPaydayDate(year, month, day) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, daysInMonth), 0, 0, 0, 0);
+}
+
+function calculateSafeBurnRate(now = new Date()) {
+  const thisPayday = getPaydayDate(now.getFullYear(), now.getMonth(), payDay);
+  const lastPayday = now >= thisPayday
+    ? thisPayday
+    : getPaydayDate(now.getFullYear(), now.getMonth() - 1, payDay);
+  const nextPayday = now < thisPayday
+    ? thisPayday
+    : getPaydayDate(now.getFullYear(), now.getMonth() + 1, payDay);
+  const daysUntilPayday = Math.max(1, Math.ceil((nextPayday - now) / (1000 * 60 * 60 * 24)));
+
+  const incomeSincePayday = expenses
+    .filter(e => e.type === 'income' && new Date(e.date) >= lastPayday && new Date(e.date) <= now)
+    .reduce((sum, e) => sum + e.amount, 0) + (baseMonthlyIncome > 0 ? baseMonthlyIncome : 0);
+  const expensesSincePayday = expenses
+    .filter(e => e.type === 'expense' && new Date(e.date) >= lastPayday && new Date(e.date) <= now)
+    .reduce((sum, e) => sum + e.amount, 0);
+  const remainingIncome = Math.max(0, incomeSincePayday - expensesSincePayday);
+
+  return {
+    amount: remainingIncome / daysUntilPayday,
+    daysUntilPayday,
+    remainingIncome,
+    nextPayday,
   };
 }
 
@@ -251,9 +289,7 @@ function render() {
   const range = fc.range;
   const remaining = range.targetBudget - fc.periodTotal;
   const netRemaining = fc.totalIncome - fc.periodTotal;
-  const savingsRate = fc.totalIncome > 0
-    ? Math.round(((fc.totalIncome - range.targetBudget) / fc.totalIncome) * 100)
-    : 0;
+  const savingsRate = fc.totalIncome > 0 ? (netRemaining / fc.totalIncome) * 100 : null;
 
   // ── Mode Switcher UI ──────────────────────────────────────────────────────
   document.querySelectorAll('#viewModeSwitcher .segment-btn').forEach(btn => {
@@ -269,11 +305,18 @@ function render() {
   setText('totalEarnedDisplay', inr(fc.totalIncome));
   setText('budgetedSpentDisplay', `${inr(range.targetBudget)} / ${inr(fc.periodTotal)}`);
   setText('netRemainingDisplay', inr(netRemaining));
+  setText('savingsRateBadge', savingsRate === null ? '—' : `${savingsRate.toFixed(0)}%`);
+  const savingsBadge = document.querySelector('.insight-badge');
+  if (savingsBadge) savingsBadge.classList.toggle('insight-badge--warning', savingsRate !== null && savingsRate < 0);
+  setText('fixedExpenseInsight', fc.totalIncome > 0
+    ? `${inr(fc.fixedTotal)} fixed · ${inr(fc.variableTotal)} variable (${((fc.fixedTotal / fc.totalIncome) * 100).toFixed(0)}% of income locked in)`
+    : `${inr(fc.fixedTotal)} fixed · ${inr(fc.variableTotal)} variable`);
 
   const contextEl = document.getElementById('budgetIncomeContext');
   if (contextEl) {
-    if (fc.totalIncome > 0 && savingsRate >= 0) {
-      contextEl.textContent = `You've budgeted ${inr(range.targetBudget)} of your ${inr(fc.totalIncome)} ${range.modeName.toLowerCase()} income (${savingsRate}% Savings Target).`;
+    const savingsTarget = fc.totalIncome > 0 ? ((fc.totalIncome - range.targetBudget) / fc.totalIncome) * 100 : 0;
+    if (fc.totalIncome > 0 && savingsTarget >= 0) {
+      contextEl.textContent = `You've budgeted ${inr(range.targetBudget)} of your ${inr(fc.totalIncome)} ${range.modeName.toLowerCase()} income (${savingsTarget.toFixed(0)}% Savings Target).`;
       contextEl.classList.remove('budget-income-context--warning');
     } else if (fc.totalIncome > 0) {
       contextEl.textContent = `Your ${range.modeName.toLowerCase()} budget exceeds income by ${inr(Math.abs(fc.totalIncome - range.targetBudget))}.`;
@@ -317,7 +360,8 @@ function render() {
     projEl.textContent = inr(fc.projected);
     projEl.style.color = fc.projected > range.targetBudget ? 'var(--text-danger)' : '#60a5fa';
   }
-  setText('velocityDisplay', `${inr(fc.velocity)} / day`);
+  setText('velocityDisplay', `${inr(fc.safeBurn.amount)} / day`);
+  setText('safeBurnMeta', `${fc.safeBurn.daysUntilPayday} days until payday · ${inr(fc.safeBurn.remainingIncome)} available`);
 
   const statusEl = document.getElementById('forecastStatusMsg');
   if (statusEl) {
@@ -482,6 +526,7 @@ function renderTransactions() {
   filtered.forEach(exp => {
     const isIncome = exp.type === 'income';
     const cat     = isIncome ? { name: 'Income', icon: '💵' } : (CATEGORY_MAP[exp.category] || CATEGORY_MAP.other);
+    const kindLabel = isIncome ? 'Income' : (exp.expenseKind === 'fixed' ? 'Fixed' : 'Variable');
     const dateStr = new Date(exp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
     const item = document.createElement('div');
@@ -491,7 +536,7 @@ function renderTransactions() {
         <div class="tx-icon">${cat.icon}</div>
         <div class="tx-info">
           <div class="tx-title">${escapeHtml(exp.title)}</div>
-        <div class="tx-meta">${cat.name} &bull; ${dateStr}</div>
+        <div class="tx-meta">${kindLabel} · ${cat.name} &bull; ${dateStr}</div>
         </div>
       </div>
       <div class="tx-right">
@@ -513,6 +558,12 @@ window.deleteExpense = id => {
 function openModal() {
   document.getElementById('expDate').value = localDateKey(new Date());
   setEntryType('expense');
+  document.querySelectorAll('#expenseKindSwitcher .entry-kind-btn').forEach(button => {
+    const active = button.dataset.expenseKind === 'variable';
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  document.getElementById('expenseKind').value = 'variable';
   document.getElementById('modalBackdrop').classList.add('active');
   setTimeout(() => document.getElementById('expTitle').focus(), 80);
 }
@@ -546,6 +597,7 @@ function setEntryType(type) {
   });
   document.getElementById('entryType').value = type;
   document.getElementById('expenseCategoryField').hidden = isIncome;
+  document.getElementById('expenseKindField').hidden = isIncome;
   document.getElementById('modalTitle').textContent = isIncome ? 'Quick Add Income' : 'Quick Add Expense';
   document.querySelector('#expenseForm .submit-btn').textContent = isIncome ? 'Save Income' : 'Save Expense';
 }
@@ -553,6 +605,17 @@ function setEntryType(type) {
 document.getElementById('entryTypeSwitcher').addEventListener('click', event => {
   const button = event.target.closest('.entry-type-btn');
   if (button) setEntryType(button.dataset.entryType);
+});
+
+document.getElementById('expenseKindSwitcher').addEventListener('click', event => {
+  const button = event.target.closest('.entry-kind-btn');
+  if (!button) return;
+  document.querySelectorAll('#expenseKindSwitcher .entry-kind-btn').forEach(item => {
+    const active = item === button;
+    item.classList.toggle('active', active);
+    item.setAttribute('aria-pressed', String(active));
+  });
+  document.getElementById('expenseKind').value = button.dataset.expenseKind;
 });
 
 document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
@@ -580,6 +643,7 @@ document.getElementById('expenseForm').addEventListener('submit', e => {
   const title  = document.getElementById('expTitle').value.trim();
   const amount = evalMath(document.getElementById('expAmount').value.trim());
   const type   = document.getElementById('entryType').value;
+  const expenseKind = document.getElementById('expenseKind').value;
 
   if (!amount || amount <= 0) {
     alert('Please enter a valid amount (e.g. 350 or 200 + 150)');
@@ -598,7 +662,7 @@ document.getElementById('expenseForm').addEventListener('submit', e => {
   }
 
   expenses.unshift({
-    id: Date.now(), type, title, amount, category,
+    id: Date.now(), type, expenseKind, title, amount, category,
     date: parseLocalDate(date).toISOString(),
   });
 
@@ -696,10 +760,13 @@ function importExpensesFromCsv(text) {
   const rows = parseCsv(text);
   const expectedHeaders = ['date', 'title', 'category', 'amount (inr)'];
   const headers = (rows.shift() || []).map(header => header.replace(/^\uFEFF/, '').trim().toLowerCase());
-  const hasTypeColumn = headers.length === 5 && headers[1] === 'type';
-  const validHeaders = hasTypeColumn
-    ? ['date', 'type', 'title', 'category', 'amount (inr)']
-    : expectedHeaders;
+  const hasTypeColumn = headers.length >= 5 && headers[1] === 'type';
+  const hasKindColumn = headers.length === 6 && headers[4] === 'expense type';
+  const validHeaders = hasKindColumn
+    ? ['date', 'type', 'title', 'category', 'expense type', 'amount (inr)']
+    : hasTypeColumn
+      ? ['date', 'type', 'title', 'category', 'amount (inr)']
+      : expectedHeaders;
   if (headers.length !== validHeaders.length || !validHeaders.every((header, index) => headers[index] === header)) {
     throw new Error('The CSV must use the Well Spent export format.');
   }
@@ -711,11 +778,13 @@ function importExpensesFromCsv(text) {
     const type = hasTypeColumn && row[1].trim().toLowerCase() === 'income' ? 'income' : 'expense';
     const title = row[hasTypeColumn ? 2 : 1].trim();
     const category = importedCategory(row[hasTypeColumn ? 3 : 2]) || 'other';
-    const amount = Number(row[hasTypeColumn ? 4 : 3].replace(/,/g, '').trim());
+    const kind = hasKindColumn && row[4].trim().toLowerCase() === 'fixed' ? 'fixed' : 'variable';
+    const amount = Number(row[hasKindColumn ? 5 : hasTypeColumn ? 4 : 3].replace(/,/g, '').trim());
     if (!title || !category || !Number.isFinite(amount) || amount <= 0 || Number.isNaN(date.getTime())) return;
     imported.push({
       id: Date.now() + index + Math.random(),
       type,
+      expenseKind: kind,
       title,
       amount,
       category,
@@ -730,12 +799,13 @@ function exportExpensesToCsv() {
     alert('No expenses to export.');
     return;
   }
-  const headers = ['Date', 'Type', 'Title', 'Category', 'Amount (INR)'];
+  const headers = ['Date', 'Type', 'Title', 'Category', 'Expense Type', 'Amount (INR)'];
   const rows = expenses.map(e => [
     localDateKey(new Date(e.date)),
     e.type || 'expense',
     csvField(e.title),
     csvField(CATEGORY_MAP[e.category] ? CATEGORY_MAP[e.category].name : e.category),
+    e.type === 'income' ? '' : (e.expenseKind || 'variable'),
     e.amount.toFixed(2)
   ]);
   const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

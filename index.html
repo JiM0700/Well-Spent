@@ -74,6 +74,10 @@
           <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
           <p class="hero-sub">Spent against your <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
           <p class="budget-income-context" id="budgetIncomeContext" aria-live="polite">Set a base monthly income to see your savings target.</p>
+          <div class="insight-row">
+            <span class="insight-badge"><span id="savingsRateBadge">—</span> Savings Rate</span>
+            <span class="fixed-expense-insight" id="fixedExpenseInsight">₹0 fixed · ₹0 variable</span>
+          </div>
 
           <div class="progress-wrap">
             <div class="progress-track" role="progressbar"
@@ -119,7 +123,7 @@
               <p class="forecast-stat__val" id="projectedTotalDisplay" aria-live="polite">₹0.00</p>
             </div>
             <div class="forecast-stat forecast-stat--right">
-              <p class="forecast-stat__label">Daily Velocity</p>
+              <p class="forecast-stat__label">Safe Daily Burn</p>
               <p class="forecast-stat__val forecast-stat__val--sm" id="velocityDisplay">₹0.00 / day</p>
             </div>
           </div>
@@ -127,6 +131,7 @@
           <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">
             Calculating velocity…
           </div>
+          <div class="safe-burn-meta" id="safeBurnMeta">Calculated from income remaining until payday.</div>
         </section>
 
         <!-- Category breakdown -->
@@ -223,6 +228,7 @@
           <button type="button" class="entry-type-btn" data-entry-type="income" aria-pressed="false">Income</button>
         </div>
         <input type="hidden" id="entryType" value="expense">
+        <input type="hidden" id="expenseKind" value="variable">
         <div class="field">
           <label class="field__label" for="expTitle">Description</label>
           <input class="field__input" type="text" id="expTitle"
@@ -247,6 +253,13 @@
             <label class="cat-chip"><input type="radio" name="category" value="entertainment">     🎬 Fun</label>
             <label class="cat-chip"><input type="radio" name="category" value="invest">             💰 Investment</label>
             <label class="cat-chip"><input type="radio" name="category" value="other">             🌐 Other</label>
+          </div>
+        </div>
+        <div class="field" id="expenseKindField">
+          <label class="field__label">Expense Type</label>
+          <div class="entry-kind-switch" id="expenseKindSwitcher" role="group" aria-label="Expense type">
+            <button type="button" class="entry-kind-btn active" data-expense-kind="variable" aria-pressed="true">Variable</button>
+            <button type="button" class="entry-kind-btn" data-expense-kind="fixed" aria-pressed="false">Fixed</button>
           </div>
         </div>
         <div class="field">

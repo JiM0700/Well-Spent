@@ -24,6 +24,7 @@ The browser/PWA implementation is currently at **v1.0.0-alpha**. The Flutter imp
 - Track recurring base income by pay day and add one-off income entries from the same entry form.
 - Weekly, monthly, and yearly spending views with configurable monthly cycle start day.
 - Budget progress remains spending-versus-budget focused, with earned income, budgeted/spent totals, net remaining, and savings-target context.
+- Savings-rate tracking, payday-based safe daily burn, and fixed-versus-variable expense insights.
 - Daily velocity, end-of-period forecast, and category breakdown.
 - Day-wise and month-wise spending trend chart.
 - Category filters, delete actions, CSV export/import, responsive layout, and installable PWA support.
@@ -51,7 +52,7 @@ The current native implementation is not yet analysis-clean. The remaining block
 
 ## Data and privacy
 
-Data is kept locally in the browser under the `well_spent_*` storage keys. Expenses and one-off income share the existing entries storage with a `type` of `expense` or `income`; recurring income and pay-day settings have their own keys. Clearing site data removes it. Use **Export CSV** regularly if the data matters; **Import CSV** restores a Well Spent export and replaces the current entries.
+Data is kept locally in the browser under the `well_spent_*` storage keys. Expenses and one-off income share the existing entries storage with a `type` of `expense` or `income`; expenses also carry an `expenseKind` of `fixed` or `variable`. Recurring income and pay-day settings have their own keys. Clearing site data removes it. Use **Export CSV** regularly if the data matters; **Import CSV** restores a Well Spent export and replaces the current entries.
 
 The service worker caches the local app shell for offline use. The Google Fonts stylesheet is optional; the app falls back to system fonts when offline.
 
