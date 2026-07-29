@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -55,6 +58,110 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _showSetCycleStartDayDialog(BuildContext context, ExpenseProvider provider) {
+    final controller = TextEditingController(text: provider.cycleStartDay.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Set Cycle Start Day'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Cycle Start Day',
+            helperText: 'Enter a day between 1 and 28',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text.trim());
+              if (val != null && val >= 1 && val <= 28) {
+                provider.updateCycleStartDay(val);
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSetBaseIncomeDialog(BuildContext context, ExpenseProvider provider) {
+    final controller = TextEditingController(text: provider.baseMonthlyIncome.toStringAsFixed(0));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Set Base Monthly Income'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Base Monthly Income (\$)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text.trim());
+              if (val != null && val >= 0) {
+                provider.updateBaseMonthlyIncome(val);
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSetPayDayDialog(BuildContext context, ExpenseProvider provider) {
+    final controller = TextEditingController(text: provider.payDay.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Set Payday'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Payday',
+            helperText: 'Enter a day between 1 and 28',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text.trim());
+              if (val != null && val >= 1 && val <= 28) {
+                provider.updatePayDay(val);
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getCategoryIcon(ExpenseCategory category) {
     switch (category) {
       case ExpenseCategory.food:
@@ -69,9 +176,29 @@ class DashboardScreen extends StatelessWidget {
         return Icons.medical_services;
       case ExpenseCategory.entertainment:
         return Icons.movie;
+      case ExpenseCategory.invest:
+        return Icons.savings;
       case ExpenseCategory.other:
         return Icons.more_horiz;
     }
+  }
+
+  Widget _settingPill({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return ActionChip(
+      label: Text(label),
+      avatar: Icon(icon, size: 18, color: theme.colorScheme.onSurface),
+      onPressed: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      backgroundColor: theme.colorScheme.surfaceVariant,
+      elevation: 0,
+      labelStyle: theme.textTheme.bodyMedium,
+    );
   }
 
   @override
@@ -108,12 +235,139 @@ class DashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // Summary Header Card
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: {
+                            'weekly': 'Weekly',
+                            'monthly': 'Monthly',
+                            'yearly': 'Yearly'
+                          }.entries.map((entry) {
+                            final isSelected = provider.viewMode == entry.key;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ChoiceChip(
+                                label: Text(entry.value),
+                                selected: isSelected,
+                                onSelected: (_) => provider.updateViewMode(entry.key),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+
                         SummaryCard(
-                          currentMonthTotal: provider.currentMonthTotal,
+                          periodLabel: provider.currentPeriodLabel,
+                          periodTotal: provider.currentPeriodTotal,
                           todayTotal: provider.todayTotal,
-                          monthlyBudget: provider.monthlyBudget,
+                          periodBudget: provider.currentPeriodBudget,
                           onEditBudget: () => _showSetBudgetDialog(context, provider),
+                          summaryEnabled: provider.summaryEnabled,
+                          summaryWindowLabel: provider.summaryPeriodLabel,
+                          summaryRangeLabel: provider.summaryRangeLabel,
+                          summaryDifferenceLabel: provider.summaryDifferenceLabel,
+                          summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
+                        ),
+                        const SizedBox(height: 16),
+                        Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Cycle & Income Settings',
+                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _settingPill(
+                                      context: context,
+                                      label: 'Cycle day: ${provider.cycleStartDay}',
+                                      icon: Icons.calendar_today,
+                                      onTap: () => _showSetCycleStartDayDialog(context, provider),
+                                    ),
+                                    _settingPill(
+                                      context: context,
+                                      label: 'Payday: ${provider.payDay}',
+                                      icon: Icons.paypal,
+                                      onTap: () => _showSetPayDayDialog(context, provider),
+                                    ),
+                                    _settingPill(
+                                      context: context,
+                                      label: 'Income: \$${provider.baseMonthlyIncome.toStringAsFixed(0)}',
+                                      icon: Icons.attach_money,
+                                      onTap: () => _showSetBaseIncomeDialog(context, provider),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('Enable spending summary'),
+                                  value: provider.summaryEnabled,
+                                  onChanged: provider.updateSummaryEnabled,
+                                ),
+                                if (provider.summaryEnabled) ...[
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    children: ['daily', 'weekly', 'monthly'].map((option) {
+                                      final label = option == 'daily'
+                                          ? 'Daily'
+                                          : option == 'weekly'
+                                              ? 'Weekly'
+                                              : 'Monthly';
+                                      return ChoiceChip(
+                                        label: Text(label),
+                                        selected: provider.summaryPeriod == option,
+                                        onSelected: (_) => provider.updateSummaryPeriod(option),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: ['daywise', 'monthwise'].map((option) {
+                                    final label = option == 'daywise' ? 'Daywise' : 'Monthwise';
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: ChoiceChip(
+                                        label: Text(label),
+                                        selected: provider.chartMode == option,
+                                        onSelected: (_) => provider.updateChartMode(option),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.chartMode == 'monthwise' ? 'Monthly Chart' : 'Daywise Chart',
+                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: 240,
+                                  child: _ExpenseChart(provider: provider),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -235,11 +489,11 @@ class DashboardScreen extends StatelessWidget {
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   trailing: Text(
-                                    '-\$${item.amount.toStringAsFixed(2)}',
+                                    item.isIncome ? '+\$${item.amount.toStringAsFixed(2)}' : '-\$${item.amount.toStringAsFixed(2)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: theme.colorScheme.error,
+                                      color: item.isIncome ? theme.colorScheme.primary : theme.colorScheme.error,
                                     ),
                                   ),
                                 ),
@@ -259,6 +513,97 @@ class DashboardScreen extends StatelessWidget {
         onPressed: () => _showAddExpenseModal(context),
         icon: const Icon(Icons.add),
         label: const Text('Add Expense'),
+      ),
+    );
+  }
+}
+
+class _ExpenseChart extends StatelessWidget {
+  final ExpenseProvider provider;
+
+  const _ExpenseChart({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dataPoints = provider.chartData;
+    if (dataPoints.isEmpty) {
+      return Center(
+        child: Text(
+          'No chart data available yet.',
+          style: theme.textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    final maxValue = dataPoints.map((p) => p.amount).fold<double>(0.0, (prev, value) => max(prev, value));
+    final spots = List.generate(dataPoints.length, (index) {
+      return FlSpot(index.toDouble(), dataPoints[index].amount);
+    });
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxValue > 0 ? maxValue / 4 : 1,
+            getDrawingHorizontalLine: (value) => FlLine(
+              color: theme.colorScheme.outline.withOpacity(0.2),
+              strokeWidth: 1,
+            ),
+          ),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: maxValue > 0 ? maxValue / 4 : 1,
+                getTitlesWidget: (value, meta) => Text(
+                  value == 0 ? '0' : value.toStringAsFixed(0),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 28,
+                interval: 1,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index < 0 || index >= dataPoints.length) return const SizedBox.shrink();
+                  final label = dataPoints[index].label;
+                  return SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    child: Text(label, style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
+                  );
+                },
+              ),
+            ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+          ),
+          minY: 0,
+          maxY: maxValue * 1.1,
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: theme.colorScheme.primary,
+              barWidth: 3,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: theme.colorScheme.primary.withOpacity(0.2),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

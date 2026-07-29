@@ -30,7 +30,7 @@ class ForecastCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'End-of-Month Forecast',
+                  'Projected Period End',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -60,7 +60,7 @@ class ForecastCard extends StatelessWidget {
                     Text(
                       '\$${forecast.projectedMonthEnd.toStringAsFixed(2)}',
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.extrabold,
+                        fontWeight: FontWeight.w800,
                         color: isWarning ? Colors.redAccent : theme.colorScheme.primary,
                       ),
                     ),

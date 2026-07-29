@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 
 class SummaryCard extends StatelessWidget {
-  final double currentMonthTotal;
+  final String periodLabel;
+  final double periodTotal;
   final double todayTotal;
-  final double monthlyBudget;
+  final double periodBudget;
   final VoidCallback onEditBudget;
+  final bool summaryEnabled;
+  final String summaryWindowLabel;
+  final String summaryRangeLabel;
+  final String summaryDifferenceLabel;
+  final String summaryTopCategoryLabel;
 
   const SummaryCard({
     super.key,
-    required this.currentMonthTotal,
+    required this.periodLabel,
+    required this.periodTotal,
     required this.todayTotal,
-    required this.monthlyBudget,
+    required this.periodBudget,
     required this.onEditBudget,
+    this.summaryEnabled = false,
+    this.summaryWindowLabel = '',
+    this.summaryRangeLabel = '',
+    this.summaryDifferenceLabel = '',
+    this.summaryTopCategoryLabel = '',
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final remainingBudget = monthlyBudget - currentMonthTotal;
-    final usagePct = monthlyBudget > 0 ? (currentMonthTotal / monthlyBudget).clamp(0.0, 1.0) : 0.0;
+    final remainingBudget = periodBudget - periodTotal;
+    final usagePct = periodBudget > 0 ? (periodTotal / periodBudget).clamp(0.0, 1.0) : 0.0;
 
     return Card(
       elevation: 4,
@@ -33,7 +45,7 @@ class SummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Monthly Summary',
+                  '$periodLabel Summary',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
@@ -42,27 +54,25 @@ class SummaryCard extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: onEditBudget,
-                  tooltip: 'Set Monthly Budget',
+                  tooltip: 'Set Budget',
                 ),
               ],
             ),
             const SizedBox(height: 8),
 
-            // Big Total Spent Number
             Text(
-              '\$${currentMonthTotal.toStringAsFixed(2)}',
+              '\$${periodTotal.toStringAsFixed(2)}',
               style: theme.textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.extrabold,
+                fontWeight: FontWeight.w800,
                 color: theme.colorScheme.primary,
               ),
             ),
             Text(
-              'Spent this month of \$${monthlyBudget.toStringAsFixed(0)} budget',
+              'Spent this period of \$${periodBudget.toStringAsFixed(0)} budget',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
 
-            // Budget Progress Bar
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
@@ -76,7 +86,6 @@ class SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Today & Remaining metrics
             Row(
               children: [
                 Expanded(
@@ -97,6 +106,42 @@ class SummaryCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (summaryEnabled) ...[
+              const SizedBox(height: 16),
+              Divider(color: theme.colorScheme.outline.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text(
+                '$summaryWindowLabel Summary',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(summaryRangeLabel, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Top category', style: theme.textTheme.labelSmall),
+                        const SizedBox(height: 4),
+                        Text(summaryTopCategoryLabel, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Change vs previous', style: theme.textTheme.labelSmall),
+                        const SizedBox(height: 4),
+                        Text(summaryDifferenceLabel, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

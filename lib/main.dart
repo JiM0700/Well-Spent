@@ -28,7 +28,7 @@ class WellSpentApp extends StatelessWidget {
             seedColor: const Color(0xFF1E88E5),
             brightness: Brightness.light,
           ),
-          cardTheme: const CardTheme(
+          cardTheme: const CardThemeData(
             elevation: 2,
             margin: EdgeInsets.zero,
           ),
@@ -44,7 +44,7 @@ class WellSpentApp extends StatelessWidget {
             background: const Color(0xFF0B0E14),
           ),
           scaffoldBackgroundColor: const Color(0xFF0B0E14),
-          cardTheme: const CardTheme(
+          cardTheme: const CardThemeData(
             elevation: 3,
             margin: EdgeInsets.zero,
           ),

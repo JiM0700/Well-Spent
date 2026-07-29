@@ -11,11 +11,14 @@ class AnalyticsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final provider = Provider.of<ExpenseProvider>(context);
     final breakdown = provider.categoryBreakdown;
-    final totalSpent = provider.currentMonthTotal;
+    final totalSpent = provider.currentPeriodTotal;
+    final totalIncome = provider.currentPeriodTotalIncome;
+    final recurringIncome = provider.currentPeriodRecurringIncome;
+    final oneOffIncome = provider.currentPeriodOneOffIncome;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analytics & Forecast'),
+        title: Text('${provider.currentPeriodLabel} Analytics & Forecast'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -60,15 +63,55 @@ class AnalyticsScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Projected Month-End:', style: theme.textTheme.bodyMedium),
+                        Text('Projected Period End:', style: theme.textTheme.bodyMedium),
                         Text('\$${provider.forecast.projectedMonthEnd.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: provider.forecast.projectedMonthEnd > provider.monthlyBudget
+                              color: provider.forecast.projectedMonthEnd > provider.currentPeriodBudget
                                   ? Colors.redAccent
                                   : theme.colorScheme.primary,
                             )),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Income Overview', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Recurring Income', style: theme.textTheme.bodyMedium),
+                        Text('\$${recurringIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('One-off Income', style: theme.textTheme.bodyMedium),
+                        Text('\$${oneOffIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Divider(color: theme.colorScheme.outline),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total Net Income', style: theme.textTheme.bodyMedium),
+                        Text('\$${totalIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],

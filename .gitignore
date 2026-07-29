@@ -12,6 +12,12 @@ coverage/
 android/.gradle/
 android/app/build/
 ios/Pods/
+ios/Runner.xcworkspace/
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner/Runner-Bridging-Header.h
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+macos/Runner.xcworkspace/
 
 # Editors and IDEs
 .idea/
