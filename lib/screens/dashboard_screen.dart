@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -240,14 +241,65 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSurface(BuildContext context, Widget child, {EdgeInsetsGeometry padding = const EdgeInsets.all(16), EdgeInsetsGeometry margin = EdgeInsets.zero}) {
+    final theme = Theme.of(context);
+    final isMac = defaultTargetPlatform == TargetPlatform.macOS;
+
+    if (!isMac) {
+      return Card(
+        margin: margin,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: padding,
+          child: child,
+        ),
+      );
+    }
+
+    return Container(
+      margin: margin,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.surface.withOpacity(0.76),
+                  theme.colorScheme.surface.withOpacity(0.42),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: theme.colorScheme.surface.withOpacity(0.56), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = Provider.of<ExpenseProvider>(context);
+    final isMac = defaultTargetPlatform == TargetPlatform.macOS;
 
-    return Scaffold(
-      appBar: (defaultTargetPlatform == TargetPlatform.iOS
-          ? CupertinoNavigationBar(
+    final PreferredSizeWidget? appBar = defaultTargetPlatform == TargetPlatform.iOS
+        ? PreferredSize(
+            preferredSize: const Size.fromHeight(kMinInteractiveDimensionCupertino),
+            child: CupertinoNavigationBar(
               middle: const Text('Well Spent'),
               trailing: CupertinoButton(
                 padding: EdgeInsets.zero,
@@ -255,311 +307,354 @@ class DashboardScreen extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pushNamed('/analytics'),
                 child: const Icon(CupertinoIcons.chart_bar),
               ),
-            )
-          : AppBar(
-              title: const Row(children: [
-                Icon(Icons.account_balance_wallet_outlined),
-                SizedBox(width: 8),
-                Text('Well Spent', style: TextStyle(fontWeight: FontWeight.bold)),
-              ]),
-              actions: [
+            ),
+          )
+        : AppBar(
+            title: const Row(children: [
+              Icon(Icons.account_balance_wallet_outlined),
+              SizedBox(width: 8),
+              Text('Well Spent', style: TextStyle(fontWeight: FontWeight.bold)),
+            ]),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.bar_chart_rounded),
+                tooltip: 'Analytics & Forecasting',
+                onPressed: () => Navigator.of(context).pushNamed('/analytics'),
+              ),
+              if (defaultTargetPlatform != TargetPlatform.iOS)
                 IconButton(
-                  icon: const Icon(Icons.bar_chart_rounded),
-                  tooltip: 'Analytics & Forecasting',
-                  onPressed: () => Navigator.of(context).pushNamed('/analytics'),
+                  icon: const Icon(Icons.import_export),
+                  tooltip: 'Import or export CSV',
+                  onPressed: () => _showDataMenu(context, provider),
                 ),
-                if (defaultTargetPlatform != TargetPlatform.iOS)
-                  IconButton(
-                    icon: const Icon(Icons.import_export),
-                    tooltip: 'Import or export CSV',
-                    onPressed: () => _showDataMenu(context, provider),
-                  ),
-              ],
-            )) as PreferredSizeWidget,
-      body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => provider.loadData(),
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.all(16.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: {
-                            'weekly': 'Weekly',
-                            'monthly': 'Monthly',
-                            'yearly': 'Yearly'
-                          }.entries.map((entry) {
-                            final isSelected = provider.viewMode == entry.key;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: ChoiceChip(
-                                label: Text(entry.value),
-                                selected: isSelected,
-                                onSelected: (_) => provider.updateViewMode(entry.key),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 16),
+            ],
+          );
 
-                        SummaryCard(
-                          periodLabel: provider.currentPeriodLabel,
-                          periodTotal: provider.currentPeriodTotal,
-                          todayTotal: provider.todayTotal,
-                          periodBudget: provider.currentPeriodBudget,
-                          onEditBudget: () => _showSetBudgetDialog(context, provider),
-                          summaryEnabled: provider.summaryEnabled,
-                          summaryWindowLabel: provider.summaryPeriodLabel,
-                          summaryRangeLabel: provider.summaryRangeLabel,
-                          summaryDifferenceLabel: provider.summaryDifferenceLabel,
-                          summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
-                        ),
-                        const SizedBox(height: 16),
-                        Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      backgroundColor: isMac ? Colors.transparent : null,
+      appBar: appBar,
+      body: Container(
+        decoration: isMac
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.surface.withOpacity(0.95),
+                    theme.colorScheme.primary.withOpacity(0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              )
+            : null,
+        child: provider.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: () => provider.loadData(),
+                child: CustomScrollView(
+                  slivers: [
+                    if (isMac)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                          child: _buildSurface(
+                            context,
+                            Row(
                               children: [
-                                Text(
-                                  'Cycle & Income Settings',
-                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Icon(Icons.account_balance_wallet_outlined, color: theme.colorScheme.primary),
                                 ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _settingPill(
-                                      context: context,
-                                      label: 'Cycle day: ${provider.cycleStartDay}',
-                                      icon: Icons.calendar_today,
-                                      onTap: () => _showSetCycleStartDayDialog(context, provider),
-                                    ),
-                                    _settingPill(
-                                      context: context,
-                                      label: 'Payday: ${provider.payDay}',
-                                      icon: Icons.paypal,
-                                      onTap: () => _showSetPayDayDialog(context, provider),
-                                    ),
-                                    _settingPill(
-                                      context: context,
-                                      label: 'Income: ₹${provider.baseMonthlyIncome.toStringAsFixed(0)}',
-                                      icon: Icons.attach_money,
-                                      onTap: () => _showSetBaseIncomeDialog(context, provider),
-                                    ),
-                                  ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Well Spent', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                      const SizedBox(height: 4),
+                                      Text('Liquid glass overview for your money', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 16),
-                                SwitchListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: const Text('Enable spending summary'),
-                                  value: provider.summaryEnabled,
-                                  onChanged: provider.updateSummaryEnabled,
-                                ),
-                                if (provider.summaryEnabled) ...[
-                                  const SizedBox(height: 8),
+                              ],
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                          ),
+                        ),
+                      ),
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(20, isMac ? 8 : 16, 20, 16),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate(
+                          [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: {
+                                'weekly': 'Weekly',
+                                'monthly': 'Monthly',
+                                'yearly': 'Yearly'
+                              }.entries.map((entry) {
+                                final isSelected = provider.viewMode == entry.key;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ChoiceChip(
+                                    label: Text(entry.value),
+                                    selected: isSelected,
+                                    onSelected: (_) => provider.updateViewMode(entry.key),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            SummaryCard(
+                              periodLabel: provider.currentPeriodLabel,
+                              periodTotal: provider.currentPeriodTotal,
+                              todayTotal: provider.todayTotal,
+                              periodBudget: provider.currentPeriodBudget,
+                              onEditBudget: () => _showSetBudgetDialog(context, provider),
+                              summaryEnabled: provider.summaryEnabled,
+                              summaryWindowLabel: provider.summaryPeriodLabel,
+                              summaryRangeLabel: provider.summaryRangeLabel,
+                              summaryDifferenceLabel: provider.summaryDifferenceLabel,
+                              summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildSurface(
+                              context,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Cycle & Income Settings',
+                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 12),
                                   Wrap(
                                     spacing: 8,
-                                    children: ['daily', 'weekly', 'monthly'].map((option) {
-                                      final label = option == 'daily'
-                                          ? 'Daily'
-                                          : option == 'weekly'
-                                              ? 'Weekly'
-                                              : 'Monthly';
-                                      return ChoiceChip(
-                                        label: Text(label),
-                                        selected: provider.summaryPeriod == option,
-                                        onSelected: (_) => provider.updateSummaryPeriod(option),
+                                    runSpacing: 8,
+                                    children: [
+                                      _settingPill(
+                                        context: context,
+                                        label: 'Cycle day: ${provider.cycleStartDay}',
+                                        icon: Icons.calendar_today,
+                                        onTap: () => _showSetCycleStartDayDialog(context, provider),
+                                      ),
+                                      _settingPill(
+                                        context: context,
+                                        label: 'Payday: ${provider.payDay}',
+                                        icon: Icons.paypal,
+                                        onTap: () => _showSetPayDayDialog(context, provider),
+                                      ),
+                                      _settingPill(
+                                        context: context,
+                                        label: 'Income: ₹${provider.baseMonthlyIncome.toStringAsFixed(0)}',
+                                        icon: Icons.attach_money,
+                                        onTap: () => _showSetBaseIncomeDialog(context, provider),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text('Enable spending summary'),
+                                    value: provider.summaryEnabled,
+                                    onChanged: provider.updateSummaryEnabled,
+                                  ),
+                                  if (provider.summaryEnabled) ...[
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      children: ['daily', 'weekly', 'monthly'].map((option) {
+                                        final label = option == 'daily'
+                                            ? 'Daily'
+                                            : option == 'weekly'
+                                                ? 'Weekly'
+                                                : 'Monthly';
+                                        return ChoiceChip(
+                                          label: Text(label),
+                                          selected: provider.summaryPeriod == option,
+                                          onSelected: (_) => provider.updateSummaryPeriod(option),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: ['daywise', 'monthwise'].map((option) {
+                                      final label = option == 'daywise' ? 'Daywise' : 'Monthwise';
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: ChoiceChip(
+                                          label: Text(label),
+                                          selected: provider.chartMode == option,
+                                          onSelected: (_) => provider.updateChartMode(option),
+                                        ),
                                       );
                                     }).toList(),
                                   ),
                                 ],
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: ['daywise', 'monthwise'].map((option) {
-                                    final label = option == 'daywise' ? 'Daywise' : 'Monthwise';
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
-                                      child: ChoiceChip(
-                                        label: Text(label),
-                                        selected: provider.chartMode == option,
-                                        onSelected: (_) => provider.updateChartMode(option),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
+                              ),
+                              padding: const EdgeInsets.all(16.0),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 16),
+                            _buildSurface(
+                              context,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.chartMode == 'monthwise' ? 'Monthly Chart' : 'Daywise Chart',
+                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    height: 240,
+                                    child: _ExpenseChart(provider: provider),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(16.0),
+                            ),
+                            const SizedBox(height: 16),
+                            ForecastCard(forecast: provider.forecast),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  provider.chartMode == 'monthwise' ? 'Monthly Chart' : 'Daywise Chart',
+                                  'Transactions',
                                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  height: 240,
-                                  child: _ExpenseChart(provider: provider),
-                                ),
+                                if (provider.selectedCategoryFilter != null)
+                                  TextButton(
+                                    onPressed: () => provider.filterByCategory(null),
+                                    child: const Text('Clear Filter'),
+                                  ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Predictive Forecast Widget
-                        ForecastCard(forecast: provider.forecast),
-                        const SizedBox(height: 20),
-
-                        // Category Filter Chips
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Transactions',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            if (provider.selectedCategoryFilter != null)
-                              TextButton(
-                                onPressed: () => provider.filterByCategory(null),
-                                child: const Text('Clear Filter'),
+                            const SizedBox(height: 8),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  FilterChip(
+                                    label: const Text('All'),
+                                    selected: provider.selectedCategoryFilter == null,
+                                    onSelected: (_) => provider.filterByCategory(null),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ...ExpenseCategory.values.map((cat) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: FilterChip(
+                                        label: Text(cat.displayName),
+                                        selected: provider.selectedCategoryFilter == cat,
+                                        onSelected: (_) => provider.filterByCategory(cat),
+                                      ),
+                                    );
+                                  }),
+                                ],
                               ),
+                            ),
+                            const SizedBox(height: 16),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
+                      ),
+                    ),
+                    if (provider.expenses.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              FilterChip(
-                                label: const Text('All'),
-                                selected: provider.selectedCategoryFilter == null,
-                                onSelected: (_) => provider.filterByCategory(null),
+                              Icon(Icons.receipt_long_outlined, size: 64, color: theme.colorScheme.outline),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No expenses recorded yet.',
+                                style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
                               ),
-                              const SizedBox(width: 8),
-                              ...ExpenseCategory.values.map((cat) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: FilterChip(
-                                    label: Text(cat.displayName),
-                                    selected: provider.selectedCategoryFilter == cat,
-                                    onSelected: (_) => provider.filterByCategory(cat),
-                                  ),
-                                );
-                              }),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tap the + button to add your first entry!',
+                                style: theme.textTheme.bodyMedium,
+                              ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ]),
-                    ),
-                  ),
-
-                  // Transaction List
-                  if (provider.expenses.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.receipt_long_outlined, size: 64, color: theme.colorScheme.outline),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No expenses recorded yet.',
-                              style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Tap the + button to add your first entry!',
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = provider.expenses[index];
-                            return Dismissible(
-                              key: Key(item.id.toString()),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(12),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final item = provider.expenses[index];
+                              return Dismissible(
+                                key: Key(item.id.toString()),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.delete, color: Colors.white),
                                 ),
-                                child: const Icon(Icons.delete, color: Colors.white),
-                              ),
-                              onDismissed: (_) {
-                                if (item.id != null) {
-                                  provider.deleteExpense(item.id!);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Deleted "${item.title}"')),
-                                  );
-                                }
-                              },
-                              child: Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: theme.colorScheme.primaryContainer,
-                                    child: Icon(
-                                      _getCategoryIcon(item.category),
-                                      color: theme.colorScheme.onPrimaryContainer,
+                                onDismissed: (_) {
+                                  if (item.id != null) {
+                                    provider.deleteExpense(item.id!);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Deleted "${item.title}"')),
+                                    );
+                                  }
+                                },
+                                child: _buildSurface(
+                                  context,
+                                  ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: theme.colorScheme.primaryContainer,
+                                      child: Icon(
+                                        _getCategoryIcon(item.category),
+                                        color: theme.colorScheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      item.title,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Text(
+                                      '${item.category.displayName} • ${DateFormat('MMM d, yyyy').format(item.date)}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    trailing: Text(
+                                      item.isIncome ? '+₹${item.amount.toStringAsFixed(2)}' : '-₹${item.amount.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: item.isIncome ? theme.colorScheme.primary : theme.colorScheme.error,
+                                      ),
                                     ),
                                   ),
-                                  title: Text(
-                                    item.title,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Text(
-                                    '${item.category.displayName} • ${DateFormat('MMM d, yyyy').format(item.date)}',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  trailing: Text(
-                                    item.isIncome ? '+₹${item.amount.toStringAsFixed(2)}' : '-₹${item.amount.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: item.isIncome ? theme.colorScheme.primary : theme.colorScheme.error,
-                                    ),
-                                  ),
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: EdgeInsets.zero,
                                 ),
-                              ),
-                            );
-                          },
-                          childCount: provider.expenses.length,
+                              );
+                            },
+                            childCount: provider.expenses.length,
+                          ),
                         ),
                       ),
-                    ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  ],
+                ),
               ),
-            ),
+      ),
       floatingActionButton: defaultTargetPlatform == TargetPlatform.iOS
           ? null
           : FloatingActionButton.extended(

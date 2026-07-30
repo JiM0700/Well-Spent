@@ -59,23 +59,22 @@ class _IosShellScreenState extends State<IosShellScreen> {
         children: [
           Positioned.fill(child: _pageForIndex(_selectedIndex)),
           Positioned(
-            left: 18,
-            right: 18,
+            left: 14,
+            right: 14,
             bottom: 12,
             child: SafeArea(
               top: false,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Expanded(
-                    child: SizedBox(
-                      height: 78,
-                      child: UiKitView(
-                        viewType: 'well_spent/liquid-glass-bar',
-                        creationParamsCodec: StandardMessageCodec(),
-                      ),
+                  Expanded(
+                    child: _NavigationPill(
+                      selectedIndex: _selectedIndex,
+                      onSelected: (index) => setState(() => _selectedIndex = index),
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  _AddExpensePill(onPressed: _openAddExpense),
                 ],
               ),
             ),
@@ -102,42 +101,80 @@ class _NavigationPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const items = [
       (CupertinoIcons.chart_bar, 'Overview'),
       (CupertinoIcons.square_grid_2x2, 'Categories'),
       (CupertinoIcons.waveform_path_ecg, 'Insights'),
       (CupertinoIcons.gear, 'Settings'),
     ];
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(34),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: DecoratedBox(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
-            color: CupertinoColors.systemBackground.withAlpha(155),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: CupertinoColors.white.withAlpha(150), width: 0.8),
-            boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 8))],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-            child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(items.length, (index) {
-            final selected = selectedIndex == index;
-            return Expanded(child: CupertinoButton(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              minSize: 0,
-              onPressed: () => onSelected(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(color: selected ? CupertinoColors.activeBlue.withAlpha(28) : null, borderRadius: BorderRadius.circular(20)),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(items[index].$1, size: 19, color: selected ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel), const SizedBox(height: 2), Text(items[index].$2, style: TextStyle(fontSize: 10, color: selected ? CupertinoColors.activeBlue : CupertinoColors.secondaryLabel))]),
-              ),
-            ));
-          }),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [Colors.white.withOpacity(0.16), Colors.white.withOpacity(0.08)]
+                  : [Colors.white.withOpacity(0.78), Colors.white.withOpacity(0.48)],
             ),
+            borderRadius: BorderRadius.circular(34),
+            border: Border.all(color: isDark ? Colors.white.withOpacity(0.16) : Colors.white.withOpacity(0.72), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.24 : 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (index) {
+              final selected = selectedIndex == index;
+              final item = items[index];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onSelected(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? theme.colorScheme.primary.withOpacity(isDark ? 0.24 : 0.14)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          item.$1,
+                          size: 19,
+                          color: selected ? theme.colorScheme.primary : (isDark ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.$2,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -151,23 +188,37 @@ class _AddExpensePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      minSize: 0,
-      onPressed: onPressed,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onPressed,
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            width: 62,
-            height: 62,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              color: CupertinoColors.activeBlue.withAlpha(205),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [theme.colorScheme.primary.withOpacity(0.95), theme.colorScheme.secondary.withOpacity(0.8)]
+                    : [theme.colorScheme.primary.withOpacity(0.95), theme.colorScheme.secondary.withOpacity(0.78)],
+              ),
               shape: BoxShape.circle,
-              border: Border.all(color: CupertinoColors.white.withAlpha(180), width: 1),
-              boxShadow: const [BoxShadow(color: Color(0x55007AFF), blurRadius: 20, offset: Offset(0, 8))],
+              border: Border.all(color: Colors.white.withOpacity(0.28), width: 1.1),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(isDark ? 0.32 : 0.2),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: const Icon(CupertinoIcons.plus, color: CupertinoColors.white, size: 28),
+            child: const Icon(CupertinoIcons.plus, color: Colors.white, size: 27),
           ),
         ),
       ),
