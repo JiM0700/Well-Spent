@@ -110,6 +110,17 @@ class DatabaseService {
     );
   }
 
+  Future<void> replaceAllExpenses(List<Expense> expenses) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('expenses');
+      for (final expense in expenses) {
+        final values = Map<String, dynamic>.from(expense.toMap())..remove('id');
+        await txn.insert('expenses', values);
+      }
+    });
+  }
+
   // --- SETTINGS OPERATIONS ---
 
   Future<String?> getSetting(String key) async {
@@ -216,4 +227,3 @@ class DatabaseService {
     await setSetting('chart_mode', mode);
   }
 }
-

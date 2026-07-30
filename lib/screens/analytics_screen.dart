@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
@@ -17,9 +19,9 @@ class AnalyticsScreen extends StatelessWidget {
     final oneOffIncome = provider.currentPeriodOneOffIncome;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${provider.currentPeriodLabel} Analytics & Forecast'),
-      ),
+      appBar: (defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoNavigationBar(middle: Text('${provider.currentPeriodLabel} Analytics'))
+          : AppBar(title: Text('${provider.currentPeriodLabel} Analytics & Forecast'))) as PreferredSizeWidget,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -55,7 +57,7 @@ class AnalyticsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Current Velocity:', style: theme.textTheme.bodyMedium),
-                        Text('\$${provider.forecast.dailyVelocity.toStringAsFixed(2)} / day',
+                        Text('₹${provider.forecast.dailyVelocity.toStringAsFixed(2)} / day',
                             style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
@@ -64,7 +66,7 @@ class AnalyticsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Projected Period End:', style: theme.textTheme.bodyMedium),
-                        Text('\$${provider.forecast.projectedMonthEnd.toStringAsFixed(2)}',
+                        Text('₹${provider.forecast.projectedMonthEnd.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -93,7 +95,7 @@ class AnalyticsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Recurring Income', style: theme.textTheme.bodyMedium),
-                        Text('\$${recurringIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        Text('₹${recurringIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -101,7 +103,7 @@ class AnalyticsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('One-off Income', style: theme.textTheme.bodyMedium),
-                        Text('\$${oneOffIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        Text('₹${oneOffIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -111,7 +113,7 @@ class AnalyticsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Total Net Income', style: theme.textTheme.bodyMedium),
-                        Text('\$${totalIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        Text('₹${totalIncome.toStringAsFixed(2)}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
@@ -155,7 +157,7 @@ class AnalyticsScreen extends StatelessWidget {
                         children: [
                           Text(category.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
                           Text(
-                            '\$${amount.toStringAsFixed(2)} (${(pct * 100).toStringAsFixed(1)}%)',
+                            '₹${amount.toStringAsFixed(2)} (${(pct * 100).toStringAsFixed(1)}%)',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],

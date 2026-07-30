@@ -58,7 +58,7 @@ class ForecastCard extends StatelessWidget {
                   children: [
                     Text('Projected Total', style: theme.textTheme.bodySmall),
                     Text(
-                      '\$${forecast.projectedMonthEnd.toStringAsFixed(2)}',
+                      '₹${forecast.projectedMonthEnd.toStringAsFixed(2)}',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: isWarning ? Colors.redAccent : theme.colorScheme.primary,
@@ -71,7 +71,7 @@ class ForecastCard extends StatelessWidget {
                   children: [
                     Text('Daily Spending Velocity', style: theme.textTheme.bodySmall),
                     Text(
-                      '\$${forecast.dailyVelocity.toStringAsFixed(2)} / day',
+                      '₹${forecast.dailyVelocity.toStringAsFixed(2)} / day',
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],

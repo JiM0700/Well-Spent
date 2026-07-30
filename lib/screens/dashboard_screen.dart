@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
@@ -12,6 +15,42 @@ import '../widgets/summary_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
+
+  void _showDataMenu(BuildContext context, ExpenseProvider provider) {
+    showMenu<String>(
+      context: context,
+      position: const RelativeRect.fromLTRB(600, 80, 12, 0),
+      items: const [
+        PopupMenuItem(value: 'export', child: Text('Export CSV')),
+        PopupMenuItem(value: 'import', child: Text('Import CSV')),
+      ],
+    ).then((value) {
+      if (value == 'export') _exportCsv(context, provider);
+      if (value == 'import') _importCsv(context, provider);
+    });
+  }
+
+  Future<void> _exportCsv(BuildContext context, ExpenseProvider provider) async {
+    await Clipboard.setData(ClipboardData(text: provider.exportCsv()));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('CSV copied to clipboard')));
+  }
+
+  Future<void> _importCsv(BuildContext context, ExpenseProvider provider) async {
+    final controller = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Import CSV'),
+        content: SizedBox(width: 520, child: TextField(controller: controller, maxLines: 10, decoration: const InputDecoration(hintText: 'Paste a Well Spent CSV export here', border: OutlineInputBorder()))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: () async { final count = await provider.importCsv(controller.text); if (context.mounted) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$count entries imported'))); } }, child: const Text('Replace data')),
+        ],
+      ),
+    );
+    controller.dispose();
+  }
 
   void _showAddExpenseModal(BuildContext context) {
     showModalBottomSheet(
@@ -34,7 +73,7 @@ class DashboardScreen extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
-            labelText: 'Monthly Budget (\$)',
+            labelText: 'Monthly Budget (₹)',
             border: OutlineInputBorder(),
           ),
         ),
@@ -103,7 +142,7 @@ class DashboardScreen extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
-            labelText: 'Base Monthly Income (\$)',
+            labelText: 'Base Monthly Income (₹)',
             border: OutlineInputBorder(),
           ),
         ),
@@ -207,24 +246,36 @@ class DashboardScreen extends StatelessWidget {
     final provider = Provider.of<ExpenseProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(Icons.account_balance_wallet_outlined),
-            SizedBox(width: 8),
-            Text('Well Spent', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart_rounded),
-            tooltip: 'Analytics & Forecasting',
-            onPressed: () {
-              Navigator.of(context).pushNamed('/analytics');
-            },
-          ),
-        ],
-      ),
+      appBar: (defaultTargetPlatform == TargetPlatform.iOS
+          ? CupertinoNavigationBar(
+              middle: const Text('Well Spent'),
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () => Navigator.of(context).pushNamed('/analytics'),
+                child: const Icon(CupertinoIcons.chart_bar),
+              ),
+            )
+          : AppBar(
+              title: const Row(children: [
+                Icon(Icons.account_balance_wallet_outlined),
+                SizedBox(width: 8),
+                Text('Well Spent', style: TextStyle(fontWeight: FontWeight.bold)),
+              ]),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.bar_chart_rounded),
+                  tooltip: 'Analytics & Forecasting',
+                  onPressed: () => Navigator.of(context).pushNamed('/analytics'),
+                ),
+                if (defaultTargetPlatform != TargetPlatform.iOS)
+                  IconButton(
+                    icon: const Icon(Icons.import_export),
+                    tooltip: 'Import or export CSV',
+                    onPressed: () => _showDataMenu(context, provider),
+                  ),
+              ],
+            )) as PreferredSizeWidget,
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -298,7 +349,7 @@ class DashboardScreen extends StatelessWidget {
                                     ),
                                     _settingPill(
                                       context: context,
-                                      label: 'Income: \$${provider.baseMonthlyIncome.toStringAsFixed(0)}',
+                                      label: 'Income: ₹${provider.baseMonthlyIncome.toStringAsFixed(0)}',
                                       icon: Icons.attach_money,
                                       onTap: () => _showSetBaseIncomeDialog(context, provider),
                                     ),
@@ -489,7 +540,7 @@ class DashboardScreen extends StatelessWidget {
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   trailing: Text(
-                                    item.isIncome ? '+\$${item.amount.toStringAsFixed(2)}' : '-\$${item.amount.toStringAsFixed(2)}',
+                                    item.isIncome ? '+₹${item.amount.toStringAsFixed(2)}' : '-₹${item.amount.toStringAsFixed(2)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -509,11 +560,13 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddExpenseModal(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Expense'),
-      ),
+      floatingActionButton: defaultTargetPlatform == TargetPlatform.iOS
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddExpenseModal(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Expense'),
+            ),
     );
   }
 }

@@ -53,7 +53,7 @@ The project uses a local Flutter SDK at `.flutter-sdk/` (ignored by Git). From t
 ./.flutter-sdk/bin/flutter analyze
 ```
 
-The current native implementation is not yet analysis-clean. The remaining blockers are Flutter API compatibility updates in the theme configuration and widget font weights.
+The native implementation passes Flutter analysis with informational notices only. A few Flutter API deprecations and minor const/style suggestions remain for future cleanup.
 
 ## Data and privacy
 

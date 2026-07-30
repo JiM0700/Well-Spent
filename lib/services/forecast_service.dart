@@ -62,12 +62,12 @@ class ForecastService {
       statusMsg = 'Set a budget target to track spending limits.';
     } else if (projectedMonthEnd > monthlyBudget) {
       final double overrun = projectedMonthEnd - monthlyBudget;
-      statusMsg = 'Warning: projected to exceed budget by \$${overrun.toStringAsFixed(2)}.';
+      statusMsg = 'Warning: projected to exceed budget by ₹${overrun.toStringAsFixed(2)}.';
     } else if (usagePct >= 85) {
       statusMsg = 'Caution: projected to reach ${usagePct.toStringAsFixed(0)}% of the budget.';
     } else {
       final double savings = monthlyBudget - projectedMonthEnd;
-      statusMsg = 'Good pace! On track to save \$${savings.toStringAsFixed(2)} this period.';
+      statusMsg = 'Good pace! On track to save ₹${savings.toStringAsFixed(2)} this period.';
     }
 
     return MonthlyForecast(

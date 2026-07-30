@@ -150,6 +150,63 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  String exportCsv() {
+    final rows = <String>[
+      'title,amount,category,date,note,type,expenseKind',
+      ..._expenses.map((expense) => [
+        expense.title,
+        expense.amount.toString(),
+        expense.category.name,
+        expense.date.toIso8601String(),
+        expense.note ?? '',
+        expense.type.name,
+        expense.expenseKind.name,
+      ].map(_csvEscape).join(',')),
+    ];
+    return rows.join('\n');
+  }
+
+  Future<int> importCsv(String csv) async {
+    final rows = _parseCsv(csv);
+    if (rows.length < 2) return 0;
+    final imported = <Expense>[];
+    for (final row in rows.skip(1)) {
+      if (row.length < 7) continue;
+      final amount = double.tryParse(row[1]);
+      final date = DateTime.tryParse(row[3]);
+      if (amount == null || date == null) continue;
+      final category = ExpenseCategory.values.where((value) => value.name == row[2]).firstOrNull ?? ExpenseCategory.other;
+      final type = ExpenseType.values.where((value) => value.name == row[5]).firstOrNull ?? ExpenseType.expense;
+      final kind = ExpenseKind.values.where((value) => value.name == row[6]).firstOrNull ?? ExpenseKind.variable;
+      imported.add(Expense(title: row[0], amount: amount, category: category, date: date, note: row[4].isEmpty ? null : row[4], type: type, expenseKind: kind));
+    }
+    await _dbService.replaceAllExpenses(imported);
+    _expenses = await _dbService.getAllExpenses();
+    notifyListeners();
+    return imported.length;
+  }
+
+  static String _csvEscape(String value) => '"${value.replaceAll('"', '""')}"';
+
+  static List<List<String>> _parseCsv(String input) {
+    final rows = <List<String>>[];
+    var row = <String>[];
+    var field = StringBuffer();
+    var quoted = false;
+    for (var i = 0; i < input.length; i++) {
+      final char = input[i];
+      if (char == '"') {
+        if (quoted && i + 1 < input.length && input[i + 1] == '"') { field.write('"'); i++; } else { quoted = !quoted; }
+      } else if (char == ',' && !quoted) { row.add(field.toString()); field = StringBuffer();
+      } else if ((char == '\n' || char == '\r') && !quoted) {
+        if (char == '\r' && i + 1 < input.length && input[i + 1] == '\n') i++;
+        row.add(field.toString()); rows.add(row); row = <String>[]; field = StringBuffer();
+      } else { field.write(char); }
+    }
+    if (field.isNotEmpty || row.isNotEmpty) { row.add(field.toString()); rows.add(row); }
+    return rows;
+  }
+
   Future<void> updateMonthlyBudget(double newBudget) async {
     await _dbService.setMonthlyBudget(newBudget);
     _monthlyBudget = newBudget;

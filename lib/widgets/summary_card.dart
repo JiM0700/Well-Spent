@@ -61,14 +61,14 @@ class SummaryCard extends StatelessWidget {
             const SizedBox(height: 8),
 
             Text(
-              '\$${periodTotal.toStringAsFixed(2)}',
+              '₹${periodTotal.toStringAsFixed(2)}',
               style: theme.textTheme.headlineLarge?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: theme.colorScheme.primary,
               ),
             ),
             Text(
-              'Spent this period of \$${periodBudget.toStringAsFixed(0)} budget',
+              'Spent this period of ₹${periodBudget.toStringAsFixed(0)} budget',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -91,7 +91,7 @@ class SummaryCard extends StatelessWidget {
                 Expanded(
                   child: _MetricTile(
                     label: "Today's Spent",
-                    value: '\$${todayTotal.toStringAsFixed(2)}',
+                    value: '₹${todayTotal.toStringAsFixed(2)}',
                     icon: Icons.today,
                   ),
                 ),
@@ -99,7 +99,7 @@ class SummaryCard extends StatelessWidget {
                 Expanded(
                   child: _MetricTile(
                     label: "Remaining",
-                    value: '\$${remainingBudget.toStringAsFixed(2)}',
+                    value: '₹${remainingBudget.toStringAsFixed(2)}',
                     icon: remainingBudget >= 0 ? Icons.savings_outlined : Icons.warning_amber_rounded,
                     valueColor: remainingBudget < 0 ? Colors.redAccent : null,
                   ),

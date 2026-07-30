@@ -105,9 +105,11 @@ class _QuickAddModalState extends State<QuickAddModal> {
         left: 20,
         right: 20,
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        child: Form(
+          key: _formKey,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -160,7 +162,7 @@ class _QuickAddModalState extends State<QuickAddModal> {
               controller: _amountController,
               keyboardType: TextInputType.text,
               decoration: const InputDecoration(
-                labelText: 'Amount (\$) - e.g. 12.50 or 15+3.5',
+                labelText: 'Amount (₹) - e.g. 12.50 or 15+3.5',
                 prefixIcon: Icon(Icons.attach_money),
                 border: OutlineInputBorder(),
                 helperText: 'Supports math expressions like 10 + 4.50',
@@ -243,6 +245,7 @@ class _QuickAddModalState extends State<QuickAddModal> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

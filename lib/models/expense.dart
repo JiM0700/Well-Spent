@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 enum ExpenseType { expense, income }
 
 enum ExpenseKind { fixed, variable }
