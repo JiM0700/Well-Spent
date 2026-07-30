@@ -14,8 +14,30 @@ import '../widgets/forecast_card.dart';
 import '../widgets/quick_add_modal.dart';
 import '../widgets/summary_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _showDataMenu(BuildContext context, ExpenseProvider provider) {
     showMenu<String>(
@@ -241,52 +263,103 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSurface(BuildContext context, Widget child, {EdgeInsetsGeometry padding = const EdgeInsets.all(16), EdgeInsetsGeometry margin = EdgeInsets.zero}) {
+  Widget _buildSurface(
+    BuildContext context,
+    Widget child, {
+    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
+    EdgeInsetsGeometry margin = EdgeInsets.zero,
+    double? animationDelay,
+  }) {
     final theme = Theme.of(context);
     final isMac = defaultTargetPlatform == TargetPlatform.macOS;
+    final isDark = theme.brightness == Brightness.dark;
 
-    if (!isMac) {
-      return Card(
-        margin: margin,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
-      );
+    final surface = isMac
+        ? Container(
+            margin: margin,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Container(
+                  padding: padding,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [
+                              theme.colorScheme.surface.withOpacity(0.84),
+                              theme.colorScheme.surface.withOpacity(0.6),
+                            ]
+                          : [
+                              theme.colorScheme.surface.withOpacity(0.86),
+                              theme.colorScheme.surface.withOpacity(0.62),
+                            ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.7), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.22 : 0.12),
+                        blurRadius: 30,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(isDark ? 0.07 : 0.16),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                      child,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          )
+        : Card(
+            margin: margin,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: Padding(
+              padding: padding,
+              child: child,
+            ),
+          );
+
+    if (animationDelay == null) {
+      return surface;
     }
 
-    return Container(
-      margin: margin,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.surface.withOpacity(0.76),
-                  theme.colorScheme.surface.withOpacity(0.42),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(color: theme.colorScheme.surface.withOpacity(0.56), width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: child,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final curvedValue = CurvedAnimation(
+          parent: _controller,
+          curve: Interval(animationDelay, 1.0, curve: Curves.easeOutCubic),
+        ).value;
+
+        return Transform.translate(
+          offset: Offset(0, 18 * (1 - curvedValue)),
+          child: Opacity(
+            opacity: curvedValue.clamp(0.0, 1.0),
+            child: surface,
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -338,8 +411,9 @@ class DashboardScreen extends StatelessWidget {
             ? BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.surface.withOpacity(0.95),
+                    theme.colorScheme.surface.withOpacity(0.98),
                     theme.colorScheme.primary.withOpacity(0.08),
+                    theme.colorScheme.secondary.withOpacity(0.06),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -383,6 +457,7 @@ class DashboardScreen extends StatelessWidget {
                               ],
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                            animationDelay: 0.02,
                           ),
                         ),
                       ),
@@ -410,7 +485,9 @@ class DashboardScreen extends StatelessWidget {
                               }).toList(),
                             ),
                             const SizedBox(height: 16),
-                            SummaryCard(
+                            _buildSurface(
+                              context,
+                              SummaryCard(
                               periodLabel: provider.currentPeriodLabel,
                               periodTotal: provider.currentPeriodTotal,
                               todayTotal: provider.todayTotal,
@@ -419,8 +496,12 @@ class DashboardScreen extends StatelessWidget {
                               summaryEnabled: provider.summaryEnabled,
                               summaryWindowLabel: provider.summaryPeriodLabel,
                               summaryRangeLabel: provider.summaryRangeLabel,
-                              summaryDifferenceLabel: provider.summaryDifferenceLabel,
-                              summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
+                                summaryDifferenceLabel: provider.summaryDifferenceLabel,
+                                summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
+                              ),
+                              padding: EdgeInsets.zero,
+                              margin: EdgeInsets.zero,
+                              animationDelay: 0.08,
                             ),
                             const SizedBox(height: 16),
                             _buildSurface(
@@ -518,9 +599,16 @@ class DashboardScreen extends StatelessWidget {
                                 ],
                               ),
                               padding: const EdgeInsets.all(16.0),
+                              animationDelay: 0.2,
                             ),
                             const SizedBox(height: 16),
-                            ForecastCard(forecast: provider.forecast),
+                            _buildSurface(
+                              context,
+                              ForecastCard(forecast: provider.forecast),
+                              padding: EdgeInsets.zero,
+                              margin: EdgeInsets.zero,
+                              animationDelay: 0.26,
+                            ),
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -643,6 +731,7 @@ class DashboardScreen extends StatelessWidget {
                                   ),
                                   margin: const EdgeInsets.only(bottom: 8),
                                   padding: EdgeInsets.zero,
+                                  animationDelay: index * 0.04,
                                 ),
                               );
                             },

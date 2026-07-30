@@ -94,10 +94,17 @@ class _IosShellScreenState extends State<IosShellScreen> {
   }
 }
 
-class _NavigationPill extends StatelessWidget {
+class _NavigationPill extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   const _NavigationPill({required this.selectedIndex, required this.onSelected});
+
+  @override
+  State<_NavigationPill> createState() => _NavigationPillState();
+}
+
+class _NavigationPillState extends State<_NavigationPill> {
+  int? _pressedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -111,10 +118,12 @@ class _NavigationPill extends StatelessWidget {
     ];
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(34),
+      borderRadius: BorderRadius.circular(36),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
+        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -122,54 +131,86 @@ class _NavigationPill extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [Colors.white.withOpacity(0.16), Colors.white.withOpacity(0.08)]
-                  : [Colors.white.withOpacity(0.78), Colors.white.withOpacity(0.48)],
+                  : [Colors.white.withOpacity(0.86), Colors.white.withOpacity(0.58)],
             ),
-            borderRadius: BorderRadius.circular(34),
+            borderRadius: BorderRadius.circular(36),
             border: Border.all(color: isDark ? Colors.white.withOpacity(0.16) : Colors.white.withOpacity(0.72), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.24 : 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+                color: Colors.black.withOpacity(isDark ? 0.26 : 0.14),
+                blurRadius: 28,
+                spreadRadius: 1,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (index) {
-              final selected = selectedIndex == index;
+              final selected = widget.selectedIndex == index;
+              final pressed = _pressedIndex == index;
               final item = items[index];
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => onSelected(index),
-                  child: AnimatedContainer(
+                  onTap: () {
+                    setState(() => _pressedIndex = null);
+                    widget.onSelected(index);
+                  },
+                  onTapDown: (_) => setState(() => _pressedIndex = index),
+                  onTapUp: (_) => setState(() => _pressedIndex = null),
+                  onTapCancel: () => setState(() => _pressedIndex = null),
+                  child: AnimatedScale(
                     duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? theme.colorScheme.primary.withOpacity(isDark ? 0.24 : 0.14)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item.$1,
-                          size: 19,
-                          color: selected ? theme.colorScheme.primary : (isDark ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurfaceVariant),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.$2,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    curve: Curves.easeOutBack,
+                    scale: pressed ? 0.93 : (selected ? 1.04 : 1.0),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 190),
+                      curve: Curves.easeOutCubic,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: selected
+                            ? LinearGradient(
+                                colors: isDark
+                                    ? [theme.colorScheme.primary.withOpacity(0.30), theme.colorScheme.primary.withOpacity(0.18)]
+                                    : [theme.colorScheme.primary.withOpacity(0.16), theme.colorScheme.primary.withOpacity(0.10)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: pressed ? Colors.white.withOpacity(isDark ? 0.12 : 0.16) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: selected
+                            ? [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withOpacity(isDark ? 0.18 : 0.14),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.$1,
+                            size: 19,
                             color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            item.$2,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                              letterSpacing: 0.15,
+                              decoration: TextDecoration.none,
+                              color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -182,9 +223,30 @@ class _NavigationPill extends StatelessWidget {
   }
 }
 
-class _AddExpensePill extends StatelessWidget {
+class _AddExpensePill extends StatefulWidget {
   final VoidCallback onPressed;
   const _AddExpensePill({required this.onPressed});
+
+  @override
+  State<_AddExpensePill> createState() => _AddExpensePillState();
+}
+
+class _AddExpensePillState extends State<_AddExpensePill> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+    _scale = Tween<double>(begin: 1.0, end: 0.94).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,33 +254,39 @@ class _AddExpensePill extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: onPressed,
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [theme.colorScheme.primary.withOpacity(0.95), theme.colorScheme.secondary.withOpacity(0.8)]
-                    : [theme.colorScheme.primary.withOpacity(0.95), theme.colorScheme.secondary.withOpacity(0.78)],
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.28), width: 1.1),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(isDark ? 0.32 : 0.2),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onPressed,
+      child: ScaleTransition(
+        scale: _scale,
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [theme.colorScheme.primary.withOpacity(0.98), theme.colorScheme.secondary.withOpacity(0.86)]
+                      : [theme.colorScheme.primary.withOpacity(0.98), theme.colorScheme.secondary.withOpacity(0.82)],
                 ),
-              ],
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withOpacity(0.30), width: 1.12),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(isDark ? 0.34 : 0.22),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: const Icon(CupertinoIcons.plus, color: Colors.white, size: 27),
             ),
-            child: const Icon(CupertinoIcons.plus, color: Colors.white, size: 27),
           ),
         ),
       ),
