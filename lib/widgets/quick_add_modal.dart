@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import 'liquid_glass_chip.dart';
 
 class QuickAddModal extends StatefulWidget {
   const QuickAddModal({super.key});
@@ -182,8 +183,8 @@ class _QuickAddModalState extends State<QuickAddModal> {
               runSpacing: 4,
               children: ExpenseCategory.values.map((cat) {
                 final selected = _selectedCategory == cat;
-                return ChoiceChip(
-                  label: Text(cat.displayName),
+                return LiquidGlassChip(
+                  label: cat.displayName,
                   selected: selected,
                   onSelected: (bool isSelected) {
                     if (isSelected) setState(() => _selectedCategory = cat);

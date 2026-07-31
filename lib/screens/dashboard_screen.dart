@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../widgets/forecast_card.dart';
+import '../widgets/liquid_glass_chip.dart';
 import '../widgets/quick_add_modal.dart';
 import '../widgets/summary_card.dart';
 
@@ -629,20 +630,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  FilterChip(
-                                    label: const Text('All'),
+                                  LiquidGlassChip(
+                                    label: 'All',
                                     selected: provider.selectedCategoryFilter == null,
                                     onSelected: (_) => provider.filterByCategory(null),
                                   ),
-                                  const SizedBox(width: 8),
                                   ...ExpenseCategory.values.map((cat) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
-                                      child: FilterChip(
-                                        label: Text(cat.displayName),
-                                        selected: provider.selectedCategoryFilter == cat,
-                                        onSelected: (_) => provider.filterByCategory(cat),
-                                      ),
+                                    return LiquidGlassChip(
+                                      label: cat.displayName,
+                                      selected: provider.selectedCategoryFilter == cat,
+                                      onSelected: (_) => provider.filterByCategory(cat),
                                     );
                                   }),
                                 ],
