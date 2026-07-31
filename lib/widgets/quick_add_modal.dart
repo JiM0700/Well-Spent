@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
-import 'liquid_glass_chip.dart';
 
+/// Cupertino-native add-expense modal. Uses CupertinoTextField,
+/// CupertinoSlidingSegmentedControl, CupertinoDatePicker, and
+/// CupertinoButton.filled — matching Apple first-party app patterns.
 class QuickAddModal extends StatefulWidget {
   const QuickAddModal({super.key});
 
@@ -13,21 +15,20 @@ class QuickAddModal extends StatefulWidget {
 }
 
 class _QuickAddModalState extends State<QuickAddModal> {
-  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
-  final _noteController = TextEditingController();
 
   ExpenseType _selectedType = ExpenseType.expense;
   ExpenseCategory _selectedCategory = ExpenseCategory.food;
   ExpenseKind _selectedExpenseKind = ExpenseKind.variable;
   DateTime _selectedDate = DateTime.now();
+  String? _titleError;
+  String? _amountError;
 
   @override
   void dispose() {
     _titleController.dispose();
     _amountController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -68,185 +69,339 @@ class _QuickAddModalState extends State<QuickAddModal> {
     }
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      final title = _titleController.text.trim();
-      final evaluatedAmount = _evaluateExpression(_amountController.text.trim());
-
-      if (evaluatedAmount == null || evaluatedAmount <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid amount or formula (e.g. 12 + 4.50)')),
-        );
-        return;
+  bool _validate() {
+    bool valid = true;
+    setState(() {
+      _titleError = null;
+      _amountError = null;
+      if (_titleController.text.trim().isEmpty) {
+        _titleError = 'Enter a description';
+        valid = false;
       }
+      if (_amountController.text.trim().isEmpty) {
+        _amountError = 'Enter an amount';
+        valid = false;
+      } else if (_evaluateExpression(_amountController.text.trim()) == null) {
+        _amountError = 'Invalid amount or formula';
+        valid = false;
+      }
+    });
+    return valid;
+  }
 
-      final expense = Expense(
-        title: title,
-        amount: evaluatedAmount,
-        category: _selectedCategory,
-        date: _selectedDate,
-        note: _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : null,
-        type: _selectedType,
-        expenseKind: _selectedType == ExpenseType.expense ? _selectedExpenseKind : ExpenseKind.variable,
-      );
+  void _submit() {
+    if (!_validate()) return;
 
-      Provider.of<ExpenseProvider>(context, listen: false).addExpense(expense);
-      Navigator.of(context).pop();
-    }
+    final evaluatedAmount = _evaluateExpression(_amountController.text.trim())!;
+
+    final expense = Expense(
+      title: _titleController.text.trim(),
+      amount: evaluatedAmount,
+      category: _selectedCategory,
+      date: _selectedDate,
+      type: _selectedType,
+      expenseKind: _selectedType == ExpenseType.expense ? _selectedExpenseKind : ExpenseKind.variable,
+    );
+
+    Provider.of<ExpenseProvider>(context, listen: false).addExpense(expense);
+    Navigator.of(context).pop();
+  }
+
+  void _showDatePicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: 280,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              // Done bar
+              Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: CupertinoColors.separator.resolveFrom(context),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              // Picker
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: _selectedDate,
+                  maximumDate: DateTime.now(),
+                  minimumDate: DateTime(2020),
+                  onDateTimeChanged: (date) => setState(() => _selectedDate = date),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
+    final labelColor = CupertinoColors.label.resolveFrom(context);
+    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        top: 20,
-        left: 20,
-        right: 20,
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      child: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Form(
-          key: _formKey,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          top: 12,
+          left: 20,
+          right: 20,
+        ),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _selectedType == ExpenseType.expense ? 'Quick Add Expense' : 'Quick Add Income',
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.separator.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedType == ExpenseType.expense ? 'Add Expense' : 'Add Income',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: labelColor,
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    child: const Icon(CupertinoIcons.xmark_circle_fill, size: 28),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Type toggle
+              SizedBox(
+                width: double.infinity,
+                child: CupertinoSlidingSegmentedControl<ExpenseType>(
+                  groupValue: _selectedType,
+                  children: const {
+                    ExpenseType.expense: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Expense'),
+                    ),
+                    ExpenseType.income: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Income'),
+                    ),
+                  },
+                  onValueChanged: (val) {
+                    if (val != null) setState(() => _selectedType = val);
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            Wrap(
-              spacing: 8,
-              children: ExpenseType.values.map((type) {
-                return ChoiceChip(
-                  label: Text(type.displayName),
-                  selected: _selectedType == type,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedType = type;
-                      });
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: _titleController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Description / Title',
-                prefixIcon: Icon(Icons.edit_note),
-                border: OutlineInputBorder(),
               ),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Enter a description' : null,
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 20),
 
-            TextFormField(
-              controller: _amountController,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                labelText: 'Amount (₹) - e.g. 12.50 or 15+3.5',
-                prefixIcon: Icon(Icons.attach_money),
-                border: OutlineInputBorder(),
-                helperText: 'Supports math expressions like 10 + 4.50',
+              // Description field
+              _fieldLabel('Description'),
+              const SizedBox(height: 6),
+              CupertinoTextField(
+                controller: _titleController,
+                placeholder: 'What did you spend on?',
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                autofocus: true,
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Enter an amount';
-                if (_evaluateExpression(v.trim()) == null) return 'Invalid calculation';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
+              if (_titleError != null) _errorText(_titleError!),
+              const SizedBox(height: 16),
 
-            Text('Category', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: ExpenseCategory.values.map((cat) {
-                final selected = _selectedCategory == cat;
-                return LiquidGlassChip(
-                  label: cat.displayName,
-                  selected: selected,
-                  onSelected: (bool isSelected) {
-                    if (isSelected) setState(() => _selectedCategory = cat);
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
+              // Amount field
+              _fieldLabel('Amount (₹)'),
+              const SizedBox(height: 6),
+              CupertinoTextField(
+                controller: _amountController,
+                placeholder: '0.00 or 15+3.50',
+                keyboardType: TextInputType.text,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                prefix: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text('₹', style: TextStyle(color: secondaryLabel, fontSize: 17)),
+                ),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              if (_amountError != null) _errorText(_amountError!),
+              Padding(
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Text(
+                  'Supports math: 10 + 4.50',
+                  style: TextStyle(fontSize: 12, color: secondaryLabel),
+                ),
+              ),
+              const SizedBox(height: 20),
 
-            if (_selectedType == ExpenseType.expense) ...[
-              Text('Expense Kind', style: theme.textTheme.labelLarge),
+              // Category
+              _fieldLabel('Category'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                children: ExpenseKind.values.map((kind) {
-                  final selected = _selectedExpenseKind == kind;
-                  return ChoiceChip(
-                    label: Text(kind.displayName),
-                    selected: selected,
-                    onSelected: (bool isSelected) {
-                      if (isSelected) setState(() => _selectedExpenseKind = kind);
-                    },
+                runSpacing: 8,
+                children: ExpenseCategory.values.map((cat) {
+                  final selected = _selectedCategory == cat;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? primaryColor : cardBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        cat.displayName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: selected
+                              ? CupertinoColors.white
+                              : labelColor,
+                        ),
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
-            ],
+              const SizedBox(height: 20),
 
-            InkWell(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                );
-                if (picked != null) setState(() => _selectedDate = picked);
-              },
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Date',
-                  prefixIcon: Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(),
+              // Expense Kind (only for expenses)
+              if (_selectedType == ExpenseType.expense) ...[
+                _fieldLabel('Expense Kind'),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoSlidingSegmentedControl<ExpenseKind>(
+                    groupValue: _selectedExpenseKind,
+                    children: const {
+                      ExpenseKind.variable: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('Variable'),
+                      ),
+                      ExpenseKind.fixed: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('Fixed'),
+                      ),
+                    },
+                    onValueChanged: (val) {
+                      if (val != null) setState(() => _selectedExpenseKind = val);
+                    },
+                  ),
                 ),
-                child: Text(DateFormat('EEEE, MMM d, yyyy').format(_selectedDate)),
-              ),
-            ),
-            const SizedBox(height: 20),
+                const SizedBox(height: 20),
+              ],
 
-            ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              // Date
+              _fieldLabel('Date'),
+              const SizedBox(height: 6),
+              GestureDetector(
+                onTap: _showDatePicker,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.calendar, size: 18, color: primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('EEEE, MMM d, yyyy').format(_selectedDate),
+                        style: TextStyle(fontSize: 15, color: labelColor),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Text(
-                _selectedType == ExpenseType.expense ? 'Save Expense' : 'Save Income',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              const SizedBox(height: 28),
+
+              // Submit button
+              CupertinoButton.filled(
+                borderRadius: BorderRadius.circular(12),
+                onPressed: _submit,
+                child: Text(
+                  _selectedType == ExpenseType.expense ? 'Save Expense' : 'Save Income',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+      ),
+    );
+  }
+
+  Widget _errorText(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: CupertinoColors.systemRed.resolveFrom(context),
         ),
       ),
     );
