@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+enum ExpenseType { expense, income }
+
+enum ExpenseKind { fixed, variable }
 
 enum ExpenseCategory {
   food,
@@ -7,6 +9,7 @@ enum ExpenseCategory {
   shopping,
   healthcare,
   entertainment,
+  invest,
   other,
 }
 
@@ -25,6 +28,8 @@ extension ExpenseCategoryExtension on ExpenseCategory {
         return 'Healthcare';
       case ExpenseCategory.entertainment:
         return 'Entertainment';
+      case ExpenseCategory.invest:
+        return 'Investments';
       case ExpenseCategory.other:
         return 'General / Other';
     }
@@ -44,8 +49,32 @@ extension ExpenseCategoryExtension on ExpenseCategory {
         return 'medical_services';
       case ExpenseCategory.entertainment:
         return 'movie';
+      case ExpenseCategory.invest:
+        return 'savings';
       case ExpenseCategory.other:
         return 'more_horiz';
+    }
+  }
+}
+
+extension ExpenseTypeExtension on ExpenseType {
+  String get displayName {
+    switch (this) {
+      case ExpenseType.expense:
+        return 'Expense';
+      case ExpenseType.income:
+        return 'Income';
+    }
+  }
+}
+
+extension ExpenseKindExtension on ExpenseKind {
+  String get displayName {
+    switch (this) {
+      case ExpenseKind.fixed:
+        return 'Fixed';
+      case ExpenseKind.variable:
+        return 'Variable';
     }
   }
 }
@@ -57,6 +86,8 @@ class Expense {
   final ExpenseCategory category;
   final DateTime date;
   final String? note;
+  final ExpenseType type;
+  final ExpenseKind expenseKind;
 
   Expense({
     this.id,
@@ -65,6 +96,8 @@ class Expense {
     required this.category,
     required this.date,
     this.note,
+    this.type = ExpenseType.expense,
+    this.expenseKind = ExpenseKind.variable,
   });
 
   Map<String, dynamic> toMap() {
@@ -75,22 +108,38 @@ class Expense {
       'category': category.name,
       'date': date.toIso8601String(),
       'note': note ?? '',
+      'type': type.name,
+      'expenseKind': expenseKind.name,
     };
   }
 
   factory Expense.fromMap(Map<String, dynamic> map) {
+    final expenseType = ExpenseType.values.firstWhere(
+      (e) => e.name == (map['type'] as String? ?? ''),
+      orElse: () => ExpenseType.expense,
+    );
+    final expenseKind = ExpenseKind.values.firstWhere(
+      (e) => e.name == (map['expenseKind'] as String? ?? ''),
+      orElse: () => ExpenseKind.variable,
+    );
+
     return Expense(
       id: map['id'] as int?,
       title: map['title'] as String,
       amount: (map['amount'] as num).toDouble(),
       category: ExpenseCategory.values.firstWhere(
-        (e) => e.name == map['category'],
+        (e) => e.name == (map['category'] as String? ?? ''),
         orElse: () => ExpenseCategory.other,
       ),
       date: DateTime.parse(map['date'] as String),
-      note: map['note'] as String?,
+      note: (map['note'] as String?)?.isNotEmpty == true ? map['note'] as String : null,
+      type: expenseType,
+      expenseKind: expenseKind,
     );
   }
+
+  bool get isIncome => type == ExpenseType.income;
+  bool get isExpense => type == ExpenseType.expense;
 
   Expense copyWith({
     int? id,
@@ -99,6 +148,8 @@ class Expense {
     ExpenseCategory? category,
     DateTime? date,
     String? note,
+    ExpenseType? type,
+    ExpenseKind? expenseKind,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -107,6 +158,8 @@ class Expense {
       category: category ?? this.category,
       date: date ?? this.date,
       note: note ?? this.note,
+      type: type ?? this.type,
+      expenseKind: expenseKind ?? this.expenseKind,
     );
   }
 }

@@ -21,7 +21,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE expenses (
@@ -30,7 +30,9 @@ class DatabaseService {
             amount REAL NOT NULL,
             category TEXT NOT NULL,
             date TEXT NOT NULL,
-            note TEXT
+            note TEXT,
+            type TEXT NOT NULL,
+            expenseKind TEXT NOT NULL
           )
         ''');
 
@@ -41,12 +43,34 @@ class DatabaseService {
           )
         ''');
 
-        // Insert default monthly budget
         await db.insert('settings', {'key': 'monthly_budget', 'value': '1000.0'});
+        await db.insert('settings', {'key': 'cycle_start_day', 'value': '1'});
+        await db.insert('settings', {'key': 'base_monthly_income', 'value': '0.0'});
+        await db.insert('settings', {'key': 'pay_day', 'value': '1'});
+        await db.insert('settings', {'key': 'summary_enabled', 'value': 'true'});
+        await db.insert('settings', {'key': 'summary_period', 'value': 'daily'});
+        await db.insert('settings', {'key': 'view_mode', 'value': 'monthly'});
+        await db.insert('settings', {'key': 'chart_mode', 'value': 'daywise'});
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT "expense"');
+          await db.execute('ALTER TABLE expenses ADD COLUMN expenseKind TEXT NOT NULL DEFAULT "variable"');
+          await db.insert('settings', {'key': 'cycle_start_day', 'value': '1'});
+          await db.insert('settings', {'key': 'base_monthly_income', 'value': '0.0'});
+          await db.insert('settings', {'key': 'pay_day', 'value': '1'});
+          await db.insert('settings', {'key': 'summary_enabled', 'value': 'true'});
+          await db.insert('settings', {'key': 'summary_period', 'value': 'daily'});
+          await db.insert('settings', {'key': 'view_mode', 'value': 'monthly'});
+          await db.insert('settings', {'key': 'chart_mode', 'value': 'daywise'});
+        }
       },
       onConfigure: (db) async {
-        // Enable WAL mode for high performance & ACID safety
-        await db.execute('PRAGMA journal_mode = WAL');
+        try {
+          await db.execute('PRAGMA journal_mode = WAL');
+        } catch (_) {
+          // Some macOS sqlite builds do not allow WAL; continue without it.
+        }
       },
     );
   }
@@ -86,23 +110,120 @@ class DatabaseService {
     );
   }
 
-  // --- SETTINGS OPERATIONS ---
-
-  Future<double> getMonthlyBudget() async {
+  Future<void> replaceAllExpenses(List<Expense> expenses) async {
     final db = await database;
-    final res = await db.query('settings', where: 'key = ?', whereArgs: ['monthly_budget']);
-    if (res.isNotEmpty) {
-      return double.tryParse(res.first['value'] as String) ?? 1000.0;
-    }
-    return 1000.0;
+    await db.transaction((txn) async {
+      await txn.delete('expenses');
+      for (final expense in expenses) {
+        final values = Map<String, dynamic>.from(expense.toMap())..remove('id');
+        await txn.insert('expenses', values);
+      }
+    });
   }
 
-  Future<void> setMonthlyBudget(double budget) async {
+  // --- SETTINGS OPERATIONS ---
+
+  Future<String?> getSetting(String key) async {
+    final db = await database;
+    final res = await db.query('settings', where: 'key = ?', whereArgs: [key]);
+    if (res.isNotEmpty) {
+      return res.first['value'] as String?;
+    }
+    return null;
+  }
+
+  Future<void> setSetting(String key, String value) async {
     final db = await database;
     await db.insert(
       'settings',
-      {'key': 'monthly_budget', 'value': budget.toString()},
+      {'key': key, 'value': value},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<double> getDoubleSetting(String key, double defaultValue) async {
+    final raw = await getSetting(key);
+    return raw == null ? defaultValue : double.tryParse(raw) ?? defaultValue;
+  }
+
+  Future<int> getIntSetting(String key, int defaultValue) async {
+    final raw = await getSetting(key);
+    return raw == null ? defaultValue : int.tryParse(raw) ?? defaultValue;
+  }
+
+  Future<bool> getBoolSetting(String key, bool defaultValue) async {
+    final raw = await getSetting(key);
+    if (raw == null) return defaultValue;
+    return raw.toLowerCase() == 'true';
+  }
+
+  Future<double> getMonthlyBudget() async {
+    return getDoubleSetting('monthly_budget', 1000.0);
+  }
+
+  Future<void> setMonthlyBudget(double budget) async {
+    await setSetting('monthly_budget', budget.toString());
+  }
+
+  Future<int> getCycleStartDay() async {
+    return getIntSetting('cycle_start_day', 1);
+  }
+
+  Future<void> setCycleStartDay(int day) async {
+    await setSetting('cycle_start_day', day.toString());
+  }
+
+  Future<double> getBaseMonthlyIncome() async {
+    return getDoubleSetting('base_monthly_income', 0.0);
+  }
+
+  Future<void> setBaseMonthlyIncome(double income) async {
+    await setSetting('base_monthly_income', income.toString());
+  }
+
+  Future<int> getPayDay() async {
+    return getIntSetting('pay_day', 1);
+  }
+
+  Future<void> setPayDay(int day) async {
+    await setSetting('pay_day', day.toString());
+  }
+
+  Future<bool> getSummaryEnabled() async {
+    return getBoolSetting('summary_enabled', true);
+  }
+
+  Future<void> setSummaryEnabled(bool enabled) async {
+    await setSetting('summary_enabled', enabled.toString());
+  }
+
+  Future<String> getSummaryPeriod() async {
+    final raw = await getSetting('summary_period');
+    if (raw == 'daily' || raw == 'weekly' || raw == 'monthly') return raw!;
+    return 'daily';
+  }
+
+  Future<void> setSummaryPeriod(String period) async {
+    await setSetting('summary_period', period);
+  }
+
+  Future<String> getViewMode() async {
+    final raw = await getSetting('view_mode');
+    if (raw == 'weekly' || raw == 'monthly' || raw == 'yearly') return raw!;
+    return 'monthly';
+  }
+
+  Future<void> setViewMode(String mode) async {
+    await setSetting('view_mode', mode);
+  }
+
+  Future<String> getChartMode() async {
+    final raw = await getSetting('chart_mode');
+    if (raw == 'daywise' || raw == 'monthwise') return raw!;
+    return 'daywise';
+  }
+
+  Future<void> setChartMode(String mode) async {
+    await setSetting('chart_mode', mode);
   }
 }

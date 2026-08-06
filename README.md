@@ -4,7 +4,10 @@ Well Spent is a private, offline-first expense tracker. It stores expenses and b
 
 ## Project status
 
-The browser/PWA implementation is currently at **v1.0.0-alpha**. The Flutter implementation is an active native-app workstream: the local Flutter SDK is installed and dependencies resolve, but native analysis still has compatibility errors to address.
+The browser/PWA implementation is complete and can run from the web assets in this repository. The Flutter native implementation is active and now includes both macOS and iOS scaffolding:
+
+- Native macOS support has been validated with Xcode and Flutter build tooling.
+- The iOS platform was generated and can be deployed to a connected device after Xcode signing is configured.
 
 ## Delivery phases
 
@@ -13,10 +16,10 @@ The browser/PWA implementation is currently at **v1.0.0-alpha**. The Flutter imp
 | 1. Core expense tracking | ✅ Complete | Add, view, filter, and delete expenses with categories, dates, and quick amount formulas. |
 | 2. Budgets and insights | ✅ Complete | Weekly, monthly, and yearly views; budget progress; velocity and period-end forecasting; category breakdowns; day-wise and month-wise trends. |
 | 3. Data portability and offline web app | ✅ Complete | CSV import/export, responsive UI, installable PWA metadata, and service-worker app-shell caching. |
-| 4. Native Flutter app | 🚧 In progress | Flutter 3.44.8/Dart 3.12.2 is installed locally; dashboard, analytics, SQLite persistence, CRUD operations, and forecast services are scaffolded. API compatibility fixes, native build validation, parity, and release polish remain. |
+| 4. Native Flutter app | 🚧 In progress | Flutter app is scaffolded for macOS and iOS, including SQLite persistence, dashboard, analytics, forecasts, and device build support. Device signing is the remaining deployment step for real iPhone installs. |
 | 5. Cloud and integrations | ⏳ Planned | Optional authentication, cloud sync, cross-device backup, and bank integrations. |
 
-**Current focus:** finish and validate the Flutter/native implementation while maintaining the browser/PWA experience.
+**Current focus:** finish native Flutter feature parity, finalize build compatibility, and enable device deployment.
 
 ## Features
 
@@ -50,7 +53,7 @@ The project uses a local Flutter SDK at `.flutter-sdk/` (ignored by Git). From t
 ./.flutter-sdk/bin/flutter analyze
 ```
 
-The current native implementation is not yet analysis-clean. The remaining blockers are Flutter API compatibility updates in the theme configuration and widget font weights.
+The native implementation passes Flutter analysis with informational notices only. A few Flutter API deprecations and minor const/style suggestions remain for future cleanup.
 
 ## Data and privacy
 
