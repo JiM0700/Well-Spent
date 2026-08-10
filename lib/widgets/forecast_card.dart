@@ -68,6 +68,7 @@ class ForecastCard extends StatelessWidget {
           // Numbers row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAlignment.start,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +95,7 @@ class ForecastCard extends StatelessWidget {
                   Text(
                     '₹${forecast.dailyVelocity.toStringAsFixed(2)} / day',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: labelColor,
                     ),
@@ -102,6 +103,34 @@ class ForecastCard extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+
+          // Safe Burn Row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Safe Daily Burn',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelColor),
+                ),
+                Text(
+                  '₹${forecast.safeBurnRate.toStringAsFixed(2)} / day',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: primaryColor),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${forecast.daysUntilPayday} days left until payday · ₹${forecast.remainingIncome.toStringAsFixed(2)} available income',
+            style: TextStyle(fontSize: 11, color: secondaryLabel),
           ),
           const SizedBox(height: 10),
 

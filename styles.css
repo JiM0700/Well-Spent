@@ -819,8 +819,16 @@ button { cursor: pointer; font-family: inherit; }
 .activity-filters summary span { color: var(--text); font-weight: 700; }
 .activity-filters .filter-row { padding-top: 12px; }
 
-/* Transaction items */
-.tx-list { display: flex; flex-direction: column; gap: 8px; }
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
 
 .tx-item {
   display: flex;
@@ -1362,10 +1370,173 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cur
 
 /* Scrollbar styling */
 .tx-card { overflow: hidden; }
-.tx-list { min-height: 0; overflow: visible; padding-right: 2px; }
+.tx-list {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
 @media (min-width: 900px) {
   .tx-card { flex-shrink: 0; }
+  .tx-list { max-height: 520px; }
 }
-.tx-list::-webkit-scrollbar { width: 4px; }
-.tx-list::-webkit-scrollbar-track { background: transparent; }
-.tx-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+.tx-list::-webkit-scrollbar { width: 6px; }
+.tx-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 99px; }
+.tx-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 99px; }
+.tx-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* ── PWA App Navigation Tabbar ─────────────────────────────────────────── */
+.pwa-tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px var(--page-pad-x);
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 1px solid var(--lg-border);
+  backdrop-filter: blur(var(--lg-blur-heavy));
+  -webkit-backdrop-filter: blur(var(--lg-blur-heavy));
+  overflow-x: auto;
+}
+.pwa-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.pwa-tab-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.06);
+}
+.pwa-tab-btn.active {
+  color: #fff;
+  background: var(--accent-grad);
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+}
+
+/* ── Category Cards Grid (PWA Parity with Flutter Categories Tab) ─────── */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.category-card {
+  padding: 20px;
+  background: var(--lg-fill);
+  border: 1px solid var(--lg-border);
+  border-radius: var(--lg-radius);
+  backdrop-filter: blur(var(--lg-blur));
+  -webkit-backdrop-filter: blur(var(--lg-blur));
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+.category-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--lg-border-strong);
+  box-shadow: var(--lg-shadow);
+  background: var(--lg-fill-hover);
+}
+.category-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.category-card__icon {
+  font-size: 1.8rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.category-card__count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 99px;
+}
+.category-card__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.category-card__amount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Insights / Analytics Dashboard View ──────────────────────────────── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+.insight-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.insight-stat-row:last-child {
+  border-bottom: none;
+}
+.insight-stat-label {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+.insight-stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Search & Multi-Filter Controls ──────────────────────────────────── */
+.filter-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.search-box {
+  position: relative;
+  width: 100%;
+}
+.search-box input {
+  padding-left: 38px;
+}
+.search-box__icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+

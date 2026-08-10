@@ -33,37 +33,88 @@ class _QuickAddModalState extends State<QuickAddModal> {
   }
 
   double? _evaluateExpression(String input) {
-    String clean = input.replaceAll(' ', '');
-    if (clean.isEmpty) return null;
+    final str = input.trim();
+    if (str.isEmpty || RegExp(r'[^0-9.+\-*/()\s]').hasMatch(str)) return null;
+
+    int pos = 0;
+
+    String? peek() {
+      while (pos < str.length && str[pos] == ' ') {
+        pos++;
+      }
+      return pos < str.length ? str[pos] : null;
+    }
+
+    double parsePrimary() {
+      final ch = peek();
+      if (ch == null) throw Exception('Unexpected end');
+      if (ch == '(') {
+        pos++;
+        final val = parseAddSub();
+        if (peek() != ')') throw Exception('Expected )');
+        pos++;
+        return val;
+      }
+      if (ch == '+' || ch == '-') {
+        pos++;
+        final val = parsePrimary();
+        return ch == '+' ? val : -val;
+      }
+      final start = pos;
+      while (pos < str.length && RegExp(r'[0-9.]').hasMatch(str[pos])) {
+        pos++;
+      }
+      if (start == pos) throw Exception('Expected number');
+      final numStr = str.substring(start, pos);
+      final numVal = double.tryParse(numStr);
+      if (numVal == null) throw Exception('Invalid number');
+      return numVal;
+    }
+
+    double parseMulDiv() {
+      double left = parsePrimary();
+      while (true) {
+        final ch = peek();
+        if (ch == '*' || ch == '/') {
+          pos++;
+          final right = parsePrimary();
+          if (ch == '*') {
+            left *= right;
+          } else {
+            if (right == 0) throw Exception('Division by zero');
+            left /= right;
+          }
+        } else {
+          break;
+        }
+      }
+      return left;
+    }
+
+    double parseAddSub() {
+      double left = parseMulDiv();
+      while (true) {
+        final ch = peek();
+        if (ch == '+' || ch == '-') {
+          pos++;
+          final right = parseMulDiv();
+          if (ch == '+') {
+            left += right;
+          } else {
+            left -= right;
+          }
+        } else {
+          break;
+        }
+      }
+      return left;
+    }
 
     try {
-      if (clean.contains('+') || clean.contains('-')) {
-        double total = 0.0;
-        String currentNum = '';
-        String currentOp = '+';
-
-        for (int i = 0; i < clean.length; i++) {
-          String char = clean[i];
-          if (char == '+' || char == '-') {
-            if (currentNum.isNotEmpty) {
-              double val = double.parse(currentNum);
-              total += (currentOp == '+') ? val : -val;
-              currentNum = '';
-            }
-            currentOp = char;
-          } else {
-            currentNum += char;
-          }
-        }
-        if (currentNum.isNotEmpty) {
-          double val = double.parse(currentNum);
-          total += (currentOp == '+') ? val : -val;
-        }
-        return total > 0 ? total : null;
-      } else {
-        final parsed = double.tryParse(clean);
-        return (parsed != null && parsed > 0) ? parsed : null;
-      }
+      final result = parseAddSub();
+      peek();
+      if (pos < str.length) return null;
+      return (result.isFinite && result > 0) ? result : null;
     } catch (_) {
       return null;
     }
