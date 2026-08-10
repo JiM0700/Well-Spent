@@ -457,8 +457,10 @@ function render() {
     btn.setAttribute('aria-pressed', String(isSelected));
   });
 
+  const activeTabId = `tab${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}`;
   document.querySelectorAll('.tab-view').forEach(view => {
-    view.style.display = view.id === `tab${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}` ? 'block' : 'none';
+    const isActive = view.id === activeTabId;
+    view.classList.toggle('active', isActive);
   });
 
   // ── Mode Switcher UI ──────────────────────────────────────────────────────
