@@ -361,12 +361,7 @@ class ExpenseProvider extends ChangeNotifier {
 
     final period = currentPeriodRange;
     final currentStart = DateTime(period.startDate.year, period.startDate.month, period.startDate.day);
-    final currentEndRaw = DateTime(
-      now.isBefore(period.endDate) ? now.year : period.endDate.year,
-      now.isBefore(period.endDate) ? now.month : period.endDate.month,
-      now.isBefore(period.endDate) ? now.day : period.endDate.day,
-    );
-    final currentEnd = DateTime(currentEndRaw.year, currentEndRaw.month, currentEndRaw.day, 23, 59, 59, 999);
+    final currentEnd = DateTime(period.endDate.year, period.endDate.month, period.endDate.day, 23, 59, 59, 999);
     final windowDays = currentEnd.difference(currentStart).inDays + 1;
     final previousEnd = currentStart.subtract(const Duration(milliseconds: 1));
     final previousStart = DateTime(

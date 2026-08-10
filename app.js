@@ -320,32 +320,31 @@ function calculatePeriodForecast() {
 }
 
 function getSummaryWindow(mode, now = new Date()) {
-  const dayMs = 1000 * 60 * 60 * 24;
-  const endOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
   const startOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
-  let currentEnd = new Date(now);
-  let currentStart;
-  let previousStart;
-  let previousEnd;
+  const endOfDay   = date => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+
+  let currentStart, currentEnd, previousStart, previousEnd;
 
   if (mode === 'daily') {
-    currentStart = startOfDay(now);
+    currentStart  = startOfDay(now);
+    currentEnd    = endOfDay(now);
     previousStart = startOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
-    previousEnd = endOfDay(previousStart);
+    previousEnd   = endOfDay(previousStart);
   } else if (mode === 'weekly') {
     const dayOfWeek = now.getDay();
     const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    currentStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday));
-    const elapsedDays = Math.max(1, Math.ceil((currentEnd - currentStart + 1) / dayMs));
-    previousEnd = endOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 1));
-    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - elapsedDays + 1));
+    currentStart  = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday));
+    currentEnd    = endOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() + 6));
+    previousStart = startOfDay(new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 7));
+    previousEnd   = endOfDay(new Date(previousStart.getFullYear(), previousStart.getMonth(), previousStart.getDate() + 6));
   } else {
-    const period = getCurrentPeriodRange(now);
-    currentStart = period.startDate;
-    currentEnd = now < period.endDate ? now : period.endDate;
-    const elapsedDays = Math.max(1, Math.ceil((currentEnd - currentStart + 1) / dayMs));
-    previousEnd = new Date(currentStart.getTime() - 1);
-    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - elapsedDays + 1));
+    const period  = getCurrentPeriodRange(now);
+    currentStart  = startOfDay(period.startDate);
+    currentEnd    = endOfDay(period.endDate);
+    const msDiff  = currentEnd.getTime() - currentStart.getTime();
+    const daysInPeriod = Math.max(1, Math.round(msDiff / (1000 * 60 * 60 * 24)));
+    previousEnd   = new Date(currentStart.getTime() - 1);
+    previousStart = startOfDay(new Date(previousEnd.getFullYear(), previousEnd.getMonth(), previousEnd.getDate() - daysInPeriod + 1));
   }
 
   return { currentStart, currentEnd, previousStart, previousEnd };
@@ -384,7 +383,12 @@ function renderSpendingSummary() {
   setText('summaryPeriodLabel', labels[summaryPeriod]);
   setText('summaryTotalDisplay', inr(stats.total));
   setText('summaryTopCategory', stats.topCategory);
-  setText('summaryRangeLabel', `${formatDateShort(stats.currentStart)} – ${formatDateShort(stats.currentEnd)}`);
+
+  if (summaryPeriod === 'daily') {
+    setText('summaryRangeLabel', formatDateShort(stats.currentStart));
+  } else {
+    setText('summaryRangeLabel', `${formatDateShort(stats.currentStart)} – ${formatDateShort(stats.currentEnd)}`);
+  }
 
   const differenceEl = document.getElementById('summaryDifference');
   if (differenceEl) {

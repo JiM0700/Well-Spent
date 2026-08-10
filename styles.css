@@ -819,8 +819,16 @@ button { cursor: pointer; font-family: inherit; }
 .activity-filters summary span { color: var(--text); font-weight: 700; }
 .activity-filters .filter-row { padding-top: 12px; }
 
-/* Transaction items */
-.tx-list { display: flex; flex-direction: column; gap: 8px; }
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
 
 .tx-item {
   display: flex;
@@ -1362,13 +1370,19 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cur
 
 /* Scrollbar styling */
 .tx-card { overflow: hidden; }
-.tx-list { min-height: 0; overflow: visible; padding-right: 2px; }
+.tx-list {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
 @media (min-width: 900px) {
   .tx-card { flex-shrink: 0; }
+  .tx-list { max-height: 520px; }
 }
-.tx-list::-webkit-scrollbar { width: 4px; }
-.tx-list::-webkit-scrollbar-track { background: transparent; }
-.tx-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+.tx-list::-webkit-scrollbar { width: 6px; }
+.tx-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 99px; }
+.tx-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 99px; }
+.tx-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.35); }
 
 /* ── PWA App Navigation Tabbar ─────────────────────────────────────────── */
 .pwa-tabbar {
