@@ -7,7 +7,7 @@
   <title>Well Spent – Expense Tracker &amp; Budget Forecast</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a0c12">
+  <meta name="theme-color" content="#080b14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Well Spent">
@@ -28,7 +28,7 @@
 
   <div class="app-shell">
 
-    <!-- ── Sticky top bar ──────────────────────────────────────────────── -->
+    <!-- ── Sticky Top Bar ──────────────────────────────────────────────── -->
     <header class="topbar glass-bar">
       <div class="topbar__brand">
         <span class="topbar__icon" aria-hidden="true">💳</span>
@@ -36,7 +36,7 @@
         <span class="alpha-badge" aria-label="Alpha build">ALPHA</span>
       </div>
       <nav class="topbar__actions">
-        <span class="privacy-mark" data-tooltip="Private &amp; Offline" tabindex="0" role="img" aria-label="Private and offline">🔒</span>
+        <span class="privacy-mark" data-tooltip="Private &amp; Offline — no data leaves your device" tabindex="0" role="img" aria-label="Private and offline">🔒</span>
         <div class="data-menu-wrap">
           <button class="glass-pill" id="dataMenuBtn" aria-label="Import or export expenses" aria-expanded="false" aria-haspopup="true">
             ⇅&nbsp; Data
@@ -48,48 +48,51 @@
         </div>
         <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
         <button class="glass-pill" id="openSettingsBtn" aria-label="Budget, Income &amp; Cycle Settings">
-          ⚙️&nbsp; Budget &amp; Income
+          ⚙️&nbsp; Settings
         </button>
       </nav>
     </header>
 
-    <!-- ── App Navigation Tab Bar ──────────────────────────────────────── -->
+    <!-- ── Tab Navigation Bar ──────────────────────────────────────────── -->
     <nav class="pwa-tabbar glass-bar" id="pwaTabBar" aria-label="Main Navigation">
-      <button type="button" class="pwa-tab-btn active" data-tab="overview" aria-pressed="true">🏠 Overview</button>
-      <button type="button" class="pwa-tab-btn" data-tab="categories" aria-pressed="false">🗂️ Categories</button>
-      <button type="button" class="pwa-tab-btn" data-tab="insights" aria-pressed="false">📊 Insights</button>
-      <button type="button" class="pwa-tab-btn" data-tab="settings" aria-pressed="false">⚙️ Settings</button>
+      <button type="button" class="pwa-tab-btn active" data-tab="overview"    aria-pressed="true" >🏠 Overview</button>
+      <button type="button" class="pwa-tab-btn"        data-tab="categories"  aria-pressed="false">🗂️ Categories</button>
+      <button type="button" class="pwa-tab-btn"        data-tab="insights"    aria-pressed="false">📊 Insights</button>
+      <button type="button" class="pwa-tab-btn"        data-tab="settings"    aria-pressed="false">⚙️ Settings</button>
     </nav>
 
-    <!-- ── Main Content Container ──────────────────────────────────────── -->
-    <main class="main-grid">
+    <!-- ── Main Content ─────────────────────────────────────────────────── -->
+    <main class="main-content">
 
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <!-- TAB 1: OVERVIEW                                                   -->
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <div id="tabOverview" class="tab-view active" style="width: 100%;">
-        <div class="main-grid">
-          <!-- LEFT COLUMN -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- TAB 1 · OVERVIEW                                                -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="tabOverview" class="tab-view active">
+        <div class="overview-grid">
+
+          <!-- ── LEFT COLUMN ────────────────────────────────────────── -->
           <div class="col-left">
-            <!-- Period view switcher -->
+
+            <!-- Period Switcher -->
             <nav class="glass-segmented" id="viewModeSwitcher" aria-label="Select period">
               <button class="segment-btn"        data-mode="weekly"  aria-pressed="false">📅 Weekly</button>
               <button class="segment-btn active" data-mode="monthly" aria-pressed="true" >📆 Monthly</button>
               <button class="segment-btn"        data-mode="yearly"  aria-pressed="false">🗓️ Yearly</button>
             </nav>
 
-            <!-- Hero summary card -->
-            <section class="lg-card hero-card" aria-label="Summary">
+            <!-- Hero Summary Card -->
+            <section class="lg-card hero-card" aria-label="Period Summary">
               <div class="hero-card__header">
                 <div>
                   <p class="eyebrow" id="heroEyebrow">Monthly Cycle</p>
                   <p class="cycle-date" id="heroCycleDate">—</p>
                 </div>
-                <button class="info-tooltip" id="cycleInfo" type="button" aria-label="View cycle details" data-tooltip="Income, savings, and expense details">i</button>
+                <button class="info-tooltip" id="cycleInfo" type="button"
+                        aria-label="View cycle details"
+                        data-tooltip="Income, savings, and expense details">i</button>
               </div>
               <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
               <p class="hero-sub">Spent of <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
-
               <div class="progress-wrap">
                 <div class="progress-track" role="progressbar"
                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
@@ -103,7 +106,7 @@
               </div>
             </section>
 
-            <!-- Spending summary -->
+            <!-- Spending Summary Card -->
             <section class="lg-card spending-summary-card" id="spendingSummaryCard" aria-label="Spending summary">
               <div class="summary-card-header">
                 <div>
@@ -113,9 +116,9 @@
                 <span class="summary-range" id="summaryRangeLabel">—</span>
               </div>
               <nav class="summary-period-switcher" id="summaryPeriodSwitcher" aria-label="Summary period">
-                <button type="button" class="summary-period-btn active" data-summary-period="daily" aria-pressed="true">Daily</button>
-                <button type="button" class="summary-period-btn" data-summary-period="weekly" aria-pressed="false">Weekly</button>
-                <button type="button" class="summary-period-btn" data-summary-period="monthly" aria-pressed="false">Monthly</button>
+                <button type="button" class="summary-period-btn active" data-summary-period="daily"   aria-pressed="true" >Daily</button>
+                <button type="button" class="summary-period-btn"        data-summary-period="weekly"  aria-pressed="false">Weekly</button>
+                <button type="button" class="summary-period-btn"        data-summary-period="monthly" aria-pressed="false">Monthly</button>
               </nav>
               <div class="summary-card-body">
                 <div>
@@ -133,9 +136,9 @@
               </div>
             </section>
 
-            <!-- Spending by Category Breakdown -->
-            <section class="lg-card breakdown-card" aria-label="Spending by category">
-              <p class="eyebrow">Spending by Category</p>
+            <!-- Category Breakdown Card -->
+            <section class="lg-card" aria-label="Spending by category">
+              <p class="eyebrow" style="margin-bottom:16px;">Spending by Category</p>
               <div id="categoryBreakdownList" class="cat-list">
                 <div class="empty-msg">Add your first expense to see the breakdown.</div>
               </div>
@@ -162,19 +165,20 @@
                 </div>
               </div>
 
-              <div class="safe-burn-row" style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Safe Daily Burn</span>
-                <span style="font-size: 0.95rem; font-weight: 800; color: var(--text-success);" id="safeBurnDisplay">₹0.00 / day</span>
+              <div class="safe-burn-row">
+                <span>Safe Daily Burn</span>
+                <span id="safeBurnDisplay">₹0.00 / day</span>
               </div>
-
-              <div class="forecast-status" id="forecastStatusMsg" aria-live="polite" style="margin-top: 10px;">Calculating velocity…</div>
-              <div class="safe-burn-meta" id="safeBurnMeta">Calculated from income remaining until payday.</div>
+              <p class="safe-burn-meta" id="safeBurnMeta">Calculated from income remaining until payday.</p>
+              <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">Calculating velocity…</div>
             </section>
+
           </div><!-- /col-left -->
 
-          <!-- RIGHT COLUMN -->
+          <!-- ── RIGHT COLUMN ───────────────────────────────────────── -->
           <div class="col-right">
-            <!-- Visual Chart Card -->
+
+            <!-- Chart Card -->
             <section class="lg-card chart-card" aria-label="Spending chart">
               <div class="chart-card__header">
                 <div>
@@ -186,12 +190,10 @@
                   <button class="cchip"        data-chartmode="monthwise" aria-pressed="false">📈 Month-wise</button>
                 </nav>
               </div>
-
               <div class="chart-wrap" id="chartContainer">
                 <svg id="chartSvg" class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMax meet"></svg>
                 <div class="chart-tooltip" id="chartTooltip" role="tooltip" aria-hidden="true"></div>
               </div>
-
               <div class="chart-footer">
                 <span class="chart-stat-pill" id="chartPeakLabel">Peak: —</span>
                 <span class="chart-stat-pill" id="chartAvgLabel">Average: —</span>
@@ -200,7 +202,7 @@
             </section>
 
             <!-- Activity Feed -->
-            <section class="lg-card tx-card" aria-label="Recent Transactions">
+            <section class="lg-card tx-card" aria-label="Activity Feed">
               <div class="tx-card__header">
                 <div>
                   <p class="eyebrow">Recent Transactions</p>
@@ -209,30 +211,28 @@
                 <span class="tx-count" id="txCount">0 entries</span>
               </div>
 
-              <!-- Search & Filter Controls -->
+              <!-- Search + Type / Kind filters -->
               <div class="filter-toolbar">
                 <div class="search-box">
                   <span class="search-box__icon">🔍</span>
-                  <input type="text" id="txSearchInput" class="field__input" placeholder="Search entries by keyword..." autocomplete="off">
+                  <input type="text" id="txSearchInput" class="field__input"
+                         placeholder="Search by keyword, category…" autocomplete="off">
                 </div>
-
                 <div class="filter-pills-row">
-                  <!-- Type Filter -->
-                  <div class="glass-segmented" id="typeFilterToggle" style="padding: 3px; font-size: 0.75rem;">
-                    <button type="button" class="segment-btn active" data-typefilter="all">All Types</button>
-                    <button type="button" class="segment-btn" data-typefilter="expense">Expense</button>
-                    <button type="button" class="segment-btn" data-typefilter="income">Income</button>
+                  <div class="glass-segmented" id="typeFilterToggle" aria-label="Filter by type">
+                    <button type="button" class="segment-btn active" data-typefilter="all"    >All</button>
+                    <button type="button" class="segment-btn"        data-typefilter="expense">Expense</button>
+                    <button type="button" class="segment-btn"        data-typefilter="income" >Income</button>
                   </div>
-
-                  <!-- Kind Filter -->
-                  <div class="glass-segmented" id="kindFilterToggle" style="padding: 3px; font-size: 0.75rem;">
-                    <button type="button" class="segment-btn active" data-kindfilter="all">All Kinds</button>
-                    <button type="button" class="segment-btn" data-kindfilter="variable">Variable</button>
-                    <button type="button" class="segment-btn" data-kindfilter="fixed">Fixed</button>
+                  <div class="glass-segmented" id="kindFilterToggle" aria-label="Filter by kind">
+                    <button type="button" class="segment-btn active" data-kindfilter="all"     >All Kinds</button>
+                    <button type="button" class="segment-btn"        data-kindfilter="variable">Variable</button>
+                    <button type="button" class="segment-btn"        data-kindfilter="fixed"   >Fixed</button>
                   </div>
                 </div>
               </div>
 
+              <!-- Category filter chips -->
               <details class="activity-filters" open>
                 <summary>Categories <span id="filterSummaryLabel">All entries</span></summary>
                 <nav class="filter-row" id="categoryFilterChips" aria-label="Filter by category">
@@ -243,44 +243,46 @@
                   <button class="fchip"        data-cat="shopping"      aria-pressed="false">🛍️ Shopping</button>
                   <button class="fchip"        data-cat="healthcare"    aria-pressed="false">🏥 Health</button>
                   <button class="fchip"        data-cat="entertainment" aria-pressed="false">🎬 Fun</button>
-                  <button class="fchip"        data-cat="invest"        aria-pressed="false">💰 Investment</button>
+                  <button class="fchip"        data-cat="invest"        aria-pressed="false">💰 Invest</button>
                   <button class="fchip"        data-cat="other"         aria-pressed="false">🌐 Other</button>
                 </nav>
               </details>
 
               <div class="tx-list" id="transactionsList" aria-live="polite"></div>
             </section>
+
           </div><!-- /col-right -->
-        </div>
+        </div><!-- /overview-grid -->
       </div><!-- /tabOverview -->
 
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <!-- TAB 2: CATEGORIES (Interactive Category Library)                   -->
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <div id="tabCategories" class="tab-view" style="display: none; width: 100%;">
-        <section class="lg-card" style="width: 100%;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <p class="eyebrow">Category Library</p>
-              <h2 class="chart-title">Spending by Category</h2>
-            </div>
-            <span style="font-size: 0.85rem; color: var(--text-secondary);" id="catTabPeriodLabel">This Period</span>
-          </div>
-          <div class="category-grid" id="categoriesGridContainer">
-            <!-- Rendered dynamically by JS -->
-          </div>
-        </section>
-      </div>
 
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <!-- TAB 3: INSIGHTS (Analytics & Forecast Dashboard)                  -->
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <div id="tabInsights" class="tab-view" style="display: none; width: 100%;">
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- TAB 2 · CATEGORIES                                              -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="tabCategories" class="tab-view">
+        <div class="cat-tab-header">
+          <div>
+            <p class="eyebrow">Category Library</p>
+            <h2 style="font-size:1.1rem;font-weight:700;margin:0;">Spending by Category</h2>
+          </div>
+          <span class="cat-tab-period" id="catTabPeriodLabel">This Period</span>
+        </div>
+        <div class="category-grid" id="categoriesGridContainer">
+          <!-- Rendered by JS -->
+        </div>
+      </div><!-- /tabCategories -->
+
+
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- TAB 3 · INSIGHTS                                                -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="tabInsights" class="tab-view">
         <div class="insights-grid">
-          <!-- Income Overview Card -->
-          <section class="lg-card">
-            <p class="eyebrow">💵 Income &amp; Cashflow Overview</p>
-            <h2 class="chart-title" style="margin-bottom: 16px;">Net Cashflow</h2>
+
+          <!-- Income & Cashflow -->
+          <section class="lg-card" aria-label="Income overview">
+            <p class="eyebrow">💵 Income &amp; Cashflow</p>
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 16px;">Net Cashflow</h2>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Recurring Base Income</span>
               <span class="insight-stat-val" id="insRecurringIncome">₹0.00</span>
@@ -291,22 +293,22 @@
             </div>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Total Net Income</span>
-              <span class="insight-stat-val" style="color: var(--text-success);" id="insTotalIncome">₹0.00</span>
+              <span class="insight-stat-val" style="color:var(--text-success);" id="insTotalIncome">₹0.00</span>
             </div>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Total Expenses</span>
-              <span class="insight-stat-val" style="color: var(--text-danger);" id="insTotalExpenses">₹0.00</span>
+              <span class="insight-stat-val" style="color:var(--text-danger);" id="insTotalExpenses">₹0.00</span>
             </div>
-            <div class="insight-stat-row" style="font-weight: 800; font-size: 1.1rem; border-top: 1px solid var(--lg-border); padding-top: 14px;">
-              <span class="insight-stat-label" style="font-weight: 700; color: var(--text);">Net Savings</span>
+            <div class="insight-stat-row" style="font-weight:800;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);border-bottom:none;margin-top:4px;">
+              <span class="insight-stat-label" style="color:var(--text);font-weight:700;">Net Savings</span>
               <span class="insight-stat-val" id="insNetSavings">₹0.00</span>
             </div>
           </section>
 
-          <!-- Velocity & Forecast Analytics Card -->
-          <section class="lg-card">
+          <!-- Velocity & Burn Analytics -->
+          <section class="lg-card" aria-label="Velocity and forecast">
             <p class="eyebrow">📈 Velocity &amp; Burn Analytics</p>
-            <h2 class="chart-title" style="margin-bottom: 16px;">Period Forecast</h2>
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 16px;">Period Forecast</h2>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Days Elapsed</span>
               <span class="insight-stat-val" id="insDaysElapsed">—</span>
@@ -317,7 +319,7 @@
             </div>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Safe Daily Burn Rate</span>
-              <span class="insight-stat-val" style="color: var(--text-success);" id="insSafeBurn">₹0.00 / day</span>
+              <span class="insight-stat-val" style="color:var(--text-success);" id="insSafeBurn">₹0.00 / day</span>
             </div>
             <div class="insight-stat-row">
               <span class="insight-stat-label">Projected Period End</span>
@@ -325,81 +327,73 @@
             </div>
           </section>
 
-          <!-- Fixed vs Variable Expense Breakdown Card -->
-          <section class="lg-card">
+          <!-- Fixed vs Variable -->
+          <section class="lg-card" aria-label="Expense kind breakdown">
             <p class="eyebrow">⚖️ Expense Kind Breakdown</p>
-            <h2 class="chart-title" style="margin-bottom: 16px;">Fixed vs Variable</h2>
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 16px;">Fixed vs Variable</h2>
             <div class="insight-stat-row">
-              <span class="insight-stat-label">Fixed Expenses (Bills, Subscriptions)</span>
+              <span class="insight-stat-label">Fixed Expenses</span>
               <span class="insight-stat-val" id="insFixedExpenses">₹0.00</span>
             </div>
             <div class="insight-stat-row">
-              <span class="insight-stat-label">Variable Expenses (Food, Shopping)</span>
+              <span class="insight-stat-label">Variable Expenses</span>
               <span class="insight-stat-val" id="insVariableExpenses">₹0.00</span>
             </div>
           </section>
-        </div>
-      </div>
 
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <!-- TAB 4: SETTINGS                                                   -->
-      <!-- ═════════════════════════════════════════════════════════════════ -->
-      <div id="tabSettings" class="tab-view" style="display: none; width: 100%;">
-        <section class="lg-card" style="max-width: 600px; margin: 0 auto;">
-          <p class="eyebrow">⚙️ Application Settings</p>
-          <h2 class="chart-title" style="margin-bottom: 20px;">Budget, Income &amp; Cycle Configuration</h2>
-          <form id="tabSettingsForm" class="modal-form">
-            <div class="field">
-              <label class="field__label" for="tabSettingBaseIncome">Base Monthly Income (₹)</label>
-              <input class="field__input" type="number" id="tabSettingBaseIncome" placeholder="40000" min="0" step="100">
-            </div>
-            <div class="field">
-              <label class="field__label" for="tabSettingPayDay">Income Pay Day</label>
-              <select class="field__input field__select" id="tabSettingPayDay">
-                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
-                <option value="5">5th</option><option value="10">10th</option><option value="15">15th</option>
-                <option value="20">20th</option><option value="25">25th</option><option value="28">28th</option>
-              </select>
-            </div>
-            <div class="field">
-              <label class="field__label" for="tabSettingMonthlyBudget">Monthly Budget Target (₹)</label>
-              <input class="field__input" type="number" id="tabSettingMonthlyBudget" placeholder="25000" min="0" step="100" required>
-            </div>
-            <div class="field">
-              <label class="field__label" for="tabSettingCycleStartDay">Spending Cycle Start Day</label>
-              <select class="field__input field__select" id="tabSettingCycleStartDay">
-                <option value="1">1st – Calendar month</option><option value="5">5th</option>
-                <option value="10">10th</option><option value="15">15th – Mid-month</option>
-                <option value="20">20th</option><option value="25">25th – Payday</option>
-              </select>
-            </div>
-            <label class="summary-setting-row" for="tabSettingSummaryEnabled">
-              <span>
-                <strong>Spending Summaries &amp; Reminders</strong>
-                <small>Show the spending summary card on your dashboard.</small>
-              </span>
-              <input type="checkbox" id="tabSettingSummaryEnabled">
-            </label>
-            <button type="submit" class="submit-btn">Save Settings</button>
-          </form>
-        </section>
-      </div>
+        </div>
+      </div><!-- /tabInsights -->
+
+
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- TAB 4 · SETTINGS                                                -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <div id="tabSettings" class="tab-view">
+        <div class="settings-tab-inner">
+          <section class="lg-card">
+            <p class="eyebrow">⚙️ Application Settings</p>
+            <h2 style="font-size:1.05rem;font-weight:700;margin:0 0 22px;">Budget, Income &amp; Cycle</h2>
+            <form id="tabSettingsForm" class="modal-form" novalidate>
+              <div class="field">
+                <label class="field__label" for="tabSettingBaseIncome">Base Monthly Income (₹)</label>
+                <input class="field__input" type="number" id="tabSettingBaseIncome" placeholder="40000" min="0" step="100" inputmode="numeric">
+              </div>
+              <div class="field">
+                <label class="field__label" for="tabSettingPayDay">Income Pay Day</label>
+                <select class="field__input field__select" id="tabSettingPayDay">
+                  <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                  <option value="5">5th</option><option value="10">10th</option><option value="15">15th</option>
+                  <option value="20">20th</option><option value="25">25th</option><option value="28">28th</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="tabSettingMonthlyBudget">Monthly Budget Target (₹)</label>
+                <input class="field__input" type="number" id="tabSettingMonthlyBudget" placeholder="25000" min="0" step="100" required inputmode="numeric">
+              </div>
+              <div class="field">
+                <label class="field__label" for="tabSettingCycleStartDay">Spending Cycle Start Day</label>
+                <select class="field__input field__select" id="tabSettingCycleStartDay">
+                  <option value="1">1st – Calendar month</option><option value="5">5th</option>
+                  <option value="10">10th</option><option value="15">15th – Mid-month</option>
+                  <option value="20">20th</option><option value="25">25th – Payday</option>
+                </select>
+              </div>
+              <label class="summary-setting-row" for="tabSettingSummaryEnabled">
+                <span>
+                  <strong>Spending Summaries</strong>
+                  <small>Show the spending summary card on your dashboard.</small>
+                </span>
+                <input type="checkbox" id="tabSettingSummaryEnabled">
+              </label>
+              <button type="submit" class="submit-btn">Save Settings</button>
+            </form>
+          </section>
+        </div>
+      </div><!-- /tabSettings -->
 
     </main>
 
-    <!-- ── Category Detail Modal ────────────────────────────────────────── -->
-    <div class="modal-veil" id="categoryDetailModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="catDetailModalTitle">
-      <div class="modal-sheet" style="max-width: 600px;">
-        <div class="modal-drag-handle" aria-hidden="true"></div>
-        <div class="modal-head">
-          <h2 id="catDetailModalTitle" class="modal-title">Category Details</h2>
-          <button class="modal-close" id="closeCatDetailModalBtn" aria-label="Close">✕</button>
-        </div>
-        <div id="catDetailContent" style="padding: 10px 0;"></div>
-      </div>
-    </div>
-
-    <!-- FAB -->
+    <!-- ── FAB ──────────────────────────────────────────────────────────── -->
     <button class="fab" id="openAddModalBtn" aria-label="Add new entry">
       <span class="fab__icon">＋</span>
       <span class="fab__label">Add Entry</span>
@@ -407,7 +401,20 @@
 
   </div><!-- /app-shell -->
 
-  <!-- ── Add Entry Modal ────────────────────────────────────────────────── -->
+
+  <!-- ── Category Detail Modal ─────────────────────────────────────────── -->
+  <div class="modal-veil" id="categoryDetailModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="catDetailModalTitle">
+    <div class="modal-sheet" style="max-width:560px;">
+      <div class="modal-drag-handle" aria-hidden="true"></div>
+      <div class="modal-head">
+        <h2 id="catDetailModalTitle" class="modal-title">Category Details</h2>
+        <button class="modal-close" id="closeCatDetailModalBtn" aria-label="Close">✕</button>
+      </div>
+      <div id="catDetailContent" style="padding:4px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ── Add Entry Modal ───────────────────────────────────────────────── -->
   <div class="modal-veil" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-sheet">
       <div class="modal-drag-handle" aria-hidden="true"></div>
@@ -417,10 +424,10 @@
       </div>
       <form id="expenseForm" class="modal-form" novalidate>
         <div class="entry-type-switch" id="entryTypeSwitcher" role="group" aria-label="Entry type">
-          <button type="button" class="entry-type-btn active" data-entry-type="expense" aria-pressed="true">Expense</button>
-          <button type="button" class="entry-type-btn" data-entry-type="income" aria-pressed="false">Income</button>
+          <button type="button" class="entry-type-btn active" data-entry-type="expense" aria-pressed="true" >Expense</button>
+          <button type="button" class="entry-type-btn"        data-entry-type="income"  aria-pressed="false">Income</button>
         </div>
-        <input type="hidden" id="entryType" value="expense">
+        <input type="hidden" id="entryType"   value="expense">
         <input type="hidden" id="expenseKind" value="variable">
         <div class="field">
           <label class="field__label" for="expTitle">Description</label>
@@ -444,15 +451,15 @@
             <label class="cat-chip"><input type="radio" name="category" value="shopping">          🛍️ Shopping</label>
             <label class="cat-chip"><input type="radio" name="category" value="healthcare">        🏥 Health</label>
             <label class="cat-chip"><input type="radio" name="category" value="entertainment">     🎬 Fun</label>
-            <label class="cat-chip"><input type="radio" name="category" value="invest">             💰 Investment</label>
+            <label class="cat-chip"><input type="radio" name="category" value="invest">             💰 Invest</label>
             <label class="cat-chip"><input type="radio" name="category" value="other">             🌐 Other</label>
           </div>
         </div>
         <div class="field" id="expenseKindField">
           <label class="field__label">Expense Type</label>
           <div class="entry-kind-switch" id="expenseKindSwitcher" role="group" aria-label="Expense type">
-            <button type="button" class="entry-kind-btn active" data-expense-kind="variable" aria-pressed="true">Variable</button>
-            <button type="button" class="entry-kind-btn" data-expense-kind="fixed" aria-pressed="false">Fixed</button>
+            <button type="button" class="entry-kind-btn active" data-expense-kind="variable" aria-pressed="true" >Variable</button>
+            <button type="button" class="entry-kind-btn"        data-expense-kind="fixed"    aria-pressed="false">Fixed</button>
           </div>
         </div>
         <div class="field">
@@ -464,12 +471,12 @@
     </div>
   </div>
 
-  <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
+  <!-- ── Settings Modal ───────────────────────────────────────────────── -->
   <div class="modal-veil" id="settingsModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div class="modal-sheet">
       <div class="modal-drag-handle" aria-hidden="true"></div>
       <div class="modal-head">
-        <h2 id="settingsModalTitle" class="modal-title">Budget, Income &amp; Cycle Settings</h2>
+        <h2 id="settingsModalTitle" class="modal-title">Budget, Income &amp; Cycle</h2>
         <button class="modal-close" id="closeSettingsModalBtn" aria-label="Close">✕</button>
       </div>
       <form id="settingsForm" class="modal-form" novalidate>
@@ -479,23 +486,17 @@
             <span class="field__hint">Recurring baseline</span>
           </label>
           <input class="field__input" type="number" id="settingBaseIncome"
-            placeholder="4000" min="0" step="100" inputmode="numeric">
+            placeholder="40000" min="0" step="100" inputmode="numeric">
         </div>
         <div class="field">
           <label class="field__label" for="settingPayDay">
             Income Pay Day
-            <span class="field__hint">Used for the current budget cycle</span>
+            <span class="field__hint">Used for safe burn rate</span>
           </label>
           <select class="field__input field__select" id="settingPayDay">
-            <option value="1">1st</option>
-            <option value="2">2nd</option>
-            <option value="3">3rd</option>
-            <option value="5">5th</option>
-            <option value="10">10th</option>
-            <option value="15">15th</option>
-            <option value="20">20th</option>
-            <option value="25">25th</option>
-            <option value="28">28th</option>
+            <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+            <option value="5">5th</option><option value="10">10th</option><option value="15">15th</option>
+            <option value="20">20th</option><option value="25">25th</option><option value="28">28th</option>
           </select>
         </div>
         <div class="field">
@@ -506,43 +507,26 @@
         <div class="field">
           <label class="field__label" for="settingCycleStartDay">
             Spending Cycle Start Day
-            <span class="field__hint">e.g. 5 for salary date</span>
+            <span class="field__hint">e.g. salary date</span>
           </label>
           <select class="field__input field__select" id="settingCycleStartDay">
-            <option value="1">1st – Calendar month</option>
-            <option value="2">2nd</option>
-            <option value="3">3rd</option>
-            <option value="4">4th</option>
-            <option value="5">5th</option>
-            <option value="6">6th</option>
-            <option value="7">7th</option>
-            <option value="8">8th</option>
-            <option value="9">9th</option>
-            <option value="10">10th</option>
-            <option value="11">11th</option>
-            <option value="12">12th</option>
-            <option value="13">13th</option>
-            <option value="14">14th</option>
-            <option value="15">15th – Mid-month</option>
-            <option value="16">16th</option>
-            <option value="17">17th</option>
-            <option value="18">18th</option>
-            <option value="19">19th</option>
-            <option value="20">20th</option>
-            <option value="21">21st</option>
-            <option value="22">22nd</option>
-            <option value="23">23rd</option>
-            <option value="24">24th</option>
-            <option value="25">25th – Payday</option>
-            <option value="26">26th</option>
-            <option value="27">27th</option>
-            <option value="28">28th</option>
+            <option value="1">1st – Calendar month</option><option value="2">2nd</option>
+            <option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option>
+            <option value="6">6th</option><option value="7">7th</option><option value="8">8th</option>
+            <option value="9">9th</option><option value="10">10th</option><option value="11">11th</option>
+            <option value="12">12th</option><option value="13">13th</option><option value="14">14th</option>
+            <option value="15">15th – Mid-month</option><option value="16">16th</option>
+            <option value="17">17th</option><option value="18">18th</option><option value="19">19th</option>
+            <option value="20">20th</option><option value="21">21st</option><option value="22">22nd</option>
+            <option value="23">23rd</option><option value="24">24th</option>
+            <option value="25">25th – Payday</option><option value="26">26th</option>
+            <option value="27">27th</option><option value="28">28th</option>
           </select>
         </div>
         <label class="summary-setting-row" for="settingSummaryEnabled">
           <span>
-            <strong>Spending Summaries &amp; Reminders</strong>
-            <small>Show the in-app summary card on your dashboard.</small>
+            <strong>Spending Summaries</strong>
+            <small>Show the in-app summary card on the dashboard.</small>
           </span>
           <input type="checkbox" id="settingSummaryEnabled">
         </label>
