@@ -152,15 +152,15 @@ class ExpenseProvider extends ChangeNotifier {
 
   String exportCsv() {
     final rows = <String>[
-      'title,amount,category,date,note,type,expenseKind',
+      'date,type,title,category,expenseKind,amount,note',
       ..._expenses.map((expense) => [
-        expense.title,
-        expense.amount.toString(),
-        expense.category.name,
         expense.date.toIso8601String(),
-        expense.note ?? '',
         expense.type.name,
+        expense.title,
+        expense.category.name,
         expense.expenseKind.name,
+        expense.amount.toStringAsFixed(2),
+        expense.note ?? '',
       ].map(_csvEscape).join(',')),
     ];
     return rows.join('\n');
@@ -168,21 +168,89 @@ class ExpenseProvider extends ChangeNotifier {
 
   Future<int> importCsv(String csv) async {
     final rows = _parseCsv(csv);
-    if (rows.length < 2) return 0;
+    if (rows.isEmpty) return 0;
+
+    final headerRow = rows.first.map((e) => e.replaceAll('\uFEFF', '').trim().toLowerCase()).toList();
+
+    int idxDate = headerRow.indexOf('date');
+    int idxType = headerRow.indexOf('type');
+    int idxTitle = headerRow.indexOf('title');
+    int idxCategory = headerRow.indexOf('category');
+    int idxKind = headerRow.indexOf('expensekind');
+    if (idxKind == -1) idxKind = headerRow.indexOf('expense type');
+    int idxAmount = headerRow.indexOf('amount');
+    if (idxAmount == -1) idxAmount = headerRow.indexOf('amount (inr)');
+    int idxNote = headerRow.indexOf('note');
+
+    final bool hasHeader = idxDate != -1 || idxTitle != -1 || idxAmount != -1;
+    final dataRows = hasHeader ? rows.skip(1) : rows;
+
     final imported = <Expense>[];
-    for (final row in rows.skip(1)) {
-      if (row.length < 7) continue;
-      final amount = double.tryParse(row[1]);
-      final date = DateTime.tryParse(row[3]);
-      if (amount == null || date == null) continue;
-      final category = ExpenseCategory.values.where((value) => value.name == row[2]).firstOrNull ?? ExpenseCategory.other;
-      final type = ExpenseType.values.where((value) => value.name == row[5]).firstOrNull ?? ExpenseType.expense;
-      final kind = ExpenseKind.values.where((value) => value.name == row[6]).firstOrNull ?? ExpenseKind.variable;
-      imported.add(Expense(title: row[0], amount: amount, category: category, date: date, note: row[4].isEmpty ? null : row[4], type: type, expenseKind: kind));
+
+    for (final row in dataRows) {
+      if (row.every((cell) => cell.trim().isEmpty)) continue;
+
+      String rawDate = '';
+      String rawType = 'expense';
+      String rawTitle = '';
+      String rawCategory = 'other';
+      String rawKind = 'variable';
+      String rawAmount = '';
+      String rawNote = '';
+
+      if (hasHeader) {
+        if (idxDate != -1 && idxDate < row.length) rawDate = row[idxDate].trim();
+        if (idxType != -1 && idxType < row.length) rawType = row[idxType].trim();
+        if (idxTitle != -1 && idxTitle < row.length) rawTitle = row[idxTitle].trim();
+        if (idxCategory != -1 && idxCategory < row.length) rawCategory = row[idxCategory].trim();
+        if (idxKind != -1 && idxKind < row.length) rawKind = row[idxKind].trim();
+        if (idxAmount != -1 && idxAmount < row.length) rawAmount = row[idxAmount].trim();
+        if (idxNote != -1 && idxNote < row.length) rawNote = row[idxNote].trim();
+      } else {
+        if (row.length >= 7) {
+          rawTitle = row[0].trim();
+          rawAmount = row[1].trim();
+          rawCategory = row[2].trim();
+          rawDate = row[3].trim();
+          rawNote = row[4].trim();
+          rawType = row[5].trim();
+          rawKind = row[6].trim();
+        } else if (row.length >= 4) {
+          rawDate = row[0].trim();
+          rawTitle = row[1].trim();
+          rawCategory = row[2].trim();
+          rawAmount = row[3].trim();
+        }
+      }
+
+      final amount = double.tryParse(rawAmount.replaceAll(',', ''));
+      final date = DateTime.tryParse(rawDate) ?? DateTime.tryParse(rawDate.replaceAll('/', '-'));
+      if (amount == null || amount <= 0 || date == null || rawTitle.isEmpty) continue;
+
+      final category = ExpenseCategory.values.where((e) {
+        final norm = rawCategory.toLowerCase();
+        return e.name.toLowerCase() == norm || e.displayName.toLowerCase() == norm;
+      }).firstOrNull ?? ExpenseCategory.other;
+
+      final type = rawType.toLowerCase() == 'income' ? ExpenseType.income : ExpenseType.expense;
+      final kind = rawKind.toLowerCase() == 'fixed' ? ExpenseKind.fixed : ExpenseKind.variable;
+
+      imported.add(Expense(
+        title: rawTitle,
+        amount: amount,
+        category: category,
+        date: date,
+        note: rawNote.isEmpty ? null : rawNote,
+        type: type,
+        expenseKind: kind,
+      ));
     }
-    await _dbService.replaceAllExpenses(imported);
-    _expenses = await _dbService.getAllExpenses();
-    notifyListeners();
+
+    if (imported.isNotEmpty) {
+      await _dbService.replaceAllExpenses(imported);
+      _expenses = await _dbService.getAllExpenses();
+      notifyListeners();
+    }
     return imported.length;
   }
 
@@ -603,6 +671,10 @@ class ExpenseProvider extends ChangeNotifier {
       periodEnd: range.endDate,
       totalIncome: currentPeriodTotalIncome,
       recurringIncome: currentPeriodRecurringIncome,
+      safeBurnRate: safeBurnRate,
+      daysUntilPayday: daysUntilNextPayday,
+      remainingIncome: remainingIncome,
+      nextPayday: nextPayday,
     );
   }
 

@@ -15,6 +15,10 @@ class MonthlyForecast {
   final double totalIncome;
   final double recurringIncome;
   final double oneOffIncome;
+  final double safeBurnRate;
+  final int daysUntilPayday;
+  final double remainingIncome;
+  final DateTime nextPayday;
 
   MonthlyForecast({
     required this.currentTotal,
@@ -29,11 +33,15 @@ class MonthlyForecast {
     required this.totalIncome,
     required this.recurringIncome,
     required this.oneOffIncome,
+    required this.safeBurnRate,
+    required this.daysUntilPayday,
+    required this.remainingIncome,
+    required this.nextPayday,
   });
 }
 
 class ForecastService {
-  /// Calculates velocity and projects end-of-period expense totals.
+  /// Calculates velocity, safe burn rate, and projects end-of-period expense totals.
   static MonthlyForecast calculateForecast({
     required List<Expense> currentPeriodExpenses,
     required double monthlyBudget,
@@ -42,9 +50,14 @@ class ForecastService {
     required DateTime periodEnd,
     required double totalIncome,
     required double recurringIncome,
+    required double safeBurnRate,
+    required int daysUntilPayday,
+    required double remainingIncome,
+    required DateTime nextPayday,
   }) {
-    final totalDaysInMonth = periodEnd.difference(periodStart).inDays + 1;
-    final daysElapsed = max(1, now.difference(periodStart).inDays + 1);
+    final totalDaysInMonth = max(1, periodEnd.difference(periodStart).inDays + 1);
+    final rawDaysElapsed = now.difference(periodStart).inDays + 1;
+    final daysElapsed = max(1, min(totalDaysInMonth, rawDaysElapsed));
     final daysRemaining = max(0, totalDaysInMonth - daysElapsed);
 
     final double currentTotal = currentPeriodExpenses.fold(
@@ -82,7 +95,11 @@ class ForecastService {
       statusMessage: statusMsg,
       totalIncome: totalIncome,
       recurringIncome: recurringIncome,
-      oneOffIncome: totalIncome - recurringIncome,
+      oneOffIncome: max(0.0, totalIncome - recurringIncome),
+      safeBurnRate: safeBurnRate,
+      daysUntilPayday: daysUntilPayday,
+      remainingIncome: remainingIncome,
+      nextPayday: nextPayday,
     );
   }
 }

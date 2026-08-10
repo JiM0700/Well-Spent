@@ -9,6 +9,7 @@ const SUMMARY_ENABLED_KEY  = 'well_spent_summary_enabled_v1';
 const SUMMARY_PERIOD_KEY   = 'well_spent_summary_period_v1';
 const VIEW_MODE_KEY        = 'well_spent_view_mode_v1';
 const CHART_MODE_KEY       = 'well_spent_chart_mode_v1';
+const TAB_KEY              = 'well_spent_current_tab_v1';
 
 const CATEGORY_MAP = {
   food:          { name: 'Food & Dining',    icon: '🍔' },
@@ -41,11 +42,15 @@ function localDateKey(dateObj) {
 }
 
 function parseLocalDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(NaN);
-  const [year, month, day] = value.split('-').map(Number);
-  const result = new Date(year, month - 1, day, 12, 0, 0, 0);
-  return result.getFullYear() === year && result.getMonth() === month - 1 && result.getDate() === day
-    ? result : new Date(NaN);
+  if (!value) return new Date(NaN);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    const result = new Date(year, month - 1, day, 12, 0, 0, 0);
+    return result.getFullYear() === year && result.getMonth() === month - 1 && result.getDate() === day
+      ? result : new Date(NaN);
+  }
+  const parsed = new Date(value);
+  return parsed;
 }
 
 function escapeHtml(value) {
@@ -67,6 +72,7 @@ function loadExpenses() {
         amount: Number(item.amount),
         category: CATEGORY_MAP[item.category] ? item.category : 'other',
         date: typeof item.date === 'string' ? item.date : new Date().toISOString(),
+        note: item.note ? String(item.note) : '',
       }))
       .filter(item => item.title && Number.isFinite(item.amount) && item.amount > 0 && !Number.isNaN(new Date(item.date).getTime()));
   } catch {
@@ -77,9 +83,9 @@ function loadExpenses() {
 // ── State ─────────────────────────────────────────────────────────────────────
 let expenses = loadExpenses();
 if (expenses.length === 0 && !localStorage.getItem(STORAGE_KEY)) expenses = [
-  { id: 1, type: 'expense', title: 'Groceries',         amount: 850,  category: 'food',      date: new Date().toISOString() },
-  { id: 2, type: 'expense', title: 'Metro Monthly Pass', amount: 400, category: 'transport', date: new Date().toISOString() },
-  { id: 3, type: 'expense', title: 'Electricity Bill',  amount: 1200, category: 'bills',     date: new Date().toISOString() },
+  { id: 1, type: 'expense', expenseKind: 'variable', title: 'Groceries',         amount: 850,  category: 'food',      date: new Date().toISOString() },
+  { id: 2, type: 'expense', expenseKind: 'fixed',    title: 'Metro Monthly Pass', amount: 400, category: 'transport', date: new Date().toISOString() },
+  { id: 3, type: 'expense', expenseKind: 'fixed',    title: 'Electricity Bill',  amount: 1200, category: 'bills',     date: new Date().toISOString() },
 ];
 const storedBudget = parseFloat(localStorage.getItem(BUDGET_KEY));
 let monthlyBudget   = Number.isFinite(storedBudget) && storedBudget >= 0 ? storedBudget : 25000;
@@ -94,7 +100,11 @@ let summaryPeriod = ['daily', 'weekly', 'monthly'].includes(localStorage.getItem
   ? localStorage.getItem(SUMMARY_PERIOD_KEY) : 'daily';
 let currentViewMode = localStorage.getItem(VIEW_MODE_KEY) || 'monthly'; // 'weekly' | 'monthly' | 'yearly'
 let currentChartMode = localStorage.getItem(CHART_MODE_KEY) || 'daywise';
+let currentTab = localStorage.getItem(TAB_KEY) || 'overview';
 let currentFilter   = 'all';
+let currentTypeFilter = 'all';
+let currentKindFilter = 'all';
+let currentSearchQuery = '';
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
@@ -106,29 +116,89 @@ function save() {
   localStorage.setItem(SUMMARY_PERIOD_KEY, summaryPeriod);
   localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
   localStorage.setItem(CHART_MODE_KEY, currentChartMode);
+  localStorage.setItem(TAB_KEY, currentTab);
   render();
 }
 
-// ── Inline math evaluator ─────────────────────────────────────────────────────
+// ── Complete Precedence Math Evaluator ─────────────────────────────────────────
 function evalMath(expr) {
-  const s = expr.replace(/\s+/g, '');
-  if (!s) return null;
-  if (!/^(?:\d+(?:\.\d+)?)(?:[+-]\d+(?:\.\d+)?)*$/.test(s)) return null;
-  try {
-    if (/[+\-]/.test(s)) {
-      let total = 0, num = '', op = '+';
-      for (const ch of s) {
-        if (ch === '+' || ch === '-') {
-          if (num) { total += op === '+' ? +num : -num; num = ''; }
-          op = ch;
-        } else { num += ch; }
-      }
-      if (num) total += op === '+' ? +num : -num;
-      return Number.isFinite(total) && total > 0 ? total : null;
+  if (typeof expr !== 'string') return null;
+  const str = expr.trim();
+  if (!str || /[^0-9.+\-*/()\s]/.test(str)) return null;
+
+  let pos = 0;
+  function peek() {
+    while (pos < str.length && str[pos] === ' ') pos++;
+    return pos < str.length ? str[pos] : null;
+  }
+
+  function parsePrimary() {
+    const ch = peek();
+    if (ch === null) throw new Error('Unexpected end');
+    if (ch === '(') {
+      pos++; // consume '('
+      const val = parseAddSub();
+      if (peek() !== ')') throw new Error('Expected )');
+      pos++; // consume ')'
+      return val;
     }
-    const n = parseFloat(s);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  } catch { return null; }
+    if (ch === '+' || ch === '-') {
+      pos++;
+      const val = parsePrimary();
+      return ch === '+' ? val : -val;
+    }
+    const start = pos;
+    while (pos < str.length && (/[0-9.]/).test(str[pos])) pos++;
+    if (start === pos) throw new Error('Expected number');
+    const numStr = str.substring(start, pos);
+    const num = parseFloat(numStr);
+    if (Number.isNaN(num)) throw new Error('Invalid number');
+    return num;
+  }
+
+  function parseMulDiv() {
+    let left = parsePrimary();
+    while (true) {
+      const ch = peek();
+      if (ch === '*' || ch === '/') {
+        pos++;
+        const right = parsePrimary();
+        if (ch === '*') left = left * right;
+        else {
+          if (right === 0) throw new Error('Division by zero');
+          left = left / right;
+        }
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  function parseAddSub() {
+    let left = parseMulDiv();
+    while (true) {
+      const ch = peek();
+      if (ch === '+' || ch === '-') {
+        pos++;
+        const right = parseMulDiv();
+        if (ch === '+') left = left + right;
+        else left = left - right;
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  try {
+    const result = parseAddSub();
+    peek();
+    if (pos < str.length) return null;
+    return Number.isFinite(result) && result > 0 ? result : null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Period & Cycle Date Calculator ───────────────────────────────────────────
@@ -186,6 +256,13 @@ function getCurrentPeriodRange(now = new Date()) {
   };
 }
 
+function getRecurringIncomeForRange(range) {
+  if (baseMonthlyIncome <= 0) return 0;
+  if (currentViewMode === 'weekly') return baseMonthlyIncome / 4.33;
+  if (currentViewMode === 'yearly') return baseMonthlyIncome * 12;
+  return baseMonthlyIncome;
+}
+
 // ── Period Forecast Engine ────────────────────────────────────────────────────
 function calculatePeriodForecast() {
   const now = new Date();
@@ -215,7 +292,7 @@ function calculatePeriodForecast() {
 
   const velocity     = periodTotal / daysElapsed;
   const projected    = periodTotal + (velocity * daysLeft);
-  const safeBurn = calculateSafeBurnRate(now);
+  const safeBurn     = calculateSafeBurnRate(now);
 
   const todayStr     = localDateKey(now);
   const todayTotal   = expenses
@@ -290,7 +367,7 @@ function getSummaryStats(mode) {
     categoryTotals[entry.category] = (categoryTotals[entry.category] || 0) + entry.amount;
   });
   const topCategoryKey = Object.keys(categoryTotals).sort((a, b) => categoryTotals[b] - categoryTotals[a])[0];
-  const topCategory = topCategoryKey
+  const topCategory = topCategoryKey && categoryTotals[topCategoryKey] > 0
     ? `${CATEGORY_MAP[topCategoryKey].icon} ${CATEGORY_MAP[topCategoryKey].name}` : 'No spending yet';
   const difference = previousTotal === 0 ? (total > 0 ? null : 0) : ((total - previousTotal) / previousTotal) * 100;
   return { ...window, total, previousTotal, difference, topCategory };
@@ -361,23 +438,6 @@ function calculateSafeBurnRate(now = new Date()) {
   };
 }
 
-function getRecurringIncomeForRange(range) {
-  if (baseMonthlyIncome <= 0) return 0;
-  if (currentViewMode === 'weekly') return baseMonthlyIncome / 4.33;
-  if (currentViewMode === 'yearly') return baseMonthlyIncome * 12;
-
-  let total = 0;
-  const cursor = new Date(range.startDate.getFullYear(), range.startDate.getMonth() - 1, 1);
-  const lastMonth = new Date(range.endDate.getFullYear(), range.endDate.getMonth() + 1, 1);
-  while (cursor < lastMonth) {
-    const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
-    const incomeDate = new Date(cursor.getFullYear(), cursor.getMonth(), Math.min(payDay, daysInMonth), 12, 0, 0, 0);
-    if (incomeDate >= range.startDate && incomeDate <= range.endDate) total += baseMonthlyIncome;
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  return total;
-}
-
 // ── Main Render Engine ────────────────────────────────────────────────────────
 function render() {
   const fc = calculatePeriodForecast();
@@ -385,6 +445,17 @@ function render() {
   const remaining = range.targetBudget - fc.periodTotal;
   const netRemaining = fc.totalIncome - fc.periodTotal;
   const savingsRate = fc.totalIncome > 0 ? (netRemaining / fc.totalIncome) * 100 : null;
+
+  // ── Tab Navigation State UI ───────────────────────────────────────────────
+  document.querySelectorAll('.pwa-tab-btn').forEach(btn => {
+    const isSelected = btn.dataset.tab === currentTab;
+    btn.classList.toggle('active', isSelected);
+    btn.setAttribute('aria-pressed', String(isSelected));
+  });
+
+  document.querySelectorAll('.tab-view').forEach(view => {
+    view.style.display = view.id === `tab${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}` ? 'block' : 'none';
+  });
 
   // ── Mode Switcher UI ──────────────────────────────────────────────────────
   document.querySelectorAll('#viewModeSwitcher .segment-btn').forEach(btn => {
@@ -430,8 +501,9 @@ function render() {
     projEl.textContent = inr(fc.projected);
     projEl.style.color = fc.projected > range.targetBudget ? 'var(--text-danger)' : '#60a5fa';
   }
-  setText('velocityDisplay', `${inr(fc.safeBurn.amount)} / day`);
-  setText('safeBurnMeta', `${fc.safeBurn.daysUntilPayday} days until payday · ${inr(fc.safeBurn.remainingIncome)} available`);
+  setText('dailyVelocityDisplay', `${inr(fc.velocity)} / day`);
+  setText('safeBurnDisplay', `${inr(fc.safeBurn.amount)} / day`);
+  setText('safeBurnMeta', `${fc.safeBurn.daysUntilPayday} days until payday · ${inr(fc.safeBurn.remainingIncome)} available income`);
 
   const statusEl = document.getElementById('forecastStatusMsg');
   if (statusEl) {
@@ -448,9 +520,154 @@ function render() {
   renderBreakdown(fc.periodTotal, fc.periodExp);
   renderChart(fc);
 
-  // ── Transactions List ─────────────────────────────────────────────────────
+  // ── Transactions List & Categories Grid ──────────────────────────────────
   renderSpendingSummary();
   renderTransactions();
+  renderCategoryGrid(fc);
+  renderInsightsTab(fc);
+  populateSettingsForm();
+}
+
+// ── Render Interactive Category Grid (Categories Tab) ────────────────────────
+function renderCategoryGrid(fc) {
+  const container = document.getElementById('categoriesGridContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  setText('catTabPeriodLabel', `${formatDateShort(fc.range.startDate)} – ${formatDateShort(fc.range.endDate)}`);
+
+  const categoryTotals = {};
+  const categoryCounts = {};
+  Object.keys(CATEGORY_MAP).forEach(cat => {
+    categoryTotals[cat] = 0;
+    categoryCounts[cat] = 0;
+  });
+
+  fc.periodExp.forEach(e => {
+    if (CATEGORY_MAP[e.category]) {
+      categoryTotals[e.category] += e.amount;
+      categoryCounts[e.category] += 1;
+    }
+  });
+
+  Object.keys(CATEGORY_MAP).forEach(catKey => {
+    const cat = CATEGORY_MAP[catKey];
+    const total = categoryTotals[catKey];
+    const count = categoryCounts[catKey];
+    const pct = fc.periodTotal > 0 ? ((total / fc.periodTotal) * 100).toFixed(1) : '0';
+
+    const card = document.createElement('div');
+    card.className = 'category-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.onclick = () => openCategoryDetailModal(catKey);
+    card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') openCategoryDetailModal(catKey); };
+
+    card.innerHTML = `
+      <div class="category-card__head">
+        <div class="category-card__icon">${cat.icon}</div>
+        <span class="category-card__count">${count} ${count === 1 ? 'entry' : 'entries'}</span>
+      </div>
+      <div>
+        <div class="category-card__name">${cat.name}</div>
+        <div class="category-card__amount">${inr(total)}</div>
+      </div>
+      <div class="cat-bar" style="margin-top: 4px;">
+        <div class="cat-fill" style="width:${pct}%; background: var(--accent);"></div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ── Open Category Detail Modal ────────────────────────────────────────────────
+function openCategoryDetailModal(catKey) {
+  const cat = CATEGORY_MAP[catKey];
+  if (!cat) return;
+  const fc = calculatePeriodForecast();
+  const catExpenses = fc.periodExp.filter(e => e.category === catKey);
+  const total = catExpenses.reduce((s, e) => s + e.amount, 0);
+
+  setText('catDetailModalTitle', `${cat.icon} ${cat.name}`);
+
+  const content = document.getElementById('catDetailContent');
+  if (!content) return;
+
+  let html = `
+    <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary);">Spent this period</p>
+        <p style="font-size: 1.6rem; font-weight: 800; color: var(--text);">${inr(total)}</p>
+      </div>
+      <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-secondary);">${catExpenses.length} transaction${catExpenses.length === 1 ? '' : 's'}</span>
+    </div>
+    <div class="tx-list" style="max-height: 350px; overflow-y: auto;">
+  `;
+
+  if (catExpenses.length === 0) {
+    html += '<div class="empty-msg">No transactions recorded in this category for this period.</div>';
+  } else {
+    catExpenses.forEach(exp => {
+      const dateStr = new Date(exp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      html += `
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon">${cat.icon}</div>
+            <div class="tx-info">
+              <div class="tx-title">${escapeHtml(exp.title)}</div>
+              <div class="tx-meta">${exp.expenseKind === 'fixed' ? 'Fixed' : 'Variable'} &bull; ${dateStr}</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <span class="tx-amount">&minus;${inr(exp.amount)}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+  document.getElementById('categoryDetailModalBackdrop').classList.add('active');
+}
+
+function closeCategoryDetailModal() {
+  document.getElementById('categoryDetailModalBackdrop').classList.remove('active');
+}
+
+// ── Render Insights Tab Analytics ─────────────────────────────────────────────
+function renderInsightsTab(fc) {
+  setText('insRecurringIncome', inr(fc.recurringIncome));
+  setText('insOneOffIncome', inr(fc.oneOffIncome));
+  setText('insTotalIncome', inr(fc.totalIncome));
+  setText('insTotalExpenses', inr(fc.periodTotal));
+  const netSaved = fc.totalIncome - fc.periodTotal;
+  const netSavedEl = document.getElementById('insNetSavings');
+  if (netSavedEl) {
+    netSavedEl.textContent = inr(netSaved);
+    netSavedEl.style.color = netSaved >= 0 ? 'var(--text-success)' : 'var(--text-danger)';
+  }
+
+  setText('insDaysElapsed', `${fc.daysElapsed} / ${fc.totalDays} days`);
+  setText('insDailyVelocity', `${inr(fc.velocity)} / day`);
+  setText('insSafeBurn', `${inr(fc.safeBurn.amount)} / day`);
+  setText('insProjectedEnd', inr(fc.projected));
+
+  setText('insFixedExpenses', inr(fc.fixedTotal));
+  setText('insVariableExpenses', inr(fc.variableTotal));
+}
+
+// ── Settings Form Auto-populate ───────────────────────────────────────────────
+function populateSettingsForm() {
+  const baseIncEl = document.getElementById('tabSettingBaseIncome');
+  if (baseIncEl && document.activeElement !== baseIncEl) baseIncEl.value = baseMonthlyIncome || '';
+  const payDayEl = document.getElementById('tabSettingPayDay');
+  if (payDayEl && document.activeElement !== payDayEl) payDayEl.value = payDay;
+  const budgetEl = document.getElementById('tabSettingMonthlyBudget');
+  if (budgetEl && document.activeElement !== budgetEl) budgetEl.value = monthlyBudget;
+  const cycleDayEl = document.getElementById('tabSettingCycleStartDay');
+  if (cycleDayEl && document.activeElement !== cycleDayEl) cycleDayEl.value = cycleStartDay;
+  const summaryEl = document.getElementById('tabSettingSummaryEnabled');
+  if (summaryEl) summaryEl.checked = summaryEnabled;
 }
 
 function renderChart(forecast) {
@@ -538,7 +755,7 @@ function renderBreakdown(periodTotal, periodExp) {
   Object.keys(CATEGORY_MAP).forEach(k => (totals[k] = 0));
 
   periodExp.forEach(e => {
-    totals[e.category] = (totals[e.category] || 0) + e.amount;
+    if (CATEGORY_MAP[e.category]) totals[e.category] = (totals[e.category] || 0) + e.amount;
   });
 
   if (periodTotal === 0) {
@@ -555,6 +772,8 @@ function renderBreakdown(periodTotal, periodExp) {
     const cat = CATEGORY_MAP[key];
     const row = document.createElement('div');
     row.className = 'cat-row';
+    row.style.cursor = 'pointer';
+    row.onclick = () => openCategoryDetailModal(key);
     row.innerHTML = `
       <div class="cat-meta">
         <span class="cat-name">${cat.icon} ${cat.name}</span>
@@ -575,22 +794,44 @@ function renderBreakdown(periodTotal, periodExp) {
   }
 }
 
-// ── Transaction Feed List ─────────────────────────────────────────────────────
+// ── Transaction Feed List with Multi-Filter ──────────────────────────────────
 function renderTransactions() {
   const el = document.getElementById('transactionsList');
   if (!el) return;
   el.innerHTML = '';
 
-  const filtered = currentFilter === 'all'
-    ? expenses
-    : expenses.filter(e => e.type === 'expense' && e.category === currentFilter);
+  let filtered = expenses;
 
-  // Update count badge
+  // Filter by Search Query
+  if (currentSearchQuery.trim()) {
+    const q = currentSearchQuery.trim().toLowerCase();
+    filtered = filtered.filter(e =>
+      e.title.toLowerCase().includes(q) ||
+      (e.note && e.note.toLowerCase().includes(q)) ||
+      (CATEGORY_MAP[e.category] && CATEGORY_MAP[e.category].name.toLowerCase().includes(q))
+    );
+  }
+
+  // Filter by Type
+  if (currentTypeFilter !== 'all') {
+    filtered = filtered.filter(e => e.type === currentTypeFilter);
+  }
+
+  // Filter by Kind
+  if (currentKindFilter !== 'all') {
+    filtered = filtered.filter(e => e.type === 'expense' && e.expenseKind === currentKindFilter);
+  }
+
+  // Filter by Category
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(e => e.category === currentFilter);
+  }
+
   const countEl = document.getElementById('txCount');
   if (countEl) countEl.textContent = `${filtered.length} ${filtered.length === 1 ? 'entry' : 'entries'}`;
 
   if (filtered.length === 0) {
-    el.innerHTML = '<div class="empty-msg">No expenses found in this category.</div>';
+    el.innerHTML = '<div class="empty-msg">No matching entries found.</div>';
     return;
   }
 
@@ -607,7 +848,7 @@ function renderTransactions() {
         <div class="tx-icon">${cat.icon}</div>
         <div class="tx-info">
           <div class="tx-title">${escapeHtml(exp.title)}</div>
-        <div class="tx-meta">${kindLabel} · ${cat.name} &bull; ${dateStr}</div>
+          <div class="tx-meta">${kindLabel} · ${cat.name} &bull; ${dateStr}</div>
         </div>
       </div>
       <div class="tx-right">
@@ -659,6 +900,15 @@ function closeSettingsModal() {
 // ── Event Listeners ───────────────────────────────────────────────────────────
 document.getElementById('openAddModalBtn').addEventListener('click', openModal);
 document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+document.getElementById('closeCatDetailModalBtn')?.addEventListener('click', closeCategoryDetailModal);
+
+// PWA Tab Bar Navigation Event Listener
+document.getElementById('pwaTabBar')?.addEventListener('click', e => {
+  const btn = e.target.closest('.pwa-tab-btn');
+  if (!btn) return;
+  currentTab = btn.dataset.tab;
+  save();
+});
 
 function setEntryType(type) {
   const isIncome = type === 'income';
@@ -701,7 +951,8 @@ document.getElementById('summaryPeriodSwitcher').addEventListener('click', event
 });
 
 document.getElementById('viewBreakdownBtn').addEventListener('click', () => {
-  document.querySelector('.breakdown-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  currentTab = 'categories';
+  save();
 });
 
 document.getElementById('modalBackdrop').addEventListener('click', e => {
@@ -712,12 +963,41 @@ document.getElementById('settingsModalBackdrop').addEventListener('click', e => 
   if (e.target === e.currentTarget) closeSettingsModal();
 });
 
+document.getElementById('categoryDetailModalBackdrop')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeCategoryDetailModal();
+});
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeModal();
     closeSettingsModal();
+    closeCategoryDetailModal();
     if (typeof closeDataMenu === 'function') closeDataMenu();
   }
+});
+
+// Search Box Input Event Listener
+document.getElementById('txSearchInput')?.addEventListener('input', e => {
+  currentSearchQuery = e.target.value;
+  renderTransactions();
+});
+
+// Type Filter Toggle Listener
+document.getElementById('typeFilterToggle')?.addEventListener('click', e => {
+  const btn = e.target.closest('.segment-btn');
+  if (!btn) return;
+  currentTypeFilter = btn.dataset.typefilter;
+  document.querySelectorAll('#typeFilterToggle .segment-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderTransactions();
+});
+
+// Kind Filter Toggle Listener
+document.getElementById('kindFilterToggle')?.addEventListener('click', e => {
+  const btn = e.target.closest('.segment-btn');
+  if (!btn) return;
+  currentKindFilter = btn.dataset.kindfilter;
+  document.querySelectorAll('#kindFilterToggle .segment-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderTransactions();
 });
 
 // Expense Form Submit
@@ -729,7 +1009,7 @@ document.getElementById('expenseForm').addEventListener('submit', e => {
   const expenseKind = document.getElementById('expenseKind').value;
 
   if (!amount || amount <= 0) {
-    alert('Please enter a valid amount (e.g. 350 or 200 + 150)');
+    alert('Please enter a valid amount or formula (e.g. 350 or 200 + 150 * 2)');
     return;
   }
 
@@ -747,6 +1027,7 @@ document.getElementById('expenseForm').addEventListener('submit', e => {
   expenses.unshift({
     id: Date.now(), type, expenseKind, title, amount, category,
     date: parseLocalDate(date).toISOString(),
+    note: '',
   });
 
   save();
@@ -754,7 +1035,7 @@ document.getElementById('expenseForm').addEventListener('submit', e => {
   closeModal();
 });
 
-// Settings Form Submit
+// Topbar Settings Form Submit
 document.getElementById('settingsForm').addEventListener('submit', e => {
   e.preventDefault();
   const newBudget   = parseFloat(document.getElementById('settingMonthlyBudget').value);
@@ -763,21 +1044,31 @@ document.getElementById('settingsForm').addEventListener('submit', e => {
   const newPayDay = parseInt(document.getElementById('settingPayDay').value, 10);
   summaryEnabled = document.getElementById('settingSummaryEnabled').checked;
 
-  if (!isNaN(newBudget) && newBudget >= 0) {
-    monthlyBudget = newBudget;
-  }
-  if (!isNaN(newStartDay) && newStartDay >= 1 && newStartDay <= 28) {
-    cycleStartDay = newStartDay;
-  }
-  if (!isNaN(newBaseIncome) && newBaseIncome >= 0) {
-    baseMonthlyIncome = newBaseIncome;
-  }
-  if (!isNaN(newPayDay) && newPayDay >= 1 && newPayDay <= 28) {
-    payDay = newPayDay;
-  }
+  if (!isNaN(newBudget) && newBudget >= 0) monthlyBudget = newBudget;
+  if (!isNaN(newStartDay) && newStartDay >= 1 && newStartDay <= 28) cycleStartDay = newStartDay;
+  if (!isNaN(newBaseIncome) && newBaseIncome >= 0) baseMonthlyIncome = newBaseIncome;
+  if (!isNaN(newPayDay) && newPayDay >= 1 && newPayDay <= 28) payDay = newPayDay;
 
   save();
   closeSettingsModal();
+});
+
+// Settings Tab Form Submit
+document.getElementById('tabSettingsForm')?.addEventListener('submit', e => {
+  e.preventDefault();
+  const newBudget   = parseFloat(document.getElementById('tabSettingMonthlyBudget').value);
+  const newStartDay = parseInt(document.getElementById('tabSettingCycleStartDay').value, 10);
+  const newBaseIncome = parseFloat(document.getElementById('tabSettingBaseIncome').value);
+  const newPayDay = parseInt(document.getElementById('tabSettingPayDay').value, 10);
+  summaryEnabled = document.getElementById('tabSettingSummaryEnabled').checked;
+
+  if (!isNaN(newBudget) && newBudget >= 0) monthlyBudget = newBudget;
+  if (!isNaN(newStartDay) && newStartDay >= 1 && newStartDay <= 28) cycleStartDay = newStartDay;
+  if (!isNaN(newBaseIncome) && newBaseIncome >= 0) baseMonthlyIncome = newBaseIncome;
+  if (!isNaN(newPayDay) && newPayDay >= 1 && newPayDay <= 28) payDay = newPayDay;
+
+  save();
+  alert('Settings saved successfully!');
 });
 
 // View Mode Switcher
@@ -788,7 +1079,7 @@ document.getElementById('viewModeSwitcher').addEventListener('click', e => {
   save();
 });
 
-// Import/export CSV
+// ── Unified CSV Export & Import Logic ─────────────────────────────────────────
 function csvField(value) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
@@ -837,44 +1128,67 @@ function importedCategory(value) {
   const normalized = String(value).trim().toLowerCase();
   return Object.entries(CATEGORY_MAP).find(([key, category]) =>
     key === normalized || category.name.toLowerCase() === normalized
-  )?.[0] || null;
+  )?.[0] || 'other';
 }
 
 function importExpensesFromCsv(text) {
   const rows = parseCsv(text);
-  const expectedHeaders = ['date', 'title', 'category', 'amount (inr)'];
-  const headers = (rows.shift() || []).map(header => header.replace(/^\uFEFF/, '').trim().toLowerCase());
-  const hasTypeColumn = headers.length >= 5 && headers[1] === 'type';
-  const hasKindColumn = headers.length === 6 && headers[4] === 'expense type';
-  const validHeaders = hasKindColumn
-    ? ['date', 'type', 'title', 'category', 'expense type', 'amount (inr)']
-    : hasTypeColumn
-      ? ['date', 'type', 'title', 'category', 'amount (inr)']
-      : expectedHeaders;
-  if (headers.length !== validHeaders.length || !validHeaders.every((header, index) => headers[index] === header)) {
-    throw new Error('The CSV must use the Well Spent export format.');
-  }
+  if (rows.length === 0) throw new Error('CSV file is empty.');
+
+  const headerRow = rows[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
+
+  const idxDate = headerRow.indexOf('date');
+  const idxType = headerRow.indexOf('type');
+  const idxTitle = headerRow.indexOf('title');
+  const idxCategory = headerRow.indexOf('category');
+  let idxKind = headerRow.indexOf('expensekind');
+  if (idxKind === -1) idxKind = headerRow.indexOf('expense type');
+  let idxAmount = headerRow.indexOf('amount');
+  if (idxAmount === -1) idxAmount = headerRow.indexOf('amount (inr)');
+  const idxNote = headerRow.indexOf('note');
+
+  const hasHeader = idxDate !== -1 || idxTitle !== -1 || idxAmount !== -1;
+  const dataRows = hasHeader ? rows.slice(1) : rows;
 
   const imported = [];
-  rows.forEach((row, index) => {
-    if (row.length !== validHeaders.length) return;
-    const date = parseLocalDate(row[0].trim());
-    const type = hasTypeColumn && row[1].trim().toLowerCase() === 'income' ? 'income' : 'expense';
-    const title = row[hasTypeColumn ? 2 : 1].trim();
-    const category = importedCategory(row[hasTypeColumn ? 3 : 2]) || 'other';
-    const kind = hasKindColumn && row[4].trim().toLowerCase() === 'fixed' ? 'fixed' : 'variable';
-    const amount = Number(row[hasKindColumn ? 5 : hasTypeColumn ? 4 : 3].replace(/,/g, '').trim());
-    if (!title || !category || !Number.isFinite(amount) || amount <= 0 || Number.isNaN(date.getTime())) return;
+  dataRows.forEach((row, index) => {
+    if (row.every(cell => !cell.trim())) return;
+
+    let rawDate = '', rawType = 'expense', rawTitle = '', rawCategory = 'other', rawKind = 'variable', rawAmount = '', rawNote = '';
+
+    if (hasHeader) {
+      if (idxDate !== -1 && row[idxDate]) rawDate = row[idxDate].trim();
+      if (idxType !== -1 && row[idxType]) rawType = row[idxType].trim();
+      if (idxTitle !== -1 && row[idxTitle]) rawTitle = row[idxTitle].trim();
+      if (idxCategory !== -1 && row[idxCategory]) rawCategory = row[idxCategory].trim();
+      if (idxKind !== -1 && row[idxKind]) rawKind = row[idxKind].trim();
+      if (idxAmount !== -1 && row[idxAmount]) rawAmount = row[idxAmount].trim();
+      if (idxNote !== -1 && row[idxNote]) rawNote = row[idxNote].trim();
+    } else {
+      if (row.length >= 7) {
+        rawTitle = row[0].trim(); rawAmount = row[1].trim(); rawCategory = row[2].trim();
+        rawDate = row[3].trim(); rawNote = row[4].trim(); rawType = row[5].trim(); rawKind = row[6].trim();
+      } else if (row.length >= 4) {
+        rawDate = row[0].trim(); rawTitle = row[1].trim(); rawCategory = row[2].trim(); rawAmount = row[3].trim();
+      }
+    }
+
+    const amount = Number(rawAmount.replace(/,/g, '').trim());
+    const date = parseLocalDate(rawDate);
+    if (!rawTitle || !Number.isFinite(amount) || amount <= 0 || Number.isNaN(date.getTime())) return;
+
     imported.push({
       id: Date.now() + index + Math.random(),
-      type,
-      expenseKind: kind,
-      title,
+      type: rawType.toLowerCase() === 'income' ? 'income' : 'expense',
+      expenseKind: rawKind.toLowerCase() === 'fixed' ? 'fixed' : 'variable',
+      title: rawTitle,
       amount,
-      category,
+      category: importedCategory(rawCategory),
       date: date.toISOString(),
+      note: rawNote,
     });
   });
+
   return imported;
 }
 
@@ -883,14 +1197,15 @@ function exportExpensesToCsv() {
     alert('No expenses to export.');
     return;
   }
-  const headers = ['Date', 'Type', 'Title', 'Category', 'Expense Type', 'Amount (INR)'];
+  const headers = ['date', 'type', 'title', 'category', 'expenseKind', 'amount', 'note'];
   const rows = expenses.map(e => [
-    localDateKey(new Date(e.date)),
+    e.date,
     e.type || 'expense',
     csvField(e.title),
-    csvField(CATEGORY_MAP[e.category] ? CATEGORY_MAP[e.category].name : e.category),
-    e.type === 'income' ? '' : (e.expenseKind || 'variable'),
-    e.amount.toFixed(2)
+    e.category,
+    e.expenseKind || 'variable',
+    e.amount.toFixed(2),
+    csvField(e.note || '')
   ]);
   const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blobUrl = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }));
@@ -928,7 +1243,7 @@ document.getElementById('importCsvBtn').addEventListener('click', () => {
 });
 
 document.addEventListener('click', event => {
-  if (!dataMenuWrap.contains(event.target)) closeDataMenu();
+  if (dataMenuWrap && !dataMenuWrap.contains(event.target)) closeDataMenu();
 });
 
 document.getElementById('importCsvInput').addEventListener('change', event => {
