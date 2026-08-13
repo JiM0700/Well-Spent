@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'providers/expense_provider.dart';
+import 'models/expense.dart';
 import 'screens/analytics_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/ios_shell_screen.dart';
+import 'screens/message_import_screen.dart';
+import 'services/url_scheme_service.dart';
 
 /// Apple-native green accent — calming finance colour.
 const Color _kAccentGreen = CupertinoColors.systemGreen;
@@ -13,6 +16,7 @@ const Color _kAccentGreenDark = Color(0xFF30D158);
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  UrlSchemeService.instance.start();
   runApp(const WellSpentApp());
 }
 
@@ -31,7 +35,7 @@ class WellSpentApp extends StatelessWidget {
   }
 
   Widget _buildCupertinoApp(TargetPlatform platform) {
-    return CupertinoApp(
+    return UrlTransactionListener(child: CupertinoApp(
       title: 'Well Spent',
       debugShowCheckedModeBanner: false,
       theme: const CupertinoThemeData(
@@ -59,12 +63,13 @@ class WellSpentApp extends StatelessWidget {
           : const DashboardScreen(),
       routes: {
         '/analytics': (context) => const AnalyticsScreen(),
+        '/message-import': (context) => const MessageImportScreen(),
       },
-    );
+    ));
   }
 
   Widget _buildMaterialApp() {
-    return MaterialApp(
+    return UrlTransactionListener(child: MaterialApp(
       title: 'Well Spent',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
@@ -73,8 +78,9 @@ class WellSpentApp extends StatelessWidget {
       home: const DashboardScreen(),
       routes: {
         '/analytics': (context) => const AnalyticsScreen(),
+        '/message-import': (context) => const MessageImportScreen(),
       },
-    );
+    ));
   }
 
   ThemeData _buildMaterialTheme(Brightness brightness) {
@@ -105,4 +111,26 @@ class WellSpentApp extends StatelessWidget {
       ),
     );
   }
+}
+
+class UrlTransactionListener extends StatefulWidget {
+  final Widget child;
+  const UrlTransactionListener({required this.child, super.key});
+  @override State<UrlTransactionListener> createState() => _UrlTransactionListenerState();
+}
+
+class _UrlTransactionListenerState extends State<UrlTransactionListener> {
+  @override void initState() {
+    super.initState();
+    UrlSchemeService.instance.transactions.listen((transaction) {
+      if (!mounted) return;
+      context.read<ExpenseProvider>().addExpense(Expense(
+        title: transaction.title,
+        amount: transaction.amount,
+        category: ExpenseCategory.values.firstWhere((e) => e.name == transaction.category, orElse: () => ExpenseCategory.other),
+        date: DateTime.now(),
+      ));
+    });
+  }
+  @override Widget build(BuildContext context) => widget.child;
 }
