@@ -12,15 +12,16 @@ public struct QuickAddView: View {
     @State private var isExpense: Bool = true
     @Environment(\.colorScheme) var colorScheme
 
+    public init() {}
+
     public var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     // ── Hero Amount Input ─────────────────────────────────
                     VStack(spacing: 6) {
-                        Text("Amount")
-                            .font(.caption)
-                            .fontWeight(.semibold)
+                        Text("TRANSACTION AMOUNT")
+                            .font(.system(size: 10.5, weight: .bold))
                             .foregroundStyle(.secondary)
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -30,28 +31,22 @@ public struct QuickAddView: View {
 
                             TextField("0.00", text: $amountString)
                                 .font(.system(size: 44, weight: .heavy, design: .rounded))
+                                #if os(iOS)
                                 .keyboardType(.decimalPad)
+                                #endif
                                 .fixedSize(horizontal: true, vertical: false)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .padding(.vertical, 16)
+                    .padding(.vertical, 18)
                     .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
-                            )
-                    )
+                    .liquidGlassCard(cornerRadius: 20)
                     .padding(.horizontal)
 
                     // ── Category Selector Grid ────────────────────────────
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Category")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+                        Text("SELECT CATEGORY")
+                            .font(.system(size: 10.5, weight: .bold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal)
 
@@ -67,44 +62,40 @@ public struct QuickAddView: View {
                     VStack(spacing: 12) {
                         TextField("Description (e.g. Blue Tokai Coffee)", text: $title)
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                            )
+                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
 
                         DatePicker("Date", selection: $date, displayedComponents: .date)
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                            )
+                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
 
                         TextField("Optional Notes", text: $notes)
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                            )
+                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
                     }
                     .padding(.horizontal)
 
-                    // ── Apple Native Action Button ────────────────────────
+                    // ── Action Button ─────────────────────────────────────
                     Button(action: saveTransaction) {
-                        Text("Add Entry")
-                            .font(.system(size: 17, weight: .bold))
-                            .frame(maxWidth: .infinity)
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 16, weight: .bold))
+                            Text("Record Transaction")
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(store.accentColor)
-                    .controlSize(.large)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .buttonStyle(LiquidGlassButtonStyle(tintColor: store.accentColor, cornerRadius: 14))
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                 }
                 .padding(.top, 10)
+                .padding(.bottom, 20)
             }
-            .navigationTitle("Quick Add")
+            .navigationTitle("New Entry")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -112,7 +103,7 @@ public struct QuickAddView: View {
                     }
                 }
             }
-            .background(colorScheme == .dark ? Color.black : Color(uiColor: .systemGroupedBackground))
+            .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
         }
     }
 
@@ -120,14 +111,19 @@ public struct QuickAddView: View {
         let isSelected = selectedCategory == category
 
         return Button(action: {
-            UISelectionFeedbackGenerator().selectionChanged()
+            PlatformFeedback.selection()
             selectedCategory = category
         }) {
             VStack(spacing: 6) {
                 ZStack {
                     Circle()
-                        .fill(isSelected ? category.color.opacity(0.25) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
+                        .fill(isSelected ? category.color.opacity(0.28) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
                         .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .stroke(isSelected ? category.color : Color.clear, lineWidth: 1.5)
+                                .shadow(color: isSelected ? category.color.opacity(0.5) : Color.clear, radius: 4)
+                        )
 
                     Image(systemName: category.sfSymbol)
                         .font(.system(size: 18))
@@ -135,16 +131,13 @@ public struct QuickAddView: View {
                 }
 
                 Text(category.displayName.components(separatedBy: " ").first ?? "")
-                    .font(.system(size: 10.5, weight: isSelected ? .bold : .medium))
+                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                     .foregroundStyle(isSelected ? Color.primary : .secondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(isSelected ? category.color : Color.clear, lineWidth: 1.5)
-            )
+            .liquidGlassCard(cornerRadius: 14, interactiveHover: !isSelected)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -162,7 +155,7 @@ public struct QuickAddView: View {
             isExpense: isExpense
         )
 
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        PlatformFeedback.impact()
         store.addExpense(expense)
         dismiss()
     }

@@ -14,6 +14,7 @@
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		AA0000010000000000000002 /* Expense.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000001 /* Expense.swift */; };
 		AA0000020000000000000002 /* ExpenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000001 /* ExpenseStore.swift */; };
+		AA0000020000000000000004 /* PlatformHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000003 /* PlatformHelpers.swift */; };
 		AA0000030000000000000002 /* DualIslandTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000030000000000000001 /* DualIslandTabBar.swift */; };
 		AA0000040000000000000002 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000040000000000000001 /* OverviewView.swift */; };
 		AA0000050000000000000002 /* CategoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000050000000000000001 /* CategoriesView.swift */; };
@@ -21,6 +22,11 @@
 		AA0000070000000000000002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000070000000000000001 /* SettingsView.swift */; };
 		AA0000080000000000000002 /* QuickAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000080000000000000001 /* QuickAddView.swift */; };
 		AA0000090000000000000002 /* WellSpentRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000090000000000000001 /* WellSpentRootView.swift */; };
+		AA00000A0000000000000002 /* LiquidGlassStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000A0000000000000001 /* LiquidGlassStyles.swift */; };
+		AA00000B0000000000000002 /* MacDesktopRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000B0000000000000001 /* MacDesktopRootView.swift */; };
+		AA00000C0000000000000002 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000C0000000000000001 /* WidgetDataManager.swift */; };
+		AA00000D0000000000000002 /* TodayExpenseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000D0000000000000001 /* TodayExpenseWidget.swift */; };
+		AA00000E0000000000000002 /* CsvEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000E0000000000000001 /* CsvEngine.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -65,6 +71,7 @@
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA0000010000000000000001 /* Expense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Models/Expense.swift"; sourceTree = "<group>"; };
 		AA0000020000000000000001 /* ExpenseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/ExpenseStore.swift"; sourceTree = "<group>"; };
+		AA0000020000000000000003 /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/PlatformHelpers.swift"; sourceTree = "<group>"; };
 		AA0000030000000000000001 /* DualIslandTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/Components/DualIslandTabBar.swift"; sourceTree = "<group>"; };
 		AA0000040000000000000001 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/OverviewView.swift"; sourceTree = "<group>"; };
 		AA0000050000000000000001 /* CategoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/CategoriesView.swift"; sourceTree = "<group>"; };
@@ -72,6 +79,11 @@
 		AA0000070000000000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/SettingsView.swift"; sourceTree = "<group>"; };
 		AA0000080000000000000001 /* QuickAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/QuickAddView.swift"; sourceTree = "<group>"; };
 		AA0000090000000000000001 /* WellSpentRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/WellSpentRootView.swift"; sourceTree = "<group>"; };
+		AA00000A0000000000000001 /* LiquidGlassStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/Components/LiquidGlassStyles.swift"; sourceTree = "<group>"; };
+		AA00000B0000000000000001 /* MacDesktopRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/MacDesktopRootView.swift"; sourceTree = "<group>"; };
+		AA00000C0000000000000001 /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/WidgetDataManager.swift"; sourceTree = "<group>"; };
+		AA00000D0000000000000001 /* TodayExpenseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/Components/TodayExpenseWidget.swift"; sourceTree = "<group>"; };
+		AA00000E0000000000000001 /* CsvEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/CsvEngine.swift"; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -183,6 +195,7 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				AA0000010000000000000001 /* Expense.swift */,
 				AA0000020000000000000001 /* ExpenseStore.swift */,
+				AA0000020000000000000003 /* PlatformHelpers.swift */,
 				AA0000030000000000000001 /* DualIslandTabBar.swift */,
 				AA0000040000000000000001 /* OverviewView.swift */,
 				AA0000050000000000000001 /* CategoriesView.swift */,
@@ -190,6 +203,11 @@
 				AA0000070000000000000001 /* SettingsView.swift */,
 				AA0000080000000000000001 /* QuickAddView.swift */,
 				AA0000090000000000000001 /* WellSpentRootView.swift */,
+				AA00000A0000000000000001 /* LiquidGlassStyles.swift */,
+				AA00000B0000000000000001 /* MacDesktopRootView.swift */,
+				AA00000C0000000000000001 /* WidgetDataManager.swift */,
+				AA00000D0000000000000001 /* TodayExpenseWidget.swift */,
+				AA00000E0000000000000001 /* CsvEngine.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -412,6 +430,7 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				AA0000010000000000000002 /* Expense.swift in Sources */,
 				AA0000020000000000000002 /* ExpenseStore.swift in Sources */,
+				AA0000020000000000000004 /* PlatformHelpers.swift in Sources */,
 				AA0000030000000000000002 /* DualIslandTabBar.swift in Sources */,
 				AA0000040000000000000002 /* OverviewView.swift in Sources */,
 				AA0000050000000000000002 /* CategoriesView.swift in Sources */,
@@ -419,6 +438,11 @@
 				AA0000070000000000000002 /* SettingsView.swift in Sources */,
 				AA0000080000000000000002 /* QuickAddView.swift in Sources */,
 				AA0000090000000000000002 /* WellSpentRootView.swift in Sources */,
+				AA00000A0000000000000002 /* LiquidGlassStyles.swift in Sources */,
+				AA00000B0000000000000002 /* MacDesktopRootView.swift in Sources */,
+				AA00000C0000000000000002 /* WidgetDataManager.swift in Sources */,
+				AA00000D0000000000000002 /* TodayExpenseWidget.swift in Sources */,
+				AA00000E0000000000000002 /* CsvEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -32,6 +32,21 @@
 		B345C392EFCC87316F44D065 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1948926AFA7CA34B38522296 /* Pods_Runner.framework */; };
 		C00200000000000000000001 /* MessagesDatabaseReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00200000000000000000003 /* MessagesDatabaseReader.swift */; };
 		C00200000000000000000002 /* MessageFetchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00200000000000000000004 /* MessageFetchHandler.swift */; };
+		A00100000000000000000001 /* Expense.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Expense.swift */; };
+		A00100000000000000000002 /* ExpenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* ExpenseStore.swift */; };
+		A00100000000000000000003 /* PlatformHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* PlatformHelpers.swift */; };
+		A00100000000000000000004 /* WellSpentRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* WellSpentRootView.swift */; };
+		A00100000000000000000005 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* OverviewView.swift */; };
+		A00100000000000000000006 /* CategoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000006 /* CategoriesView.swift */; };
+		A00100000000000000000007 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* InsightsView.swift */; };
+		A00100000000000000000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000008 /* SettingsView.swift */; };
+		A00100000000000000000009 /* QuickAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000009 /* QuickAddView.swift */; };
+		A0010000000000000000000A /* DualIslandTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000A /* DualIslandTabBar.swift */; };
+		A0010000000000000000000B /* LiquidGlassStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000B /* LiquidGlassStyles.swift */; };
+		A0010000000000000000000C /* MacDesktopRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000C /* MacDesktopRootView.swift */; };
+		A0010000000000000000000D /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000D /* WidgetDataManager.swift */; };
+		A0010000000000000000000E /* TodayExpenseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000E /* TodayExpenseWidget.swift */; };
+		A0010000000000000000000F /* CsvEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000F /* CsvEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +108,21 @@
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		C00200000000000000000003 /* MessagesDatabaseReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesDatabaseReader.swift; sourceTree = "<group>"; };
 		C00200000000000000000004 /* MessageFetchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageFetchHandler.swift; sourceTree = "<group>"; };
+		A00200000000000000000001 /* Expense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expense.swift; sourceTree = "<group>"; };
+		A00200000000000000000002 /* ExpenseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpenseStore.swift; sourceTree = "<group>"; };
+		A00200000000000000000003 /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelpers.swift; sourceTree = "<group>"; };
+		A00200000000000000000004 /* WellSpentRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellSpentRootView.swift; sourceTree = "<group>"; };
+		A00200000000000000000005 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		A00200000000000000000006 /* CategoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoriesView.swift; sourceTree = "<group>"; };
+		A00200000000000000000007 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		A00200000000000000000008 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A00200000000000000000009 /* QuickAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddView.swift; sourceTree = "<group>"; };
+		A0020000000000000000000A /* DualIslandTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualIslandTabBar.swift; sourceTree = "<group>"; };
+		A0020000000000000000000B /* LiquidGlassStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassStyles.swift; sourceTree = "<group>"; };
+		A0020000000000000000000C /* MacDesktopRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDesktopRootView.swift; sourceTree = "<group>"; };
+		A0020000000000000000000D /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
+		A0020000000000000000000E /* TodayExpenseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayExpenseWidget.swift; sourceTree = "<group>"; };
+		A0020000000000000000000F /* CsvEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CsvEngine.swift; sourceTree = "<group>"; };
 		D578F2F5BE5176896CD459C2 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -201,12 +231,67 @@
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				C00200000000000000000003 /* MessagesDatabaseReader.swift */,
 				C00200000000000000000004 /* MessageFetchHandler.swift */,
+				A00300000000000000000001 /* SwiftUI */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
 				33CC11242044D66E0003C045 /* Resources */,
 				33BA886A226E78AF003329D5 /* Configs */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		A00300000000000000000001 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				A00300000000000000000002 /* Models */,
+				A00300000000000000000003 /* Services */,
+				A00300000000000000000004 /* Views */,
+			);
+			path = SwiftUI;
+			sourceTree = "<group>";
+		};
+		A00300000000000000000002 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000001 /* Expense.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00300000000000000000003 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000002 /* ExpenseStore.swift */,
+				A00200000000000000000003 /* PlatformHelpers.swift */,
+				A0020000000000000000000D /* WidgetDataManager.swift */,
+				A0020000000000000000000F /* CsvEngine.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A00300000000000000000004 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000004 /* WellSpentRootView.swift */,
+				A00200000000000000000005 /* OverviewView.swift */,
+				A00200000000000000000006 /* CategoriesView.swift */,
+				A00200000000000000000007 /* InsightsView.swift */,
+				A00200000000000000000008 /* SettingsView.swift */,
+				A00200000000000000000009 /* QuickAddView.swift */,
+				A0020000000000000000000C /* MacDesktopRootView.swift */,
+				A00300000000000000000005 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A00300000000000000000005 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A0020000000000000000000A /* DualIslandTabBar.swift */,
+				A0020000000000000000000B /* LiquidGlassStyles.swift */,
+				A0020000000000000000000E /* TodayExpenseWidget.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		D73912EC22F37F3D000D13A0 /* Frameworks */ = {
@@ -458,6 +543,21 @@
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 				C00200000000000000000001 /* MessagesDatabaseReader.swift in Sources */,
 				C00200000000000000000002 /* MessageFetchHandler.swift in Sources */,
+				A00100000000000000000001 /* Expense.swift in Sources */,
+				A00100000000000000000002 /* ExpenseStore.swift in Sources */,
+				A00100000000000000000003 /* PlatformHelpers.swift in Sources */,
+				A00100000000000000000004 /* WellSpentRootView.swift in Sources */,
+				A00100000000000000000005 /* OverviewView.swift in Sources */,
+				A00100000000000000000006 /* CategoriesView.swift in Sources */,
+				A00100000000000000000007 /* InsightsView.swift in Sources */,
+				A00100000000000000000008 /* SettingsView.swift in Sources */,
+				A00100000000000000000009 /* QuickAddView.swift in Sources */,
+				A0010000000000000000000A /* DualIslandTabBar.swift in Sources */,
+				A0010000000000000000000B /* LiquidGlassStyles.swift in Sources */,
+				A0010000000000000000000C /* MacDesktopRootView.swift in Sources */,
+				A0010000000000000000000D /* WidgetDataManager.swift in Sources */,
+				A0010000000000000000000E /* TodayExpenseWidget.swift in Sources */,
+				A0010000000000000000000F /* CsvEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -575,7 +675,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -657,7 +757,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -707,7 +807,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;

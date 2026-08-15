@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Central state store and persistence engine for the Well Spent application
 public final class ExpenseStore: ObservableObject {
     @Published public var expenses: [Expense] = []
     @Published public var monthlyBudget: Double = 50000.0
@@ -29,7 +30,7 @@ public final class ExpenseStore: ObservableObject {
     @Published public var selectedCategoryFilter: ExpenseCategory? = nil
     @Published public var currentViewMode: String = "daywise" // "daywise" | "monthwise"
     @Published public var appThemeMode: String = "system" // "system" | "light" | "dark"
-    @Published public var appAccentColorName: String = "green" // "green", "blue", "indigo", "purple", "orange", "teal", "pink"
+    @Published public var appAccentColorName: String = "green"
 
     public var accentColor: Color {
         switch appAccentColorName {
@@ -92,6 +93,11 @@ public final class ExpenseStore: ObservableObject {
         do {
             let encoded = try JSONEncoder().encode(data)
             try encoded.write(to: fileURL, options: .atomic)
+            WidgetDataManager.shared.updateWidgetData(
+                expenses: expenses,
+                monthlyBudget: monthlyBudget,
+                accentColorName: appAccentColorName
+            )
         } catch {
             print("Error saving data: \(error)")
         }
@@ -150,52 +156,88 @@ public final class ExpenseStore: ObservableObject {
         saveData()
     }
 
-    public func updateCategoryBudget(category: ExpenseCategory, amount: Double) {
-        categoryBudgets[category.rawValue] = amount
-        saveData()
+    public func updateExpense(_ expense: Expense) {
+        if let idx = expenses.firstIndex(where: { $0.id == expense.id }) {
+            expenses[idx] = expense
+            saveData()
+        }
     }
 
-    public func getCategoryBudget(category: ExpenseCategory) -> Double {
-        return categoryBudgets[category.rawValue] ?? 0.0
-    }
-
-    public func toggleRecurringBillPaid(id: String) {
+    public func toggleBillPaid(id: String) {
         if let idx = recurringBills.firstIndex(where: { $0.id == id }) {
             recurringBills[idx].isPaid.toggle()
             saveData()
         }
     }
 
+    public func toggleRecurringBillPaid(id: String) {
+        toggleBillPaid(id: id)
+    }
+
+    public func setCategoryBudget(category: ExpenseCategory, amount: Double) {
+        categoryBudgets[category.rawValue] = amount
+        saveData()
+    }
+
+    public func updateCategoryBudget(category: ExpenseCategory, amount: Double) {
+        setCategoryBudget(category: category, amount: amount)
+    }
+
+    public func getCategoryBudget(category: ExpenseCategory) -> Double {
+        categoryBudgets[category.rawValue] ?? 0.0
+    }
+
     // ── Metrics & Calculations ────────────────────────────────────────────
 
-    public var currentPeriodExpenses: [Expense] {
+    public var todaySpend: Double {
         let calendar = Calendar.current
-        let now = Date()
-        return expenses.filter { exp in
-            guard exp.isExpense else { return false }
-            return calendar.isDate(exp.date, equalTo: now, toGranularity: .month)
-        }
+        return expenses
+            .filter { calendar.isDateInToday($0.date) && $0.isExpense }
+            .reduce(0.0) { $0 + $1.amount }
     }
 
     public var currentPeriodTotal: Double {
-        currentPeriodExpenses.reduce(0.0) { $0 + $1.amount }
-    }
-
-    public var todayTotal: Double {
         let calendar = Calendar.current
-        return expenses.filter { exp in
-            exp.isExpense && calendar.isDateInToday(exp.date)
-        }.reduce(0.0) { $0 + $1.amount }
+        let now = Date()
+        return expenses
+            .filter { exp in
+                guard exp.isExpense else { return false }
+                let compExp = calendar.dateComponents([.year, .month], from: exp.date)
+                let compNow = calendar.dateComponents([.year, .month], from: now)
+                return compExp.year == compNow.year && compExp.month == compNow.month
+            }
+            .reduce(0.0) { $0 + $1.amount }
     }
 
     public var remainingBudget: Double {
-        max(0, monthlyBudget - currentPeriodTotal)
+        max(0.0, monthlyBudget - currentPeriodTotal)
+    }
+
+    public var budgetBurnPercentage: Double {
+        guard monthlyBudget > 0 else { return 0.0 }
+        return min(1.0, currentPeriodTotal / monthlyBudget)
+    }
+
+    public func spentForCategory(_ category: ExpenseCategory) -> Double {
+        let calendar = Calendar.current
+        let now = Date()
+        return expenses
+            .filter { exp in
+                guard exp.category == category && exp.isExpense else { return false }
+                let compExp = calendar.dateComponents([.year, .month], from: exp.date)
+                let compNow = calendar.dateComponents([.year, .month], from: now)
+                return compExp.year == compNow.year && compExp.month == compNow.month
+            }
+            .reduce(0.0) { $0 + $1.amount }
     }
 
     public var categoryBreakdown: [ExpenseCategory: Double] {
         var map: [ExpenseCategory: Double] = [:]
-        for exp in currentPeriodExpenses {
-            map[exp.category, default: 0.0] += exp.amount
+        for cat in ExpenseCategory.allCases {
+            let total = spentForCategory(cat)
+            if total > 0 {
+                map[cat] = total
+            }
         }
         return map
     }
@@ -212,45 +254,18 @@ public final class ExpenseStore: ObservableObject {
         return dailySpendAverage * totalDays
     }
 
-    // ── CSV Export & Import ────────────────────────────────────────────────
+    // ── Universal CSV Engine Delegation ───────────────────────────────────
 
     public func exportCsv() -> String {
-        var csv = "ID,Title,Amount,Category,Date,Notes,IsExpense\n"
-        let formatter = ISO8601DateFormatter()
-        for exp in expenses {
-            let safeTitle = exp.title.replacingOccurrences(of: "\"", with: "\"\"")
-            let safeNotes = exp.notes.replacingOccurrences(of: "\"", with: "\"\"")
-            csv += "\"\(exp.id)\",\"\(safeTitle)\",\(exp.amount),\"\(exp.category.rawValue)\",\"\(formatter.string(from: exp.date))\",\"\(safeNotes)\",\(exp.isExpense)\n"
-        }
-        return csv
+        return CsvEngine.exportCsv(from: expenses)
     }
 
     public func importCsv(content: String) -> Int {
-        let lines = content.components(separatedBy: .newlines)
-        guard lines.count > 1 else { return 0 }
-        let formatter = ISO8601DateFormatter()
-        var imported = 0
-
-        for line in lines.dropFirst() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
-            let parts = line.components(separatedBy: ",")
-            if parts.count >= 4 {
-                let title = parts[1].replacingOccurrences(of: "\"", with: "")
-                let amount = Double(parts[2].trimmingCharacters(in: .whitespaces)) ?? 0.0
-                let catRaw = parts[3].replacingOccurrences(of: "\"", with: "").trimmingCharacters(in: .whitespaces)
-                let cat = ExpenseCategory(rawValue: catRaw) ?? .other
-                let dateStr = parts.count > 4 ? parts[4].replacingOccurrences(of: "\"", with: "") : ""
-                let date = formatter.date(from: dateStr) ?? Date()
-                let notes = parts.count > 5 ? parts[5].replacingOccurrences(of: "\"", with: "") : ""
-
-                let expense = Expense(title: title, amount: amount, category: cat, date: date, notes: notes)
-                expenses.append(expense)
-                imported += 1
-            }
-        }
-        if imported > 0 {
-            saveData()
-        }
-        return imported
+        let parsed = CsvEngine.importCsv(content: content)
+        guard !parsed.isEmpty else { return 0 }
+        expenses.append(contentsOf: parsed)
+        saveData()
+        return parsed.count
     }
 
     public func deleteAllData() {

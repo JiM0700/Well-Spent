@@ -45,144 +45,144 @@ public struct DualIslandTabBar: View {
     // ── Interactive State ──────────────────────────────────────────────────
     @State private var isLongPressing: Bool = false
     @State private var pressedTab: TabSelection? = nil
-    @State private var dragOffset: CGFloat = 0.0
+
+    public init(selectedTab: Binding<TabSelection>, onAddTapped: @escaping () -> Void) {
+        self._selectedTab = selectedTab
+        self.onAddTapped = onAddTapped
+    }
 
     public var body: some View {
-        HStack(spacing: 10) {
-            // ── Left Island: 62pt Floating Capsule with Segmented Control Sliding Track ──
+        HStack(spacing: 8) {
+            // ── Primary 56pt Liquid Glass Dock with Optical Corner Refraction ──
             GeometryReader { geo in
-                let tabCount = CGFloat(TabSelection.allCases.count)
+                let totalSlots: CGFloat = 5 // 4 tabs + 1 center action button
                 let availableWidth = geo.size.width - 8
-                let itemWidth = availableWidth / tabCount
-                let selectedIndex = CGFloat(selectedTab.rawValue)
+                let slotWidth = availableWidth / totalSlots
+
+                // Calculate visual thumb offset based on selected tab index
+                let thumbSlotIndex: CGFloat = {
+                    switch selectedTab {
+                    case .overview: return 0
+                    case .categories: return 1
+                    case .insights: return 3
+                    case .settings: return 4
+                    }
+                }()
 
                 ZStack(alignment: .leading) {
-                    // 1. Outer Liquid Glass Capsule
+                    // 1. Base Liquid Glass Capsule with Authentic Apple Optics
                     Capsule()
                         .fill(.ultraThinMaterial)
                         .overlay(
+                            // Inset Caustic Refraction Line (Inner Surface)
                             Capsule()
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(colorScheme == .dark ? 0.42 : 0.75),
-                                            Color.white.opacity(colorScheme == .dark ? 0.12 : 0.25),
+                                            Color.white.opacity(colorScheme == .dark ? 0.35 : 0.55),
+                                            Color.white.opacity(colorScheme == .dark ? 0.05 : 0.10),
                                             Color.clear,
-                                            Color.white.opacity(colorScheme == .dark ? 0.18 : 0.35)
+                                            Color.white.opacity(colorScheme == .dark ? 0.15 : 0.25)
                                         ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 0.7
+                                )
+                                .padding(0.7)
+                        )
+                        .overlay(
+                            // Outer Specular Meniscus Highlight Rim
+                            Capsule()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(colorScheme == .dark ? 0.75 : 0.95),
+                                            Color.white.opacity(colorScheme == .dark ? 0.20 : 0.40),
+                                            Color.clear,
+                                            Color.white.opacity(colorScheme == .dark ? 0.18 : 0.30)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
                                     ),
                                     lineWidth: 0.9
                                 )
                         )
-                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.55 : 0.08), radius: 18, x: 0, y: 5)
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.55 : 0.10), radius: 18, x: 0, y: 5)
 
-                    // 2. Liquid Glass Interactive Glow Aura (Under Selected Tab)
+                    // 2. Dynamic Liquid Light Aura under Active Selection
                     RadialGradient(
                         colors: [
-                            store.accentColor.opacity(isLongPressing ? 0.55 : 0.30),
-                            store.accentColor.opacity(isLongPressing ? 0.20 : 0.08),
+                            store.accentColor.opacity(isLongPressing ? 0.50 : 0.28),
+                            store.accentColor.opacity(0.08),
                             Color.clear
                         ],
                         center: .center,
                         startRadius: 2,
-                        endRadius: isLongPressing ? 46 : 32
+                        endRadius: isLongPressing ? 44 : 30
                     )
-                    .frame(width: itemWidth + 24, height: 64)
-                    .offset(x: (4 + selectedIndex * itemWidth) - 12)
-                    .animation(.spring(response: 0.34, dampingFraction: 0.70, blendDuration: 0.2), value: selectedTab)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isLongPressing)
+                    .frame(width: slotWidth + 20, height: 56)
+                    .offset(x: (4 + thumbSlotIndex * slotWidth) - 10)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2), value: selectedTab)
+                    .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
 
-                    // 3. Sliding Liquid Water Bubble Thumb with Refraction Lens & Elastic Squish
+                    // 3. Sliding Liquid Water Droplet Lens Thumb
                     ZStack {
                         Capsule()
                             .fill(
-                                colorScheme == .dark
-                                    ? Color.white.opacity(isLongPressing ? 0.24 : 0.16)
-                                    : Color.black.opacity(isLongPressing ? 0.10 : 0.06)
+                                store.accentColor.opacity(isLongPressing ? 0.24 : 0.15)
                             )
                             .overlay(
                                 Capsule()
                                     .strokeBorder(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(colorScheme == .dark ? 0.55 : 0.8),
-                                                Color.white.opacity(0.1),
-                                                store.accentColor.opacity(isLongPressing ? 0.6 : 0.2)
+                                                Color.white.opacity(colorScheme == .dark ? 0.70 : 0.90),
+                                                store.accentColor.opacity(0.40),
+                                                Color.clear
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
-                                        lineWidth: isLongPressing ? 1.4 : 0.8
+                                        lineWidth: 0.9
                                     )
                             )
-                            .shadow(color: store.accentColor.opacity(isLongPressing ? 0.45 : 0.15), radius: isLongPressing ? 10 : 4, x: 0, y: 2)
                     }
-                    .frame(width: itemWidth, height: 54)
-                    .scaleEffect(isLongPressing ? CGSize(width: 1.12, height: 1.08) : CGSize(width: 1.0, height: 1.0))
-                    .offset(x: 4 + selectedIndex * itemWidth)
-                    .animation(.spring(response: 0.32, dampingFraction: 0.70, blendDuration: 0.2), value: selectedTab)
-                    .animation(.spring(response: 0.22, dampingFraction: 0.62), value: isLongPressing)
+                    .frame(width: slotWidth - 4, height: 46)
+                    .scaleEffect(isLongPressing ? CGSize(width: 1.10, height: 1.06) : CGSize(width: 1.0, height: 1.0))
+                    .offset(x: 6 + thumbSlotIndex * slotWidth)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2), value: selectedTab)
+                    .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
 
-                    // 4. Interactive Tab Buttons with Liquid Long-Press & Tap Response
+                    // 4. Tab Items & Centered Quick Add Action
                     HStack(spacing: 0) {
-                        ForEach(TabSelection.allCases) { tab in
-                            let isSelected = selectedTab == tab
-                            let isTarget = pressedTab == tab
+                        tabButton(for: .overview, slotWidth: slotWidth)
+                        tabButton(for: .categories, slotWidth: slotWidth)
 
-                            tabButton(for: tab, itemWidth: itemWidth, isSelected: isSelected, isTarget: isTarget)
-                        }
+                        // Center Floating Action Pod
+                        centerAddButton(slotWidth: slotWidth)
+
+                        tabButton(for: .insights, slotWidth: slotWidth)
+                        tabButton(for: .settings, slotWidth: slotWidth)
                     }
                     .padding(.horizontal, 4)
                 }
             }
-            .frame(height: 62)
-
-            // ── Right Island: 62pt Detached Action Pod with Glowing Corona ─────
-            Button(action: {
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
-                onAddTapped()
-            }) {
-                ZStack {
-                    // Liquid Glass Corona Glow
-                    Circle()
-                        .fill(store.accentColor)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            Color.white.opacity(0.15)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.2
-                                )
-                        )
-                        .shadow(color: store.accentColor.opacity(0.55), radius: 14, x: 0, y: 4)
-
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-                .frame(width: 62, height: 62)
-            }
-            .buttonStyle(SquishButtonStyle())
+            .frame(height: 56)
         }
-        .padding(.horizontal, 14)
-        .padding(.bottom, 6)
+        .padding(.horizontal, 16)
+        .padding(.bottom, -8)
     }
 
-    private func tabButton(for tab: TabSelection, itemWidth: CGFloat, isSelected: Bool, isTarget: Bool) -> some View {
-        Button(action: {
+    // ── Tab Item Button ───────────────────────────────────────────────────
+
+    private func tabButton(for tab: TabSelection, slotWidth: CGFloat) -> some View {
+        let isSelected = selectedTab == tab
+
+        return Button(action: {
             if selectedTab != tab {
-                let generator = UISelectionFeedbackGenerator()
-                generator.selectionChanged()
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.70, blendDuration: 0.2)) {
+                PlatformFeedback.selection()
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2)) {
                     selectedTab = tab
                 }
             }
@@ -190,29 +190,28 @@ public struct DualIslandTabBar: View {
             VStack(spacing: 2) {
                 Image(systemName: isSelected ? tab.activeIcon : tab.icon)
                     .font(.system(size: 19, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
-                    .scaleEffect(isSelected && isLongPressing ? 1.15 : 1.0)
+                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.15, green: 0.15, blue: 0.17)))
+                    .scaleEffect(isSelected && isLongPressing ? 1.12 : 1.0)
                     .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
 
                 Text(tab.title)
                     .font(.system(size: 10, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
+                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.15, green: 0.15, blue: 0.17)))
                     .lineLimit(1)
             }
-            .frame(width: itemWidth, height: 50)
+            .frame(width: slotWidth, height: 50)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.2)
+            LongPressGesture(minimumDuration: 0.25)
                 .onEnded { _ in
-                    let generator = UIImpactFeedbackGenerator(style: .rigid)
-                    generator.impactOccurred(intensity: 0.85)
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
+                    PlatformFeedback.impact()
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.65)) {
                         selectedTab = tab
                         isLongPressing = true
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isLongPressing = false
                         }
@@ -221,13 +220,41 @@ public struct DualIslandTabBar: View {
         )
     }
 
-    private func getDisplayCornerRadius() -> CGFloat {
-        if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
-           let window = scene.windows.first(where: { $0.isKeyWindow }),
-           let radius = window.screen.value(forKey: "_displayCornerRadius") as? CGFloat, radius > 0 {
-            return radius
+    // ── Center Quick Add Action Button ────────────────────────────────────
+
+    private func centerAddButton(slotWidth: CGFloat) -> some View {
+        Button(action: {
+            PlatformFeedback.impact()
+            onAddTapped()
+        }) {
+            ZStack {
+                Circle()
+                    .fill(store.accentColor)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.65),
+                                        Color.white.opacity(0.15)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.0
+                            )
+                    )
+                    .shadow(color: store.accentColor.opacity(0.45), radius: 8, x: 0, y: 2)
+
+                Image(systemName: "plus")
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 42, height: 42)
+            .frame(width: slotWidth, height: 50)
+            .contentShape(Rectangle())
         }
-        return 47.0 // Fallback to iPhone 14 Pro / 15 / 16 / 17 curvature
+        .buttonStyle(SquishButtonStyle())
     }
 }
 

@@ -8,6 +8,11 @@ public struct WellSpentRootView: View {
     public init() {}
 
     public var body: some View {
+        #if os(macOS)
+        MacDesktopRootView()
+            .environmentObject(store)
+            .preferredColorScheme(store.colorSchemeForTheme)
+        #else
         ZStack(alignment: .bottom) {
             // ── Primary View Body ─────────────────────────────────────────
             Group {
@@ -39,5 +44,6 @@ public struct WellSpentRootView: View {
             QuickAddView()
                 .environmentObject(store)
         }
+        #endif
     }
 }
