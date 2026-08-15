@@ -1,6 +1,6 @@
 import FlutterMacOS
 
-/// Handler for Siri shortcuts integration
+/// Handler for Siri shortcuts integration on macOS
 /// Allows voice control to add transactions and query spending/budget
 final class SiriHandler: NSObject, FlutterPlugin {
   static func register(with registrar: FlutterPluginRegistrar) {
@@ -32,8 +32,7 @@ final class SiriHandler: NSObject, FlutterPlugin {
 
     let category = args["category"] as? String ?? "other"
 
-    // Store transaction in UserDefaults (simple implementation)
-    // In a real app, this would store to the SQLite database
+    // Store transaction in UserDefaults (simple implementation for testing)
     var transactions = loadTransactions()
     
     let transaction: [String: Any] = [
@@ -58,7 +57,7 @@ final class SiriHandler: NSObject, FlutterPlugin {
 
   private func handleGetBudget(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     // This would typically fetch from the app's SQLite database
-    // For now, return mock data
+    // For testing on macOS, return mock data
     result([
       "monthlyBudget": 50000.0,
       "spent": 12500.0,

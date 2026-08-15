@@ -1,12 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import 'liquid_glass_chip.dart';
+import 'liquid_glass_container.dart';
 
-/// Cupertino-native add-expense modal. Uses CupertinoTextField,
-/// CupertinoSlidingSegmentedControl, CupertinoDatePicker, and
-/// CupertinoButton.filled — matching Apple first-party app patterns.
+/// Apple-native Liquid Glass Quick Add Modal (iOS / macOS 26 style).
+/// Features real-time formula evaluation, tactile category chips,
+/// quick date selectors, and smooth haptics.
 class QuickAddModal extends StatefulWidget {
   const QuickAddModal({super.key});
 
@@ -22,14 +26,39 @@ class _QuickAddModalState extends State<QuickAddModal> {
   ExpenseCategory _selectedCategory = ExpenseCategory.food;
   ExpenseKind _selectedExpenseKind = ExpenseKind.variable;
   DateTime _selectedDate = DateTime.now();
-  String? _titleError;
+
+  double? _evaluatedAmount;
   String? _amountError;
+  String? _titleError;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(_onAmountChanged);
+  }
 
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountChanged);
     _titleController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  void _onAmountChanged() {
+    final text = _amountController.text.trim();
+    if (text.isEmpty) {
+      setState(() {
+        _evaluatedAmount = null;
+        _amountError = null;
+      });
+      return;
+    }
+    final parsed = _evaluateExpression(text);
+    setState(() {
+      _evaluatedAmount = parsed;
+      _amountError = (parsed == null || parsed <= 0) ? 'Invalid formula' : null;
+    });
   }
 
   double? _evaluateExpression(String input) {
@@ -37,7 +66,6 @@ class _QuickAddModalState extends State<QuickAddModal> {
     if (str.isEmpty || RegExp(r'[^0-9.+\-*/()\s]').hasMatch(str)) return null;
 
     int pos = 0;
-
     String? peek() {
       while (pos < str.length && str[pos] == ' ') {
         pos++;
@@ -45,7 +73,11 @@ class _QuickAddModalState extends State<QuickAddModal> {
       return pos < str.length ? str[pos] : null;
     }
 
-    double parsePrimary() {
+    late double Function() parsePrimary;
+    late double Function() parseMulDiv;
+    late double Function() parseAddSub;
+
+    parsePrimary = () {
       final ch = peek();
       if (ch == null) throw Exception('Unexpected end');
       if (ch == '(') {
@@ -69,9 +101,9 @@ class _QuickAddModalState extends State<QuickAddModal> {
       final numVal = double.tryParse(numStr);
       if (numVal == null) throw Exception('Invalid number');
       return numVal;
-    }
+    };
 
-    double parseMulDiv() {
+    parseMulDiv = () {
       double left = parsePrimary();
       while (true) {
         final ch = peek();
@@ -89,9 +121,9 @@ class _QuickAddModalState extends State<QuickAddModal> {
         }
       }
       return left;
-    }
+    };
 
-    double parseAddSub() {
+    parseAddSub = () {
       double left = parseMulDiv();
       while (true) {
         final ch = peek();
@@ -108,351 +140,465 @@ class _QuickAddModalState extends State<QuickAddModal> {
         }
       }
       return left;
-    }
+    };
 
     try {
       final result = parseAddSub();
-      peek();
-      if (pos < str.length) return null;
-      return (result.isFinite && result > 0) ? result : null;
+      return pos == str.length ? result : null;
     } catch (_) {
       return null;
     }
   }
 
-  bool _validate() {
-    bool valid = true;
-    setState(() {
-      _titleError = null;
-      _amountError = null;
-      if (_titleController.text.trim().isEmpty) {
-        _titleError = 'Enter a description';
-        valid = false;
-      }
-      if (_amountController.text.trim().isEmpty) {
-        _amountError = 'Enter an amount';
-        valid = false;
-      } else if (_evaluateExpression(_amountController.text.trim()) == null) {
-        _amountError = 'Invalid amount or formula';
-        valid = false;
-      }
-    });
-    return valid;
-  }
-
   void _submit() {
-    if (!_validate()) return;
+    final title = _titleController.text.trim();
+    final amount = _evaluatedAmount ?? _evaluateExpression(_amountController.text.trim());
 
-    final evaluatedAmount = _evaluateExpression(_amountController.text.trim())!;
+    bool hasErr = false;
+    if (title.isEmpty) {
+      setState(() => _titleError = 'Description is required');
+      hasErr = true;
+    } else {
+      setState(() => _titleError = null);
+    }
 
+    if (amount == null || amount <= 0) {
+      setState(() => _amountError = 'Enter a valid amount or formula');
+      hasErr = true;
+    } else {
+      setState(() => _amountError = null);
+    }
+
+    if (hasErr) {
+      HapticFeedback.vibrate();
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
     final expense = Expense(
-      title: _titleController.text.trim(),
-      amount: evaluatedAmount,
-      category: _selectedCategory,
+      title: title,
+      amount: amount!,
+      category: _selectedType == ExpenseType.income ? ExpenseCategory.invest : _selectedCategory,
       date: _selectedDate,
       type: _selectedType,
-      expenseKind: _selectedType == ExpenseType.expense ? _selectedExpenseKind : ExpenseKind.variable,
+      expenseKind: _selectedExpenseKind,
     );
 
-    Provider.of<ExpenseProvider>(context, listen: false).addExpense(expense);
+    context.read<ExpenseProvider>().addExpense(expense);
     Navigator.of(context).pop();
-  }
-
-  void _showDatePicker() {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => Container(
-        height: 280,
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              // Done bar
-              Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
-                  border: Border(
-                    bottom: BorderSide(
-                      color: CupertinoColors.separator.resolveFrom(context),
-                      width: 0.5,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              // Picker
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.date,
-                  initialDateTime: _selectedDate,
-                  maximumDate: DateTime.now(),
-                  minimumDate: DateTime(2020),
-                  onDateTimeChanged: (date) => setState(() => _selectedDate = date),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-    final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
+    final accentGreen = CupertinoColors.systemGreen.resolveFrom(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          top: 12,
-          left: 20,
-          right: 20,
-        ),
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.separator.resolveFrom(context),
-                    borderRadius: BorderRadius.circular(2.5),
-                  ),
-                ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF0F141E).withValues(alpha: 0.92)
+                : CupertinoColors.systemGroupedBackground.withValues(alpha: 0.94),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? CupertinoColors.white.withValues(alpha: 0.2)
+                    : CupertinoColors.black.withValues(alpha: 0.1),
+                width: 0.8,
               ),
-              const SizedBox(height: 16),
-
-              // Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 12,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    _selectedType == ExpenseType.expense ? 'Add Expense' : 'Add Income',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: labelColor,
-                    ),
-                  ),
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    child: const Icon(CupertinoIcons.xmark_circle_fill, size: 28),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Type toggle
-              SizedBox(
-                width: double.infinity,
-                child: CupertinoSlidingSegmentedControl<ExpenseType>(
-                  groupValue: _selectedType,
-                  children: const {
-                    ExpenseType.expense: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Expense'),
-                    ),
-                    ExpenseType.income: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Income'),
-                    ),
-                  },
-                  onValueChanged: (val) {
-                    if (val != null) setState(() => _selectedType = val);
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Description field
-              _fieldLabel('Description'),
-              const SizedBox(height: 6),
-              CupertinoTextField(
-                controller: _titleController,
-                placeholder: 'What did you spend on?',
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                autofocus: true,
-              ),
-              if (_titleError != null) _errorText(_titleError!),
-              const SizedBox(height: 16),
-
-              // Amount field
-              _fieldLabel('Amount (₹)'),
-              const SizedBox(height: 6),
-              CupertinoTextField(
-                controller: _amountController,
-                placeholder: '0.00 or 15+3.50',
-                keyboardType: TextInputType.text,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                prefix: Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Text('₹', style: TextStyle(color: secondaryLabel, fontSize: 17)),
-                ),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              if (_amountError != null) _errorText(_amountError!),
-              Padding(
-                padding: const EdgeInsets.only(top: 4, left: 4),
-                child: Text(
-                  'Supports math: 10 + 4.50',
-                  style: TextStyle(fontSize: 12, color: secondaryLabel),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Category
-              _fieldLabel('Category'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ExpenseCategory.values.map((cat) {
-                  final selected = _selectedCategory == cat;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = cat),
+                  // Grab Handle
+                  Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: selected ? primaryColor : cardBg,
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark
+                            ? CupertinoColors.white.withValues(alpha: 0.25)
+                            : CupertinoColors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(2.5),
                       ),
-                      child: Text(
-                        cat.displayName,
+                    ),
+                  ),
+
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedType == ExpenseType.expense ? 'Quick Add Expense' : 'Quick Add Income',
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: selected
-                              ? CupertinoColors.white
-                              : labelColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: isDark ? CupertinoColors.white : CupertinoColors.label,
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-
-              // Expense Kind (only for expenses)
-              if (_selectedType == ExpenseType.expense) ...[
-                _fieldLabel('Expense Kind'),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoSlidingSegmentedControl<ExpenseKind>(
-                    groupValue: _selectedExpenseKind,
-                    children: const {
-                      ExpenseKind.variable: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Variable'),
-                      ),
-                      ExpenseKind.fixed: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Fixed'),
-                      ),
-                    },
-                    onValueChanged: (val) {
-                      if (val != null) setState(() => _selectedExpenseKind = val);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-
-              // Date
-              _fieldLabel('Date'),
-              const SizedBox(height: 6),
-              GestureDetector(
-                onTap: _showDatePicker,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(CupertinoIcons.calendar, size: 18, color: primaryColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('EEEE, MMM d, yyyy').format(_selectedDate),
-                        style: TextStyle(fontSize: 15, color: labelColor),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDark
+                                ? CupertinoColors.white.withValues(alpha: 0.1)
+                                : CupertinoColors.black.withValues(alpha: 0.06),
+                          ),
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 14,
+                            color: isDark ? CupertinoColors.white : CupertinoColors.label,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 28),
+                  const SizedBox(height: 18),
 
-              // Submit button
-              CupertinoButton.filled(
-                borderRadius: BorderRadius.circular(12),
-                onPressed: _submit,
-                child: Text(
-                  _selectedType == ExpenseType.expense ? 'Save Expense' : 'Save Income',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
-                ),
+                  // Segmented Switcher (Expense / Income)
+                  SizedBox(
+                    width: double.infinity,
+                    child: CupertinoSlidingSegmentedControl<ExpenseType>(
+                      groupValue: _selectedType,
+                      backgroundColor: isDark
+                          ? CupertinoColors.white.withValues(alpha: 0.08)
+                          : CupertinoColors.black.withValues(alpha: 0.05),
+                      thumbColor: isDark
+                          ? const Color(0xFF1E2638)
+                          : CupertinoColors.white,
+                      children: {
+                        ExpenseType.expense: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'Expense',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _selectedType == ExpenseType.expense
+                                  ? (isDark ? CupertinoColors.white : CupertinoColors.black)
+                                  : CupertinoColors.secondaryLabel,
+                            ),
+                          ),
+                        ),
+                        ExpenseType.income: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'Income',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _selectedType == ExpenseType.income
+                                  ? accentGreen
+                                  : CupertinoColors.secondaryLabel,
+                            ),
+                          ),
+                        ),
+                      },
+                      onValueChanged: (val) {
+                        if (val != null) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedType = val);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Amount Field & Formula Preview
+                  LiquidGlassContainer(
+                    padding: const EdgeInsets.all(14),
+                    borderRadius: 16,
+                    fillOpacity: 0.05,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '₹',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: _selectedType == ExpenseType.income
+                                    ? accentGreen
+                                    : (isDark ? CupertinoColors.white : CupertinoColors.black),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: CupertinoTextField(
+                                controller: _amountController,
+                                placeholder: '0.00 or 150 + 40',
+                                keyboardType: TextInputType.text,
+                                autofocus: true,
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.5,
+                                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                                ),
+                                decoration: null,
+                                placeholderStyle: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500,
+                                  color: CupertinoColors.placeholderText.resolveFrom(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_evaluatedAmount != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accentGreen.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: accentGreen.withValues(alpha: 0.3), width: 0.8),
+                            ),
+                            child: Text(
+                              '= ₹${_evaluatedAmount!.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: accentGreen,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (_amountError != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            _amountError!,
+                            style: const TextStyle(fontSize: 12, color: CupertinoColors.systemRed),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Description Field
+                  LiquidGlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    borderRadius: 16,
+                    fillOpacity: 0.05,
+                    child: CupertinoTextField(
+                      controller: _titleController,
+                      placeholder: 'Description (e.g. Groceries, Dinner)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                      ),
+                      decoration: null,
+                      placeholderStyle: TextStyle(
+                        fontSize: 15,
+                        color: CupertinoColors.placeholderText.resolveFrom(context),
+                      ),
+                    ),
+                  ),
+                  if (_titleError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 6),
+                      child: Text(
+                        _titleError!,
+                        style: const TextStyle(fontSize: 12, color: CupertinoColors.systemRed),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+
+                  // Categories (if Expense)
+                  if (_selectedType == ExpenseType.expense) ...[
+                    Text(
+                      'CATEGORY',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ExpenseCategory.values.map((cat) {
+                        final isSelected = _selectedCategory == cat;
+                        return LiquidGlassChip(
+                          label: cat.displayName,
+                          isSelected: isSelected,
+                          onPressed: () => setState(() => _selectedCategory = cat),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Expense Kind (Variable / Fixed)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'EXPENSE TYPE',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                          ),
+                        ),
+                        CupertinoSlidingSegmentedControl<ExpenseKind>(
+                          groupValue: _selectedExpenseKind,
+                          thumbColor: isDark
+                              ? const Color(0xFF1E2638)
+                              : CupertinoColors.white,
+                          children: const {
+                            ExpenseKind.variable: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              child: Text('Variable', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
+                            ExpenseKind.fixed: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              child: Text('Fixed', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
+                          },
+                          onValueChanged: (val) {
+                            if (val != null) {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedExpenseKind = val);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
+                  // Date Presets & Picker
+                  Text(
+                    'DATE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      LiquidGlassChip(
+                        label: 'Today',
+                        isSelected: _isSameDay(_selectedDate, DateTime.now()),
+                        onPressed: () => setState(() => _selectedDate = DateTime.now()),
+                      ),
+                      const SizedBox(width: 8),
+                      LiquidGlassChip(
+                        label: 'Yesterday',
+                        isSelected: _isSameDay(_selectedDate, DateTime.now().subtract(const Duration(days: 1))),
+                        onPressed: () => setState(() => _selectedDate = DateTime.now().subtract(const Duration(days: 1))),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: LiquidGlassContainer(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          borderRadius: 14,
+                          fillOpacity: 0.05,
+                          onTap: () => _pickCustomDate(context),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.calendar, size: 14, color: isDark ? CupertinoColors.white : CupertinoColors.label),
+                              const SizedBox(width: 6),
+                              Text(
+                                DateFormat('MMM d').format(_selectedDate),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? CupertinoColors.white : CupertinoColors.label,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 26),
+
+                  // Submit Button
+                  CupertinoButton.filled(
+                    borderRadius: BorderRadius.circular(16),
+                    onPressed: _submit,
+                    child: Text(
+                      _selectedType == ExpenseType.expense ? 'Save Expense' : 'Save Income',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _fieldLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: CupertinoColors.secondaryLabel.resolveFrom(context),
-      ),
-    );
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  Widget _errorText(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, left: 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: CupertinoColors.systemRed.resolveFrom(context),
+  Future<void> _pickCustomDate(BuildContext context) async {
+    DateTime temp = _selectedDate;
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: 260,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CupertinoButton(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
+                CupertinoButton(
+                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () {
+                    setState(() => _selectedDate = temp);
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: _selectedDate,
+                maximumDate: DateTime.now().add(const Duration(days: 365)),
+                minimumDate: DateTime(2020),
+                onDateTimeChanged: (val) => temp = val,
+              ),
+            ),
+          ],
         ),
       ),
     );

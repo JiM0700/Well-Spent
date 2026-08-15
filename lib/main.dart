@@ -8,6 +8,7 @@ import 'screens/analytics_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/ios_shell_screen.dart';
 import 'screens/message_import_screen.dart';
+import 'screens/siri_debug_screen.dart';
 import 'services/url_scheme_service.dart';
 
 /// Apple-native green accent — calming finance colour.
@@ -64,6 +65,7 @@ class WellSpentApp extends StatelessWidget {
       routes: {
         '/analytics': (context) => const AnalyticsScreen(),
         '/message-import': (context) => const MessageImportScreen(),
+        '/siri-debug': (context) => const SiriDebugScreen(),
       },
     ));
   }
@@ -79,6 +81,7 @@ class WellSpentApp extends StatelessWidget {
       routes: {
         '/analytics': (context) => const AnalyticsScreen(),
         '/message-import': (context) => const MessageImportScreen(),
+        '/siri-debug': (context) => const SiriDebugScreen(),
       },
     ));
   }
