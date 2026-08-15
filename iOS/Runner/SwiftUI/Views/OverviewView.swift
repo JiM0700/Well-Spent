@@ -55,7 +55,7 @@ public struct OverviewView: View {
                     .padding(.vertical, 8)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+                            .fill(colorScheme == .dark ? Color(white: 0.16).opacity(store.glassOpacity) : Color.black.opacity(0.05))
                     )
                     .padding(.horizontal)
 
@@ -89,7 +89,7 @@ public struct OverviewView: View {
                 .padding(.top, 4)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .background(colorScheme == .dark ? Color(red: 0.04, green: 0.05, blue: 0.08) : Color(uiColor: .systemGroupedBackground))
+            .background(colorScheme == .dark ? Color.black : Color(uiColor: .systemGroupedBackground))
         }
     }
 
@@ -109,10 +109,10 @@ public struct OverviewView: View {
                 Spacer()
                 Text(isOver ? "Over Budget" : "\(Int(usage * 100))% used")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(isOver ? Color.red : Color.green)
+                    .foregroundStyle(isOver ? Color.red : store.accentColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background((isOver ? Color.red : Color.green).opacity(0.15))
+                    .background((isOver ? Color.red : store.accentColor).opacity(0.15))
                     .clipShape(Capsule())
             }
 
@@ -140,7 +140,7 @@ public struct OverviewView: View {
 
             // Apple Native ProgressView
             ProgressView(value: min(1.0, max(0.0, usage)))
-                .tint(isOver ? Color.red : Color.green)
+                .tint(isOver ? Color.red : store.accentColor)
 
             Divider()
                 .opacity(0.5)
@@ -156,12 +156,15 @@ public struct OverviewView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.85) : Color.white.opacity(0.92))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06), lineWidth: 0.8)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
         )
     }
 
@@ -204,15 +207,15 @@ public struct OverviewView: View {
         }) {
             Text(title)
                 .font(.system(size: 12.5, weight: isSelected ? .bold : .medium))
-                .foregroundStyle(isSelected ? Color.green : Color.primary)
+                .foregroundStyle(isSelected ? store.accentColor : Color.primary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
                 .background(
                     Capsule()
-                        .fill(isSelected ? Color.green.opacity(0.18) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
+                        .fill(isSelected ? store.accentColor.opacity(0.18) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
                         .overlay(
                             Capsule()
-                                .stroke(isSelected ? Color.green.opacity(0.35) : Color.clear, lineWidth: 0.8)
+                                .stroke(isSelected ? store.accentColor.opacity(0.35) : Color.clear, lineWidth: 0.8)
                         )
                 )
         }
@@ -267,10 +270,13 @@ public struct OverviewView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.7) : Color.white.opacity(0.9))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity * 0.9) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.05), lineWidth: 0.6)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.05), lineWidth: 0.6)
                 )
         )
         .contextMenu {
@@ -285,19 +291,12 @@ public struct OverviewView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("No activity recorded")
-                .font(.headline)
-            Text("Tap the floating ＋ button to record your first expense.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(40)
-        .frame(maxWidth: .infinity)
+        ContentUnavailableView(
+            "No Activity Recorded",
+            systemImage: "tray",
+            description: Text("Tap the floating ＋ button to record your first expense.")
+        )
+        .padding(.vertical, 30)
     }
 
     private var filteredExpenses: [Expense] {

@@ -33,6 +33,7 @@ public struct WellSpentRootView: View {
             )
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .preferredColorScheme(store.colorSchemeForTheme)
         .environmentObject(store)
         .sheet(isPresented: $showQuickAdd) {
             QuickAddView()

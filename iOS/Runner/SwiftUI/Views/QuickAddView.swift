@@ -26,7 +26,7 @@ public struct QuickAddView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text("₹")
                                 .font(.system(size: 30, weight: .bold, design: .rounded))
-                                .foregroundStyle(Color.green)
+                                .foregroundStyle(store.accentColor)
 
                             TextField("0.00", text: $amountString)
                                 .font(.system(size: 44, weight: .heavy, design: .rounded))
@@ -39,10 +39,13 @@ public struct QuickAddView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.8) : Color.white)
+                            .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                            .background(
+                                colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                            )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06), lineWidth: 0.8)
+                                    .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
                             )
                     )
                     .padding(.horizontal)
@@ -69,21 +72,30 @@ public struct QuickAddView: View {
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.8) : Color.white)
+                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                                    .background(
+                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                                    )
                             )
 
                         DatePicker("Date", selection: $date, displayedComponents: .date)
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.8) : Color.white)
+                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                                    .background(
+                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                                    )
                             )
 
                         TextField("Optional Notes", text: $notes)
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.8) : Color.white)
+                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                                    .background(
+                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                                    )
                             )
                     }
                     .padding(.horizontal)
@@ -95,7 +107,7 @@ public struct QuickAddView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.green)
+                    .tint(store.accentColor)
                     .controlSize(.large)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .padding(.horizontal)
@@ -112,7 +124,7 @@ public struct QuickAddView: View {
                     }
                 }
             }
-            .background(colorScheme == .dark ? Color(red: 0.04, green: 0.05, blue: 0.08) : Color(uiColor: .systemGroupedBackground))
+            .background(colorScheme == .dark ? Color.black : Color(uiColor: .systemGroupedBackground))
         }
     }
 

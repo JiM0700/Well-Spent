@@ -28,6 +28,28 @@ public final class ExpenseStore: ObservableObject {
     ]
     @Published public var selectedCategoryFilter: ExpenseCategory? = nil
     @Published public var currentViewMode: String = "daywise" // "daywise" | "monthwise"
+    @Published public var appThemeMode: String = "system" // "system" | "light" | "dark"
+    @Published public var appAccentColorName: String = "green" // "green", "blue", "indigo", "purple", "orange", "teal", "pink"
+
+    public var accentColor: Color {
+        switch appAccentColorName {
+        case "blue": return Color.blue
+        case "indigo": return Color.indigo
+        case "purple": return Color.purple
+        case "orange": return Color.orange
+        case "teal": return Color.teal
+        case "pink": return Color.pink
+        default: return Color.green
+        }
+    }
+
+    public var colorSchemeForTheme: ColorScheme? {
+        switch appThemeMode {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
 
     private let fileURL: URL
 
@@ -49,6 +71,8 @@ public final class ExpenseStore: ObservableObject {
         var summaryEnabled: Bool
         var summaryPeriod: String
         var recurringBills: [RecurringBill]
+        var appThemeMode: String?
+        var appAccentColorName: String?
     }
 
     public func saveData() {
@@ -61,7 +85,9 @@ public final class ExpenseStore: ObservableObject {
             categoryBudgets: categoryBudgets,
             summaryEnabled: summaryEnabled,
             summaryPeriod: summaryPeriod,
-            recurringBills: recurringBills
+            recurringBills: recurringBills,
+            appThemeMode: appThemeMode,
+            appAccentColorName: appAccentColorName
         )
         do {
             let encoded = try JSONEncoder().encode(data)
@@ -88,6 +114,8 @@ public final class ExpenseStore: ObservableObject {
             self.summaryEnabled = decoded.summaryEnabled
             self.summaryPeriod = decoded.summaryPeriod
             self.recurringBills = decoded.recurringBills
+            self.appThemeMode = decoded.appThemeMode ?? "system"
+            self.appAccentColorName = decoded.appAccentColorName ?? "green"
         } catch {
             print("Error loading data: \(error)")
             seedInitialData()
@@ -223,5 +251,11 @@ public final class ExpenseStore: ObservableObject {
             saveData()
         }
         return imported
+    }
+
+    public func deleteAllData() {
+        expenses.removeAll()
+        categoryBudgets.removeAll()
+        saveData()
     }
 }

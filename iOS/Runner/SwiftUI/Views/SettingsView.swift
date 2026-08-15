@@ -8,10 +8,105 @@ public struct SettingsView: View {
     @State private var importInputString: String = ""
     @State private var importMessage: String = ""
     @State private var showImportResult: Bool = false
+    @State private var showDeleteAllConfirmation: Bool = false
 
     public var body: some View {
         NavigationStack {
             List {
+                Section(header: Text("APPEARANCE & THEME")) {
+                    // Theme Mode Selector
+                    Picker("Appearance", selection: $store.appThemeMode) {
+                        Text("System").tag("system")
+                        Text("Light").tag("light")
+                        Text("Dark").tag("dark")
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: store.appThemeMode) { _, _ in
+                        UISelectionFeedbackGenerator().selectionChanged()
+                        store.saveData()
+                    }
+
+                    // Accent Color Palette
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Accent Color")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        let colorOptions: [(name: String, color: Color, title: String)] = [
+                            ("green", Color.green, "Green"),
+                            ("blue", Color.blue, "Blue"),
+                            ("indigo", Color.indigo, "Indigo"),
+                            ("purple", Color.purple, "Purple"),
+                            ("orange", Color.orange, "Orange"),
+                            ("teal", Color.teal, "Teal"),
+                            ("pink", Color.pink, "Pink")
+                        ]
+
+                        HStack(spacing: 12) {
+                            ForEach(colorOptions, id: \.name) { opt in
+                                let isSelected = store.appAccentColorName == opt.name
+
+                                Button(action: {
+                                    UISelectionFeedbackGenerator().selectionChanged()
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+                                        store.appAccentColorName = opt.name
+                                        store.saveData()
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(opt.color)
+                                            .frame(width: 32, height: 32)
+
+                                        if isSelected {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 13, weight: .bold))
+                                                .foregroundStyle(.white)
+                                        }
+                                    }
+                                    .overlay(
+                                        Circle()
+                                            .stroke(isSelected ? Color.primary : Color.clear, lineWidth: 2)
+                                            .frame(width: 38, height: 38)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .padding(.vertical, 4)
+
+                    // Liquid Glass Translucency Slider
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Liquid Glass Opacity")
+                                .font(.subheadline)
+                            Spacer()
+                            Text("\(Int(store.glassOpacity * 100))%")
+                                .font(.subheadline.monospacedDigit().weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        HStack(spacing: 12) {
+                            Image(systemName: "circle.dotted")
+                                .foregroundStyle(.secondary)
+                                .font(.system(size: 14))
+
+                            Slider(value: $store.glassOpacity, in: 0.3...1.0, step: 0.05)
+                                .tint(store.accentColor)
+                                .onChange(of: store.glassOpacity) { _, _ in
+                                    store.saveData()
+                                }
+
+                            Image(systemName: "circle.fill")
+                                .foregroundStyle(.secondary)
+                                .font(.system(size: 14))
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 Section(header: Text("BUDGETING")) {
                     Button(action: exportCsv) {
                         Label("Export Data to CSV", systemImage: "arrow.up.doc")
@@ -63,6 +158,15 @@ public struct SettingsView: View {
                     }
                 }
 
+                Section(header: Text("DATA MANAGEMENT")) {
+                    Button(role: .destructive, action: {
+                        showDeleteAllConfirmation = true
+                    }) {
+                        Label("Delete All Data", systemImage: "trash")
+                            .foregroundStyle(.red)
+                    }
+                }
+
                 Section(header: Text("ABOUT")) {
                     HStack {
                         Text("Well Spent")
@@ -79,6 +183,9 @@ public struct SettingsView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 90)
+            }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showExportShareSheet) {
@@ -97,6 +204,15 @@ public struct SettingsView: View {
                 Button("OK") {}
             } message: {
                 Text(importMessage)
+            }
+            .alert("Delete All Data?", isPresented: $showDeleteAllConfirmation) {
+                Button("Delete All Data", role: .destructive) {
+                    UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                    store.deleteAllData()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently remove all transactions and custom category targets. This action cannot be undone.")
             }
         }
     }

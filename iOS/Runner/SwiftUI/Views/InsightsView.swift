@@ -36,7 +36,7 @@ public struct InsightsView: View {
                 .padding(.top, 4)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .background(colorScheme == .dark ? Color(red: 0.04, green: 0.05, blue: 0.08) : Color(uiColor: .systemGroupedBackground))
+            .background(colorScheme == .dark ? Color.black : Color(uiColor: .systemGroupedBackground))
         }
     }
 
@@ -48,7 +48,7 @@ public struct InsightsView: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundStyle(Color.green)
+                    .foregroundStyle(store.accentColor)
             }
 
             HStack(spacing: 20) {
@@ -85,12 +85,15 @@ public struct InsightsView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.85) : Color.white.opacity(0.92))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06), lineWidth: 0.8)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
         )
     }
 
@@ -130,13 +133,13 @@ public struct InsightsView: View {
                         }) {
                             Image(systemName: bill.isPaid ? "checkmark.circle.fill" : "circle")
                                 .font(.system(size: 20))
-                                .foregroundStyle(bill.isPaid ? Color.green : Color.secondary)
+                                .foregroundStyle(bill.isPaid ? store.accentColor : Color.secondary)
                         }
                     }
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.5) : Color.white.opacity(0.8))
+                            .fill(colorScheme == .dark ? Color(white: 0.16).opacity(store.glassOpacity * 0.7) : Color.white.opacity(0.8))
                     )
                 }
             }
@@ -144,12 +147,15 @@ public struct InsightsView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.85) : Color.white.opacity(0.92))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06), lineWidth: 0.8)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
         )
     }
 
@@ -205,12 +211,15 @@ public struct InsightsView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.85) : Color.white.opacity(0.92))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06), lineWidth: 0.8)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
         )
     }
 }

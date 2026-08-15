@@ -37,6 +37,7 @@ public enum TabSelection: Int, CaseIterable, Identifiable {
 }
 
 public struct DualIslandTabBar: View {
+    @EnvironmentObject var store: ExpenseStore
     @Binding var selectedTab: TabSelection
     var onAddTapped: () -> Void
     @Environment(\.colorScheme) var colorScheme
@@ -53,17 +54,20 @@ public struct DualIslandTabBar: View {
                 ZStack(alignment: .leading) {
                     // Outer Frosted Glass Capsule
                     Capsule()
-                        .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.92) : Color.white.opacity(0.94))
+                        .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
+                        .background(
+                            colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                        )
                         .overlay(
                             Capsule()
-                                .stroke(colorScheme == .dark ? Color.white.opacity(0.16) : Color.black.opacity(0.08), lineWidth: 0.8)
+                                .stroke(colorScheme == .dark ? Color.white.opacity(0.22) : Color.black.opacity(0.08), lineWidth: 0.8)
                         )
-                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.08), radius: 20, x: 0, y: 6)
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.6 : 0.08), radius: 20, x: 0, y: 6)
 
                     // Continuous Sliding Thumb Pill (Matching UISegmentedControl Physics)
                     Capsule()
-                        .fill(colorScheme == .dark ? Color(red: 0.17, green: 0.20, blue: 0.28) : Color(red: 0.929, green: 0.929, blue: 0.929))
-                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.08), radius: 6, x: 0, y: 2)
+                        .fill(colorScheme == .dark ? Color(white: 0.22) : Color(red: 0.929, green: 0.929, blue: 0.929))
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.08), radius: 6, x: 0, y: 2)
                         .frame(width: itemWidth, height: 54)
                         .offset(x: 4 + selectedIndex * itemWidth)
                         .animation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2), value: selectedTab)
@@ -85,11 +89,11 @@ public struct DualIslandTabBar: View {
                                 VStack(spacing: 2) {
                                     Image(systemName: isSelected ? tab.activeIcon : tab.icon)
                                         .font(.system(size: 20, weight: isSelected ? .bold : .medium))
-                                        .foregroundStyle(isSelected ? Color.green : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
+                                        .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
 
                                     Text(tab.title)
                                         .font(.system(size: 10.5, weight: isSelected ? .bold : .medium))
-                                        .foregroundStyle(isSelected ? Color.green : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
+                                        .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.11, green: 0.11, blue: 0.12)))
                                         .lineLimit(1)
                                 }
                                 .frame(width: itemWidth, height: 54)
@@ -111,12 +115,12 @@ public struct DualIslandTabBar: View {
             }) {
                 ZStack {
                     Circle()
-                        .fill(Color.green)
+                        .fill(store.accentColor)
                         .overlay(
                             Circle()
                                 .stroke(Color.white.opacity(0.25), lineWidth: 1.0)
                         )
-                        .shadow(color: Color.green.opacity(0.45), radius: 14, x: 0, y: 5)
+                        .shadow(color: store.accentColor.opacity(0.45), radius: 14, x: 0, y: 5)
 
                     Image(systemName: "plus")
                         .font(.system(size: 24, weight: .bold))

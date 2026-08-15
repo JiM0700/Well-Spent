@@ -29,7 +29,7 @@ public struct CategoriesView: View {
                 .padding(.top, 4)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .background(colorScheme == .dark ? Color(red: 0.04, green: 0.05, blue: 0.08) : Color(uiColor: .systemGroupedBackground))
+            .background(colorScheme == .dark ? Color.black : Color(uiColor: .systemGroupedBackground))
             .alert("Edit Category Budget", isPresented: $showEditDialog) {
                 TextField("Budget Amount", text: $newBudgetString)
                     .keyboardType(.decimalPad)
@@ -99,12 +99,15 @@ public struct CategoriesView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.08, green: 0.10, blue: 0.16).opacity(0.7) : Color.white.opacity(0.9))
+                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity * 0.9) : Color.white.opacity(store.glassOpacity))
+                .background(
+                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.05), lineWidth: 0.6)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.05), lineWidth: 0.6)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
         )
         .onTapGesture {
             UISelectionFeedbackGenerator().selectionChanged()
