@@ -420,13 +420,18 @@
 
       </main>
 
-      <!-- ── Mobile Bottom Navigation Bar ────────────────────────────────── -->
-      <nav class="pwa-tabbar glass-bar" id="pwaTabBar" aria-label="Mobile Navigation">
-        <button type="button" class="pwa-tab-btn active" data-tab="overview">🏠 <span>Overview</span></button>
-        <button type="button" class="pwa-tab-btn"        data-tab="categories">🗂️ <span>Envelopes</span></button>
-        <button type="button" class="pwa-tab-btn"        data-tab="insights">📊 <span>Insights</span></button>
-        <button type="button" class="pwa-tab-btn"        data-tab="settings">⚙️ <span>Vault</span></button>
-      </nav>
+      <!-- ── Next-Gen Dual-Island Mobile Navigation Bar ────────────────── -->
+      <div class="pwa-dock-container" id="pwaDockContainer">
+        <nav class="pwa-tabbar glass-bar" id="pwaTabBar" aria-label="Mobile Navigation">
+          <button type="button" class="pwa-tab-btn active" data-tab="overview">🏠 <span>Overview</span></button>
+          <button type="button" class="pwa-tab-btn"        data-tab="categories">🗂️ <span>Categories</span></button>
+          <button type="button" class="pwa-tab-btn"        data-tab="insights">📊 <span>Insights</span></button>
+          <button type="button" class="pwa-tab-btn"        data-tab="settings">⚙️ <span>Settings</span></button>
+        </nav>
+        <button type="button" class="pwa-dock-add-btn glass-bar" id="pwaDockAddBtn" aria-label="Add entry" title="Quick Add">
+          <span>＋</span>
+        </button>
+      </div>
 
     </div><!-- /main-pane -->
   </div><!-- /app-layout -->

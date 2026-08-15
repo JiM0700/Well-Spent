@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show LinearProgressIndicator;
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -156,27 +155,33 @@ class _MacosShellScreenState extends State<MacosShellScreen> {
                     child: Icon(CupertinoIcons.creditcard_fill, size: 16, color: primaryColor),
                   ),
                   const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Well Spent',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                          color: labelColor,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Well Spent',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                            color: labelColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Text(
-                        'Private · Offline',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: primaryColor,
+                        Text(
+                          'Private · Offline',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -236,14 +241,16 @@ class _MacosShellScreenState extends State<MacosShellScreen> {
                     const SizedBox(height: 6),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: SizedBox(
+                      child: Container(
                         height: 5,
-                        child: LinearProgressIndicator(
-                          value: (provider.currentPeriodBudget > 0)
+                        width: double.infinity,
+                        color: CupertinoColors.systemFill.resolveFrom(context),
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: (provider.currentPeriodBudget > 0)
                               ? (provider.currentPeriodTotal / provider.currentPeriodBudget).clamp(0.0, 1.0)
                               : 0.0,
-                          backgroundColor: CupertinoColors.systemFill.resolveFrom(context),
-                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                          child: Container(color: primaryColor),
                         ),
                       ),
                     ),
@@ -393,7 +400,7 @@ class _MacosShellScreenState extends State<MacosShellScreen> {
     final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: (isDark ? const Color(0xFF090D16) : CupertinoColors.systemBackground).withValues(alpha: 0.8),
         border: Border(
@@ -403,48 +410,114 @@ class _MacosShellScreenState extends State<MacosShellScreen> {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.4,
-              color: labelColor,
-            ),
-          ),
-          if (showPeriodSwitcher) ...[
-            const SizedBox(width: 24),
-            SizedBox(
-              width: 260,
-              child: CupertinoSlidingSegmentedControl<String>(
-                groupValue: provider.viewMode,
-                thumbColor: isDark ? const Color(0xFF1B2232) : CupertinoColors.white,
-                children: const {
-                  'weekly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Weekly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-                  'monthly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Monthly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-                  'yearly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Yearly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-                },
-                onValueChanged: (val) {
-                  if (val != null) provider.updateViewMode(val);
-                },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 640;
+          final isUltraNarrow = constraints.maxWidth < 460;
+
+          if (isNarrow && (showPeriodSwitcher || showSearch)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                          color: labelColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (showSearch) ...[
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: isUltraNarrow ? 130 : 180,
+                        child: CupertinoSearchTextField(
+                          controller: _searchController,
+                          placeholder: 'Filter…',
+                          style: TextStyle(fontSize: 12, color: labelColor),
+                          onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (showPeriodSwitcher) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CupertinoSlidingSegmentedControl<String>(
+                      groupValue: provider.viewMode,
+                      thumbColor: isDark ? const Color(0xFF1B2232) : CupertinoColors.white,
+                      children: const {
+                        'weekly': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text('Weekly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                        'monthly': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text('Monthly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                        'yearly': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text('Yearly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                      },
+                      onValueChanged: (val) {
+                        if (val != null) provider.updateViewMode(val);
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                    color: labelColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
-          const Spacer(),
-          if (showSearch) ...[
-            SizedBox(
-              width: 220,
-              child: CupertinoSearchTextField(
-                controller: _searchController,
-                placeholder: 'Filter activity…',
-                style: TextStyle(fontSize: 13, color: labelColor),
-                onChanged: (val) => setState(() => _searchQuery = val.trim()),
-              ),
-            ),
-          ],
-        ],
+              if (showPeriodSwitcher) ...[
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 250,
+                  child: CupertinoSlidingSegmentedControl<String>(
+                    groupValue: provider.viewMode,
+                    thumbColor: isDark ? const Color(0xFF1B2232) : CupertinoColors.white,
+                    children: const {
+                      'weekly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Weekly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                      'monthly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Monthly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                      'yearly': Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: Text('Yearly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                    },
+                    onValueChanged: (val) {
+                      if (val != null) provider.updateViewMode(val);
+                    },
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (showSearch) ...[
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 200,
+                  child: CupertinoSearchTextField(
+                    controller: _searchController,
+                    placeholder: 'Filter activity…',
+                    style: TextStyle(fontSize: 13, color: labelColor),
+                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -470,186 +543,258 @@ class _MacosShellScreenState extends State<MacosShellScreen> {
           showPeriodSwitcher: true,
           showSearch: true,
         ),
-
-        // 2-Column Fixed Desktop Viewport with Independent Internal Scrolling
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── LEFT PANE: Fixed Glance & Forecast (Scrolls vertically if small screen) ──
-                SizedBox(
-                  width: 380,
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      SummaryCard(
-                        periodLabel: provider.currentPeriodLabel,
-                        periodTotal: provider.currentPeriodTotal,
-                        todayTotal: provider.todayTotal,
-                        periodBudget: provider.currentPeriodBudget,
-                        onEditBudget: () => _showSetBudgetDialog(context, provider),
-                        summaryEnabled: provider.summaryEnabled,
-                        summaryWindowLabel: provider.summaryPeriodLabel,
-                        summaryRangeLabel: provider.summaryRangeLabel,
-                        summaryDifferenceLabel: provider.summaryDifferenceLabel,
-                        summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
-                      ),
-                      const SizedBox(height: 16),
-                      ForecastCard(forecast: provider.forecast),
-                      const SizedBox(height: 16),
-                      const RecurringBillsCard(),
-                    ],
-                  ),
-                ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isTwoColumn = constraints.maxWidth >= 760;
 
-                const SizedBox(width: 20),
-
-                // ── RIGHT PANE: Flex 1 Activity Feed (100% Height Locked & Scrollable) ──────
-                Expanded(
-                  child: LiquidGlassContainer(
-                    borderRadius: 22,
-                    padding: const EdgeInsets.all(18),
-                    fillOpacity: 0.06,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recent Activity',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.3,
-                                color: labelColor,
-                              ),
-                            ),
-                            Text(
-                              '${filteredExpenses.length} entries',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: secondaryLabel),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Category Filter Chips Row
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              LiquidGlassChip(
-                                label: 'All',
-                                isSelected: provider.selectedCategoryFilter == null,
-                                onPressed: () => provider.filterByCategory(null),
-                              ),
-                              const SizedBox(width: 6),
-                              ...ExpenseCategory.values.map((cat) => Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: LiquidGlassChip(
-                                      label: cat.displayName,
-                                      isSelected: provider.selectedCategoryFilter == cat,
-                                      onPressed: () => provider.filterByCategory(cat),
-                                    ),
-                                  )),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Scrollable List of Transactions
-                        Expanded(
-                          child: filteredExpenses.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(CupertinoIcons.doc_text, size: 40, color: secondaryLabel),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'No transactions found',
-                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: secondaryLabel),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : ListView.builder(
-                                  itemCount: filteredExpenses.length,
-                                  itemBuilder: (context, index) {
-                                    final item = filteredExpenses[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: LiquidGlassContainer(
-                                        borderRadius: 14,
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                        fillOpacity: 0.04,
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 36,
-                                              height: 36,
-                                              decoration: BoxDecoration(
-                                                color: (item.isIncome ? primaryColor : CupertinoColors.activeBlue)
-                                                    .withValues(alpha: 0.16),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Icon(
-                                                _getCategoryIcon(item.category),
-                                                size: 16,
-                                                color: item.isIncome ? primaryColor : CupertinoColors.activeBlue,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    item.title,
-                                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
-                                                  ),
-                                                  Text(
-                                                    '${item.category.displayName} · ${DateFormat('MMM d, yyyy').format(item.date)}',
-                                                    style: TextStyle(fontSize: 12, color: secondaryLabel),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Text(
-                                              '${item.isIncome ? '+' : '-'}₹${item.amount.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w700,
-                                                color: item.isIncome ? primaryColor : labelColor,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            CupertinoButton(
-                                              padding: EdgeInsets.zero,
-                                              minimumSize: Size.zero,
-                                              onPressed: () {
-                                                if (item.id != null) provider.deleteExpense(item.id!);
-                                              },
-                                              child: Icon(CupertinoIcons.trash, size: 14, color: secondaryLabel),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
+              if (!isTwoColumn) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    SummaryCard(
+                      periodLabel: provider.currentPeriodLabel,
+                      periodTotal: provider.currentPeriodTotal,
+                      todayTotal: provider.todayTotal,
+                      periodBudget: provider.currentPeriodBudget,
+                      onEditBudget: () => _showSetBudgetDialog(context, provider),
+                      summaryEnabled: provider.summaryEnabled,
+                      summaryWindowLabel: provider.summaryPeriodLabel,
+                      summaryRangeLabel: provider.summaryRangeLabel,
+                      summaryDifferenceLabel: provider.summaryDifferenceLabel,
+                      summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    ForecastCard(forecast: provider.forecast),
+                    const SizedBox(height: 16),
+                    const RecurringBillsCard(),
+                    const SizedBox(height: 16),
+                    _buildActivityFeedContainer(
+                      context,
+                      provider,
+                      filteredExpenses,
+                      labelColor,
+                      secondaryLabel,
+                      primaryColor,
+                      isExpandable: false,
+                    ),
+                  ],
+                );
+              }
+
+              // 2-Column Fixed Desktop Viewport with Independent Internal Scrolling
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── LEFT PANE: Fixed Glance & Forecast (Scrolls vertically if small screen) ──
+                    SizedBox(
+                      width: (constraints.maxWidth * 0.42).clamp(320.0, 390.0),
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        children: [
+                          SummaryCard(
+                            periodLabel: provider.currentPeriodLabel,
+                            periodTotal: provider.currentPeriodTotal,
+                            todayTotal: provider.todayTotal,
+                            periodBudget: provider.currentPeriodBudget,
+                            onEditBudget: () => _showSetBudgetDialog(context, provider),
+                            summaryEnabled: provider.summaryEnabled,
+                            summaryWindowLabel: provider.summaryPeriodLabel,
+                            summaryRangeLabel: provider.summaryRangeLabel,
+                            summaryDifferenceLabel: provider.summaryDifferenceLabel,
+                            summaryTopCategoryLabel: provider.summaryTopCategoryLabel,
+                          ),
+                          const SizedBox(height: 16),
+                          ForecastCard(forecast: provider.forecast),
+                          const SizedBox(height: 16),
+                          const RecurringBillsCard(),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 18),
+
+                    // ── RIGHT PANE: Flex 1 Activity Feed (100% Height Locked & Scrollable) ──────
+                    Expanded(
+                      child: _buildActivityFeedContainer(
+                        context,
+                        provider,
+                        filteredExpenses,
+                        labelColor,
+                        secondaryLabel,
+                        primaryColor,
+                        isExpandable: true,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActivityFeedContainer(
+    BuildContext context,
+    ExpenseProvider provider,
+    List<Expense> filteredExpenses,
+    Color labelColor,
+    Color secondaryLabel,
+    Color primaryColor, {
+    required bool isExpandable,
+  }) {
+    final listWidget = filteredExpenses.isEmpty
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.doc_text, size: 40, color: secondaryLabel),
+                  const SizedBox(height: 10),
+                  Text(
+                    'No transactions found',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: secondaryLabel),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : ListView.builder(
+            shrinkWrap: !isExpandable,
+            physics: isExpandable ? null : const NeverScrollableScrollPhysics(),
+            itemCount: filteredExpenses.length,
+            itemBuilder: (context, index) {
+              final item = filteredExpenses[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: LiquidGlassContainer(
+                  borderRadius: 14,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  fillOpacity: 0.04,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: (item.isIncome ? primaryColor : CupertinoColors.activeBlue)
+                              .withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _getCategoryIcon(item.category),
+                          size: 16,
+                          color: item.isIncome ? primaryColor : CupertinoColors.activeBlue,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${item.category.displayName} · ${DateFormat('MMM d, yyyy').format(item.date)}',
+                              style: TextStyle(fontSize: 12, color: secondaryLabel),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${item.isIncome ? '+' : '-'}₹${item.amount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: item.isIncome ? primaryColor : labelColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        onPressed: () {
+                          if (item.id != null) provider.deleteExpense(item.id!);
+                        },
+                        child: Icon(CupertinoIcons.trash, size: 14, color: secondaryLabel),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+
+    return LiquidGlassContainer(
+      borderRadius: 22,
+      padding: const EdgeInsets.all(18),
+      fillOpacity: 0.06,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: isExpandable ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent Activity',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: labelColor,
+                ),
+              ),
+              Text(
+                '${filteredExpenses.length} entries',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: secondaryLabel),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Category Filter Chips Row
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                LiquidGlassChip(
+                  label: 'All',
+                  isSelected: provider.selectedCategoryFilter == null,
+                  onPressed: () => provider.filterByCategory(null),
+                ),
+                const SizedBox(width: 6),
+                ...ExpenseCategory.values.map((cat) => Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: LiquidGlassChip(
+                        label: cat.displayName,
+                        isSelected: provider.selectedCategoryFilter == cat,
+                        onPressed: () => provider.filterByCategory(cat),
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          if (isExpandable)
+            Expanded(child: listWidget)
+          else
+            listWidget,
+        ],
+      ),
     );
   }
 

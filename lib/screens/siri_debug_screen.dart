@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show SelectableText;
 import '../services/siri_service.dart';
 import '../widgets/liquid_glass_container.dart';
 
@@ -147,7 +146,7 @@ class _SiriDebugScreenState extends State<SiriDebugScreen> {
                   fillOpacity: 0.12,
                   child: SingleChildScrollView(
                     reverse: true,
-                    child: SelectableText(
+                    child: Text(
                       _output,
                       style: TextStyle(
                         fontFamily: 'Courier New',

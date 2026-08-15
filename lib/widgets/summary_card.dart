@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show LinearProgressIndicator;
 import 'liquid_glass_container.dart';
 
 /// Apple-native Liquid Glass Summary Card (iOS / macOS 26 style).
@@ -107,13 +106,15 @@ class SummaryCard extends StatelessWidget {
           // Glowing Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
+            child: Container(
               height: 10,
-              child: LinearProgressIndicator(
-                value: usagePct,
-                backgroundColor: CupertinoColors.systemFill.resolveFrom(context),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  isOverBudget ? dangerColor : primaryColor,
+              width: double.infinity,
+              color: CupertinoColors.systemFill.resolveFrom(context),
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: usagePct.clamp(0.0, 1.0),
+                child: Container(
+                  color: isOverBudget ? dangerColor : primaryColor,
                 ),
               ),
             ),

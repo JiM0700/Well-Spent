@@ -10,7 +10,6 @@ import '../providers/expense_provider.dart';
 import '../widgets/forecast_card.dart';
 import '../widgets/liquid_glass_chip.dart';
 import '../widgets/liquid_glass_container.dart';
-import '../widgets/quick_add_modal.dart';
 import '../widgets/recurring_bills_card.dart';
 import '../widgets/summary_card.dart';
 
@@ -22,14 +21,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  void _showAddExpenseModal(BuildContext context) {
-    HapticFeedback.mediumImpact();
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => const QuickAddModal(),
-    );
-  }
-
   void _showSetBudgetDialog(BuildContext context, ExpenseProvider provider) {
     final controller = TextEditingController(text: provider.monthlyBudget.toStringAsFixed(0));
     showCupertinoDialog<void>(
@@ -111,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return CupertinoPageScaffold(
       backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFF2F4F7),
       child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         slivers: [
           CupertinoSliverNavigationBar(
             largeTitle: const Text(
@@ -126,20 +117,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             stretch: true,
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              onPressed: () => _showAddExpenseModal(context),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(CupertinoIcons.plus, size: 18, color: primaryColor),
-              ),
-            ),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
@@ -266,7 +243,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         LiquidGlassChip(
                           label: 'All Activity',
                           isSelected: provider.selectedCategoryFilter == null,
-                          onPressed: () => provider.filterByCategory(null),
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            provider.filterByCategory(null);
+                          },
                         ),
                         const SizedBox(width: 8),
                         ...ExpenseCategory.values.map((cat) => Padding(
@@ -274,7 +254,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: LiquidGlassChip(
                                 label: cat.displayName,
                                 isSelected: provider.selectedCategoryFilter == cat,
-                                onPressed: () => provider.filterByCategory(cat),
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  provider.filterByCategory(cat);
+                                },
                               ),
                             )),
                       ],
@@ -401,7 +384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: 90)),
           ],
         ),
       );

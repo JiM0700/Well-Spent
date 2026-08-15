@@ -1189,31 +1189,96 @@ input, select, textarea { font-family: inherit; }
   color: var(--text-muted);
 }
 
-/* ── Mobile Bottom Navigation Bar ───────────────────────────────────────── */
-.pwa-tabbar {
+/* ── Apple Dual-Island Floating Navigation (Mobile PWA) ────────────────── */
+.pwa-dock-container {
   display: none;
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  max-width: 440px;
+  margin: 0 auto;
+  z-index: 100;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.pwa-tabbar {
+  flex: 1;
+  display: flex;
   height: 60px;
-  flex-shrink: 0;
   align-items: center;
   justify-content: space-around;
-  background: var(--clr-toolbar);
-  backdrop-filter: blur(var(--glass-blur)) saturate(190%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(190%);
-  border-top: 1px solid var(--glass-border);
+  background: rgba(14, 20, 32, 0.85);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 36px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 4px 6px;
+  pointer-events: auto;
 }
 .pwa-tab-btn {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pwa-tab-btn span {
+  font-size: 0.65rem;
   font-weight: 600;
-  padding: 6px 12px;
+  letter-spacing: -0.01em;
 }
 .pwa-tab-btn.active {
+  background: rgba(255, 255, 255, 0.14);
   color: var(--accent);
+}
+.pwa-tab-btn.active span {
+  color: var(--accent);
+  font-weight: 700;
+}
+.pwa-dock-add-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14, 20, 32, 0.85);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s, background 0.2s;
+}
+.pwa-dock-add-btn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(48, 209, 88, 0.2);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+  color: var(--accent);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.pwa-dock-add-btn:active {
+  transform: scale(0.94);
 }
 
 /* ── Quick Add Modal & Dialogs ──────────────────────────────────────────── */
@@ -1444,11 +1509,11 @@ input, select, textarea { font-family: inherit; }
 
 @media (max-width: 799px) {
   .pwa-sidebar { display: none; }
-  .pwa-tabbar { display: flex; }
+  .pwa-dock-container { display: flex; }
   .mobile-brand { display: flex; }
   .toolbar-title { display: none; }
   .main-toolbar { padding: 0 16px; }
-  .tab-view { padding: 14px 16px; }
+  .tab-view { padding: 14px 16px 96px 16px; }
   #openAddModalBtn {
     padding: 6px 12px;
     height: 32px;

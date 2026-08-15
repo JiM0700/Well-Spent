@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show LinearProgressIndicator;
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
@@ -28,13 +27,36 @@ class AnalyticsScreen extends StatelessWidget {
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     Widget content = CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       slivers: [
         if (showNavigationBar)
           CupertinoSliverNavigationBar(
-            largeTitle: const Text(
-              'Insights',
-              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
+            largeTitle: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Insights',
+                  style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${provider.currentPeriodLabel} View',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: secondaryLabel,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.82),
             border: Border(
@@ -44,24 +66,9 @@ class AnalyticsScreen extends StatelessWidget {
               ),
             ),
             stretch: true,
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                '${provider.currentPeriodLabel} View',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: secondaryLabel,
-                ),
-              ),
-            ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 40),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 90),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               // ─── Forecast & Burn Rate Card ──────────────────────────────────────
@@ -231,14 +238,16 @@ class AnalyticsScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
-                                child: SizedBox(
+                                child: Container(
                                   height: 6,
-                                  child: LinearProgressIndicator(
-                                    value: pct,
-                                    backgroundColor: isDark
-                                        ? CupertinoColors.white.withValues(alpha: 0.08)
-                                        : CupertinoColors.black.withValues(alpha: 0.06),
-                                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                  width: double.infinity,
+                                  color: isDark
+                                      ? CupertinoColors.white.withValues(alpha: 0.08)
+                                      : CupertinoColors.black.withValues(alpha: 0.06),
+                                  alignment: Alignment.centerLeft,
+                                  child: FractionallySizedBox(
+                                    widthFactor: pct.clamp(0.0, 1.0),
+                                    child: Container(color: primaryColor),
                                   ),
                                 ),
                               ),

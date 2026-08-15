@@ -1,16 +1,19 @@
-import Flutter
 import UIKit
+import SwiftUI
 
 @main
-@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
+@objc class AppDelegate: UIResponder, UIApplicationDelegate {
+    var window: UIWindow?
 
-  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
-    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-  }
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        let rootView = WellSpentRootView()
+        window.rootViewController = UIHostingController(rootView: rootView)
+        self.window = window
+        window.makeKeyAndVisible()
+        return true
+    }
 }

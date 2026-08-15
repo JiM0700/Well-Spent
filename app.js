@@ -1008,6 +1008,7 @@ document.getElementById('pwaTabBar')?.addEventListener('click', e => {
 
 // Add Modal button
 document.getElementById('openAddModalBtn')?.addEventListener('click', openModal);
+document.getElementById('pwaDockAddBtn')?.addEventListener('click', openModal);
 document.getElementById('sidebarAddBtn')?.addEventListener('click', openModal);
 
 // View Mode Switcher
