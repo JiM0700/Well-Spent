@@ -1,72 +1,106 @@
-# Well Spent
+# Well Spent 🍏
 
-Well Spent is a private, offline-first expense tracker. It stores expenses and budget settings in the browser’s `localStorage`; no account or backend is required.
+**Well Spent** is an offline-first, private personal finance and expense tracking application crafted with **100% Pure Native Apple SwiftUI** (iOS 17+).
 
-## Project status
+Designed from the ground up to adhere to Apple's Human Interface Guidelines (HIG), Well Spent delivers tactile responsiveness, fluid physics, authentic `.ultraThinMaterial` Liquid Glass aesthetics, and offline local data privacy.
 
-The browser/PWA implementation is complete and can run from the web assets in this repository. The Flutter native implementation is active and now includes both macOS and iOS scaffolding:
+---
 
-- Native macOS support has been validated with Xcode and Flutter build tooling.
-- The iOS platform was generated and can be deployed to a connected device after Xcode signing is configured.
+## ✨ Features & Highlights
 
-## Delivery phases
+### 📱 100% Pure Native SwiftUI Architecture
+- **Zero Third-Party UI Dependencies**: Built entirely using first-party Apple frameworks: `SwiftUI`, `import Charts`, `Combine`, `UIKit` (Taptic Engine haptics), and `Foundation`.
+- **High-Performance Rendering**: Fluid $120\text{Hz}$ ProMotion support with continuous spring animations (`.spring(response:dampingFraction:)`).
+- **iOS 17+ Modern APIs**: Utilizes `ContentUnavailableView`, `SectorMark` donut visualizers, `.safeAreaInset()`, and `.buttonStyle(.borderedProminent)`.
 
-| Phase | Status | Scope |
-| --- | --- | --- |
-| 1. Core expense tracking | ✅ Complete | Add, view, filter, and delete expenses with categories, dates, and quick amount formulas. |
-| 2. Budgets and insights | ✅ Complete | Weekly, monthly, and yearly views; budget progress; velocity and period-end forecasting; category breakdowns; day-wise and month-wise trends. |
-| 3. Data portability and offline web app | ✅ Complete | CSV import/export, responsive UI, installable PWA metadata, and service-worker app-shell caching. |
-| 4. Native Flutter app | 🚧 In progress | Flutter app is scaffolded for macOS and iOS, including SQLite persistence, dashboard, analytics, forecasts, and device build support. Device signing is the remaining deployment step for real iPhone installs. |
-| 5. Cloud and integrations | ⏳ Planned | Optional authentication, cloud sync, cross-device backup, and bank integrations. |
+### 🏝️ Apple Dual-Island Floating Tab Bar
+- **Continuous Segmented Sliding Track**: Mimics `UISegmentedControl` thumb kinematics with spring interpolation across tabs.
+- **Interactive Liquid Glass Glow Aura**: A dynamic `RadialGradient` light aura illuminates underneath the active tab button.
+- **Dual-Sheen Refractive Glass Rims**: Specular meniscus highlights along the leading edges of the `.ultraThinMaterial` capsule.
+- **Long-Press Water Bubble Physics**: Holding a tab button expands the liquid water-droplet lens (`scaleEffect(1.12, 1.08)`) with internal caustic highlights and a rigid Taptic Engine pulse (`UIImpactFeedbackGenerator`).
+- **Dedicated Floating Action Pod**: An independent solid accent island with glowing corona shadow for instant transaction entry.
 
-**Current focus:** finish native Flutter feature parity, finalize build compatibility, and enable device deployment.
+### 🎨 Pitch Black OLED & App-Wide Color System
+- **True Pitch Black (`#000000`) Dark Mode**: Pixels turn completely off on OLED Super Retina XDR displays.
+- **Crisp Apple System Grouped Light Mode**: Balanced neutral hierarchy using Apple standard system backgrounds.
+- **System / Dark / Light Appearance Toggle**: Instant runtime switching in **Settings $\rightarrow$ APPEARANCE & THEME**.
+- **7 Curated Apple System Accent Colors**:
+  - 🍏 Apple Green (Default)
+  - 🔵 Apple Blue
+  - 🟣 Apple Indigo
+  - 🔮 Apple Purple
+  - 🍊 Apple Orange
+  - 🌊 Apple Teal
+  - 🌸 Apple Pink
+  - Dynamically transforms active tab glyphs, floating action pods, progress meters, category filter chips, and interactive buttons app-wide.
 
-## Features
+### 📊 Insights & Visual Analytics
+- **Today's Pulse & Monthly Envelope**: Instant day-wise burn rate vs. total budget with percentage badges and dynamic progress meters.
+- **Apple Swift Charts Spend Distribution**: Native `SectorMark` donut chart breaking down expenses across categories.
+- **Projected Velocity Forecasting**: Real-time month-end spend estimation and daily average burn metrics.
+- **Fixed Commitments & Recurring Bills**: Track recurring subscriptions, maintenance, and bills with one-tap payment toggle checkboxes.
+- **Envelope Budgeting**: Custom monthly budget targets for individual categories (Food & Dining, Transport, Utilities, Entertainment, Health, Shopping, Housing, Other) with alert thresholds.
 
-- Add expenses with category, date, and simple `+`/`-` amount formulas.
-- Track recurring base income by pay day and add one-off income entries from the same entry form.
-- Weekly, monthly, and yearly spending views with configurable monthly cycle start day.
-- Budget progress remains spending-versus-budget focused, with earned income, budgeted/spent totals, net remaining, and savings-target context.
-- Savings-rate tracking, payday-based safe daily burn, and fixed-versus-variable expense insights.
-- Configurable in-app spending summaries for yesterday, the last 7 days, or the current month, with period comparisons and top-category breakdowns.
-- Progressive-disclosure dashboard: budget status and activity stay prominent while forecasts, charts, summaries, and filters expand on demand.
-- Daily velocity, end-of-period forecast, and category breakdown.
-- Day-wise and month-wise spending trend chart.
-- Category filters, delete actions, CSV export/import, responsive layout, and installable PWA support.
+### 🔒 Privacy-First Local Storage & Portability
+- **100% Offline**: No accounts, tracking, or cloud servers required. All transactions are serialized to local JSON storage atomically.
+- **CSV Data Portability**: Export all transaction history to CSV or import existing CSV datasets.
+- **Data Management**: Safe **"Delete All Data"** destructive action protected by Apple centered confirmation modal dialogs and warning haptics.
 
-## Run locally
+---
 
-Because service workers require an HTTP origin, serve the project with any small static server:
+## 🏗️ Project Architecture
 
-```bash
-python3 -m http.server 8080
+```
+Well-Spent/
+├── ios/
+│   ├── Runner/
+│   │   ├── SwiftUI/
+│   │   │   ├── Models/
+│   │   │   │   └── Expense.swift              # Expense & Category models, SF Symbols & colors
+│   │   │   ├── Services/
+│   │   │   │   └── ExpenseStore.swift         # ObservableObject store, JSON persistence, metrics
+│   │   │   └── Views/
+│   │   │       ├── WellSpentRootView.swift    # Root tab navigation container & theme provider
+│   │   │       ├── OverviewView.swift         # Dashboard pulse, search bar, filter chips, activity feed
+│   │   │       ├── CategoriesView.swift       # Category envelope targets & budget progress cards
+│   │   │       ├── InsightsView.swift         # Swift Charts donut, velocity forecast & recurring bills
+│   │   │       ├── SettingsView.swift         # Appearance picker, accent palette, CSV import/export, reset
+│   │   │       ├── QuickAddView.swift         # Sheet modal with centered amount and category selector
+│   │   │       └── Components/
+│   │   │           └── DualIslandTabBar.swift # Dual-island dock with liquid glow & water bubble physics
+│   │   ├── AppDelegate.swift                  # Pure SwiftUI window scene hosting
+│   │   └── SceneDelegate.swift                # Window lifecycle management
+│   └── Runner.xcodeproj/                      # Configured with IPHONEOS_DEPLOYMENT_TARGET = 17.0
+└── README.md
 ```
 
-Open <http://localhost:8080> in a browser. The app is also suitable for static hosting (GitHub Pages, Netlify, or similar).
+---
 
-### Native Flutter setup
+## 🚀 Building & Running Locally
 
-The project uses a local Flutter SDK at `.flutter-sdk/` (ignored by Git). From the project root:
+### Requirements
+- **macOS** with **Xcode 15+** installed.
+- **iOS 17.0+ Simulator** (e.g., iPhone 15 / 16 / 17 or iPhone 14 Pro).
 
-```bash
-./.flutter-sdk/bin/flutter pub get
-./.flutter-sdk/bin/flutter analyze
-```
+### Build & Run via Xcode / Command Line
 
-The native implementation passes Flutter analysis with informational notices only. A few Flutter API deprecations and minor const/style suggestions remain for future cleanup.
+1. Open the workspace in Xcode:
+   ```bash
+   open ios/Runner.xcworkspace
+   ```
+2. Or build and launch directly on the iOS Simulator from terminal:
+   ```bash
+   # Build for iOS Simulator
+   xcodebuild -workspace ios/Runner.xcworkspace \
+              -scheme Runner \
+              -destination 'platform=iOS Simulator,name=iPhone 17' \
+              build
 
-## Data and privacy
+   # Launch on booted simulator
+   xcrun simctl launch booted com.example.wellSpent
+   ```
 
-Data is kept locally in the browser under the `well_spent_*` storage keys. Expenses and one-off income share the existing entries storage with a `type` of `expense` or `income`; expenses also carry an `expenseKind` of `fixed` or `variable`. Recurring income and pay-day settings have their own keys. Clearing site data removes it. Use **Export CSV** regularly if the data matters; **Import CSV** restores a Well Spent export and replaces the current entries.
+---
 
-The service worker caches the local app shell for offline use. The Google Fonts stylesheet is optional; the app falls back to system fonts when offline.
-
-## Project layout
-
-- `index.html`, `styles.css`, `app.js` — the runnable web/PWA app.
-- `sw.js`, `manifest.json`, `icon.*` — offline and install metadata.
-- `lib/`, platform folders, and `pubspec.yaml` — the Flutter implementation for native builds.
-
-## Limitations
-
-This version intentionally has no cloud sync, authentication, bank integrations, or cross-device backup. Browser storage is device/profile-specific.
+## 📄 License
+MIT License. Created with pure SwiftUI for private, local financial clarity.
