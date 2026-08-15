@@ -55,7 +55,7 @@ public struct OverviewView: View {
                     .padding(.vertical, 8)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.16).opacity(store.glassOpacity) : Color.black.opacity(0.05))
+                            .fill(colorScheme == .dark ? Color(uiColor: .secondarySystemGroupedBackground) : Color(uiColor: .systemGray6))
                     )
                     .padding(.horizontal)
 
@@ -155,16 +155,13 @@ public struct OverviewView: View {
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
         )
     }
 
@@ -212,7 +209,7 @@ public struct OverviewView: View {
                 .padding(.vertical, 7)
                 .background(
                     Capsule()
-                        .fill(isSelected ? store.accentColor.opacity(0.18) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
+                        .fill(isSelected ? store.accentColor.opacity(0.18) : (colorScheme == .dark ? Color(uiColor: .secondarySystemGroupedBackground) : Color(uiColor: .systemGray6)))
                         .overlay(
                             Capsule()
                                 .stroke(isSelected ? store.accentColor.opacity(0.35) : Color.clear, lineWidth: 0.8)
@@ -225,14 +222,14 @@ public struct OverviewView: View {
     // ── Transaction Row ───────────────────────────────────────────────────
 
     private func transactionRow(for expense: Expense) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             // Category Icon Badge
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(expense.category.color.opacity(0.16))
-                    .frame(width: 44, height: 44)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(expense.category.color.opacity(0.18))
+                    .frame(width: 42, height: 42)
                 Image(systemName: expense.category.sfSymbol)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 19, weight: .semibold))
                     .foregroundStyle(expense.category.color)
             }
 
@@ -269,14 +266,11 @@ public struct OverviewView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity * 0.9) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.05), lineWidth: 0.6)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04), lineWidth: 0.6)
                 )
         )
         .contextMenu {

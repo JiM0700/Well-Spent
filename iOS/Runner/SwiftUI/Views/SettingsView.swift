@@ -76,35 +76,6 @@ public struct SettingsView: View {
                         .padding(.vertical, 4)
                     }
                     .padding(.vertical, 4)
-
-                    // Liquid Glass Translucency Slider
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Liquid Glass Opacity")
-                                .font(.subheadline)
-                            Spacer()
-                            Text("\(Int(store.glassOpacity * 100))%")
-                                .font(.subheadline.monospacedDigit().weight(.semibold))
-                                .foregroundStyle(.secondary)
-                        }
-
-                        HStack(spacing: 12) {
-                            Image(systemName: "circle.dotted")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 14))
-
-                            Slider(value: $store.glassOpacity, in: 0.3...1.0, step: 0.05)
-                                .tint(store.accentColor)
-                                .onChange(of: store.glassOpacity) { _, _ in
-                                    store.saveData()
-                                }
-
-                            Image(systemName: "circle.fill")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 14))
-                        }
-                    }
-                    .padding(.vertical, 4)
                 }
 
                 Section(header: Text("BUDGETING")) {

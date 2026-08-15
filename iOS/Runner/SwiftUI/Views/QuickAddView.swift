@@ -39,13 +39,10 @@ public struct QuickAddView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                            .background(
-                                colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                            )
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
+                                    .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
                             )
                     )
                     .padding(.horizontal)
@@ -72,30 +69,21 @@ public struct QuickAddView: View {
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                                    .background(
-                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                                    )
+                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             )
 
                         DatePicker("Date", selection: $date, displayedComponents: .date)
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                                    .background(
-                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                                    )
+                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             )
 
                         TextField("Optional Notes", text: $notes)
                             .padding(14)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color(white: 0.14).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                                    .background(
-                                        colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                                    )
+                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             )
                     }
                     .padding(.horizontal)

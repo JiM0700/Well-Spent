@@ -84,16 +84,13 @@ public struct InsightsView: View {
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
         )
     }
 
@@ -139,23 +136,20 @@ public struct InsightsView: View {
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.16).opacity(store.glassOpacity * 0.7) : Color.white.opacity(0.8))
+                            .fill(colorScheme == .dark ? Color(white: 0.16) : Color(uiColor: .systemGray6))
                     )
                 }
             }
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
         )
     }
 
@@ -210,16 +204,13 @@ public struct InsightsView: View {
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.06), lineWidth: 0.8)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.04), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.06), radius: 16, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
         )
     }
 }

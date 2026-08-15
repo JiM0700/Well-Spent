@@ -98,16 +98,13 @@ public struct CategoriesView: View {
         }
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(colorScheme == .dark ? Color(white: 0.12).opacity(store.glassOpacity * 0.9) : Color.white.opacity(store.glassOpacity))
-                .background(
-                    colorScheme == .dark ? .ultraThinMaterial : .regularMaterial
-                )
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.05), lineWidth: 0.6)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04), lineWidth: 0.6)
                 )
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.04), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 8, x: 0, y: 3)
         )
         .onTapGesture {
             UISelectionFeedbackGenerator().selectionChanged()
