@@ -190,8 +190,14 @@ class _QuickAddModalState extends State<QuickAddModal> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ExpenseProvider>();
     final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
     final accentGreen = CupertinoColors.systemGreen.resolveFrom(context);
+
+    final envBudget = provider.getCategoryBudget(_selectedCategory);
+    final currentCatSpent = provider.categoryBreakdown[_selectedCategory] ?? 0.0;
+    final entersAmount = _evaluatedAmount ?? double.tryParse(_amountController.text.trim()) ?? 0.0;
+    final isOverEnvelope = _selectedType == ExpenseType.expense && envBudget > 0 && entersAmount > 0 && (currentCatSpent + entersAmount > envBudget);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -543,6 +549,29 @@ class _QuickAddModalState extends State<QuickAddModal> {
                       ),
                     ],
                   ),
+                  if (isOverEnvelope) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemRed.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: CupertinoColors.systemRed.withValues(alpha: 0.35), width: 0.8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(CupertinoIcons.exclamationmark_triangle_fill, size: 14, color: CupertinoColors.systemRed),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Exceeds ${_selectedCategory.displayName} envelope target (₹${envBudget.toStringAsFixed(0)}) by ₹${(currentCatSpent + entersAmount - envBudget).toStringAsFixed(0)}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: CupertinoColors.systemRed),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 26),
 
                   // Submit Button

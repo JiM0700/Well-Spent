@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show SelectableText;
 import '../services/siri_service.dart';
+import '../widgets/liquid_glass_container.dart';
 
 /// Debug screen for testing Siri functionality on macOS
 class SiriDebugScreen extends StatefulWidget {
-  const SiriDebugScreen({Key? key}) : super(key: key);
+  const SiriDebugScreen({super.key});
 
   @override
   State<SiriDebugScreen> createState() => _SiriDebugScreenState();
@@ -18,7 +19,7 @@ class _SiriDebugScreenState extends State<SiriDebugScreen> {
     setState(() {
       _output = '${DateTime.now().toIso8601String()}: $message\n$_output';
     });
-    print('[Siri Debug] $message');
+    debugPrint('[Siri Debug] $message');
   }
 
   Future<void> _testAddTransaction() async {
@@ -92,68 +93,74 @@ class _SiriDebugScreenState extends State<SiriDebugScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Siri Debug Testing'),
-        elevation: 0,
+    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
+
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Siri Debug Testing'),
       ),
-      body: Column(
-        children: [
-          // Test Buttons
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _testAddTransaction,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Transaction (₹50 Coffee)'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _testGetBudget,
-                  icon: const Icon(Icons.wallet),
-                  label: const Text('Get Budget'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _testGetSpending,
-                  icon: const Icon(Icons.show_chart),
-                  label: const Text('Get Spending'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: () => setState(() => _output = ''),
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Clear Output'),
-                ),
-              ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Test Buttons
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CupertinoButton.filled(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    onPressed: _isLoading ? null : _testAddTransaction,
+                    child: const Text('Add Transaction (₹50 Coffee)'),
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoButton(
+                    color: CupertinoColors.activeBlue,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    onPressed: _isLoading ? null : _testGetBudget,
+                    child: const Text('Get Budget', style: TextStyle(color: CupertinoColors.white)),
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoButton(
+                    color: CupertinoColors.systemIndigo,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    onPressed: _isLoading ? null : _testGetSpending,
+                    child: const Text('Get Spending', style: TextStyle(color: CupertinoColors.white)),
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    onPressed: () => setState(() => _output = ''),
+                    child: const Text('Clear Output'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          // Divider
-          const Divider(height: 1),
-          
-          // Output Console
-          Expanded(
-            child: Container(
-              color: Colors.grey[900],
-              padding: const EdgeInsets.all(12),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: SelectableText(
-                  _output,
-                  style: const TextStyle(
-                    fontFamily: 'Courier New',
-                    fontSize: 11,
-                    color: Colors.green,
+            
+            // Output Console in LiquidGlassContainer
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: LiquidGlassContainer(
+                  borderRadius: 16,
+                  padding: const EdgeInsets.all(14),
+                  fillOpacity: 0.12,
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    child: SelectableText(
+                      _output,
+                      style: TextStyle(
+                        fontFamily: 'Courier New',
+                        fontSize: 12,
+                        color: isDark ? CupertinoColors.systemGreen : CupertinoColors.darkBackgroundGray,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

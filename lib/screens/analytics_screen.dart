@@ -7,7 +7,12 @@ import '../widgets/liquid_glass_container.dart';
 
 /// Apple-native analytics screen with Liquid Glass aesthetics (iOS / macOS 26 style).
 class AnalyticsScreen extends StatelessWidget {
-  const AnalyticsScreen({super.key});
+  final bool showNavigationBar;
+
+  const AnalyticsScreen({
+    super.key,
+    this.showNavigationBar = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,168 +27,204 @@ class AnalyticsScreen extends StatelessWidget {
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
 
-    return CupertinoPageScaffold(
-      backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFF2F4F7),
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: (isDark ? const Color(0xFF0B0F18) : CupertinoColors.systemBackground).withValues(alpha: 0.85),
-        middle: Text('${provider.currentPeriodLabel} Insights', style: const TextStyle(fontWeight: FontWeight.w700)),
-      ),
-      child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 40),
-          children: [
-            // ─── Forecast & Burn Rate Card ──────────────────────────────────────
-            LiquidGlassContainer(
-              borderRadius: 22,
-              padding: const EdgeInsets.all(20),
-              fillOpacity: 0.08,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Velocity & Spend Forecast',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: labelColor,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _infoRow(
-                    'Days Elapsed',
-                    '${provider.forecast.daysElapsed} / ${provider.forecast.totalDaysInMonth} days',
-                    labelColor,
-                    secondaryLabel,
-                  ),
-                  const SizedBox(height: 10),
-                  _infoRow(
-                    'Current Velocity',
-                    '₹${provider.forecast.dailyVelocity.toStringAsFixed(2)} / day',
-                    labelColor,
-                    secondaryLabel,
-                  ),
-                  const SizedBox(height: 10),
-                  _infoRow(
-                    'Projected Spend',
-                    '₹${provider.forecast.projectedMonthEnd.toStringAsFixed(2)}',
-                    provider.forecast.projectedMonthEnd > provider.monthlyBudget && provider.monthlyBudget > 0
-                        ? dangerColor
-                        : primaryColor,
-                    secondaryLabel,
-                  ),
-                  const SizedBox(height: 10),
-                  _infoRow(
-                    'Safe Daily Burn',
-                    '₹${provider.forecast.safeBurnRate.toStringAsFixed(2)} / day',
-                    provider.forecast.safeBurnRate > 0 ? primaryColor : dangerColor,
-                    secondaryLabel,
-                  ),
-                ],
+    Widget content = ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      children: [
+        // ─── Forecast & Burn Rate Card ──────────────────────────────────────
+        LiquidGlassContainer(
+          borderRadius: 22,
+          padding: const EdgeInsets.all(20),
+          fillOpacity: 0.08,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Velocity & Spend Forecast',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: labelColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // ─── Cash Flow Summary ────────────────────────────────────────
-            LiquidGlassContainer(
-              borderRadius: 22,
-              padding: const EdgeInsets.all(20),
-              fillOpacity: 0.08,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cash Flow Overview',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: labelColor,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _infoRow('Total Income', '₹${totalIncome.toStringAsFixed(2)}', primaryColor, secondaryLabel),
-                  const SizedBox(height: 10),
-                  _infoRow('Total Spent', '₹${totalSpent.toStringAsFixed(2)}', labelColor, secondaryLabel),
-                  const SizedBox(height: 10),
-                  _infoRow(
-                    'Net Saved',
-                    '₹${(totalIncome - totalSpent).toStringAsFixed(2)}',
-                    (totalIncome - totalSpent) >= 0 ? primaryColor : dangerColor,
-                    secondaryLabel,
-                  ),
-                ],
+              const SizedBox(height: 14),
+              _infoRow(
+                'Days Elapsed',
+                '${provider.forecast.daysElapsed} / ${provider.forecast.totalDaysInMonth} days',
+                labelColor,
+                secondaryLabel,
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 10),
+              _infoRow(
+                'Current Velocity',
+                '₹${provider.forecast.dailyVelocity.toStringAsFixed(2)} / day',
+                labelColor,
+                secondaryLabel,
+              ),
+              const SizedBox(height: 10),
+              _infoRow(
+                'Projected Spend',
+                '₹${provider.forecast.projectedMonthEnd.toStringAsFixed(2)}',
+                provider.forecast.projectedMonthEnd > provider.monthlyBudget && provider.monthlyBudget > 0
+                    ? dangerColor
+                    : primaryColor,
+                secondaryLabel,
+              ),
+              const SizedBox(height: 10),
+              _infoRow(
+                'Safe Daily Burn',
+                '₹${provider.forecast.safeBurnRate.toStringAsFixed(2)} / day',
+                provider.forecast.safeBurnRate > 0 ? primaryColor : dangerColor,
+                secondaryLabel,
+              ),
+            ],
+          ),
+        ),
 
-            // ─── Category Breakdown ───────────────────────────────────────
-            LiquidGlassContainer(
-              borderRadius: 22,
-              padding: const EdgeInsets.all(20),
-              fillOpacity: 0.08,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Category Breakdown',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: labelColor,
-                    ),
+        const SizedBox(height: 16),
+
+        // ─── Cash Flow Overview Card ─────────────────────────────────────────
+        LiquidGlassContainer(
+          borderRadius: 22,
+          padding: const EdgeInsets.all(20),
+          fillOpacity: 0.08,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Period Cash Flow',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: labelColor,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _infoRow('Base Income', '₹${totalIncome.toStringAsFixed(2)}', primaryColor, secondaryLabel),
+              const SizedBox(height: 10),
+              _infoRow('Total Outflow', '₹${totalSpent.toStringAsFixed(2)}', dangerColor, secondaryLabel),
+              const SizedBox(height: 10),
+              _infoRow(
+                'Net Cash Flow',
+                '${totalIncome - totalSpent >= 0 ? '+' : ''}₹${(totalIncome - totalSpent).toStringAsFixed(2)}',
+                totalIncome - totalSpent >= 0 ? primaryColor : dangerColor,
+                secondaryLabel,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ─── Category Breakdown Card ─────────────────────────────────────────
+        LiquidGlassContainer(
+          borderRadius: 22,
+          padding: const EdgeInsets.all(20),
+          fillOpacity: 0.08,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Spending Distribution',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: labelColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (totalSpent == 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text('No spending data yet', style: TextStyle(color: secondaryLabel)),
                   ),
-                  const SizedBox(height: 16),
-                  if (totalSpent == 0)
-                    Text('No expenses recorded yet', style: TextStyle(color: secondaryLabel, fontSize: 13))
-                  else
-                    ...breakdown.entries.where((e) => e.value > 0).map((entry) {
-                      final pct = (entry.value / totalSpent).clamp(0.0, 1.0);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                )
+              else
+                ...ExpenseCategory.values.map((cat) {
+                  final amount = breakdown[cat] ?? 0.0;
+                  if (amount <= 0) return const SizedBox.shrink();
+                  final pct = amount / totalSpent;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(entry.key.displayName,
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor)),
-                                Text(
-                                  '₹${entry.value.toStringAsFixed(0)} (${(pct * 100).toStringAsFixed(0)}%)',
-                                  style: TextStyle(fontSize: 13, color: secondaryLabel, fontWeight: FontWeight.w600),
-                                ),
-                              ],
+                            Text(
+                              cat.displayName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: labelColor,
+                              ),
                             ),
-                            const SizedBox(height: 6),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: SizedBox(
-                                height: 6,
-                                child: LinearProgressIndicator(
-                                  value: pct,
-                                  backgroundColor: CupertinoColors.systemFill.resolveFrom(context),
-                                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                                ),
+                            Text(
+                              '₹${amount.toStringAsFixed(0)} · ${(pct * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: secondaryLabel,
                               ),
                             ),
                           ],
                         ),
-                      );
-                    }),
-                ],
-              ),
-            ),
-          ],
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: SizedBox(
+                            height: 6,
+                            child: LinearProgressIndicator(
+                              value: pct,
+                              backgroundColor: isDark
+                                  ? CupertinoColors.white.withValues(alpha: 0.08)
+                                  : CupertinoColors.black.withValues(alpha: 0.06),
+                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
         ),
+      ],
+    );
+
+    if (!showNavigationBar) {
+      return Container(
+        color: isDark ? const Color(0xFF06080E) : const Color(0xFFF1F3F6),
+        child: content,
+      );
+    }
+
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? const Color(0xFF06080E) : const Color(0xFFF1F3F6),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.85),
+        middle: Text('${provider.currentPeriodLabel} Insights', style: const TextStyle(fontWeight: FontWeight.w700)),
       ),
+      child: SafeArea(child: content),
     );
   }
 
-  Widget _infoRow(String label, String value, Color valueColor, Color labelColor) {
+  Widget _infoRow(String label, String value, Color valColor, Color labelColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: labelColor)),
-        Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: valueColor)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 13, color: labelColor, fontWeight: FontWeight.w500),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: valColor),
+        ),
       ],
     );
   }

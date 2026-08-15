@@ -1,32 +1,35 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:provider/provider.dart';
 import 'package:well_spent/main.dart';
+import 'package:well_spent/providers/expense_provider.dart';
 import 'package:well_spent/widgets/liquid_glass_chip.dart';
 import 'package:well_spent/widgets/quick_add_modal.dart';
 
 void main() {
-  testWidgets('App renders dashboard and add button', (WidgetTester tester) async {
-    // Build the app and trigger a frame.
+  testWidgets('App renders dashboard navigation title', (WidgetTester tester) async {
     await tester.pumpWidget(const WellSpentApp());
+    await tester.pump();
 
-    // Verify that the app shows the dashboard.
-    expect(find.text('Well Spent'), findsOneWidget);
-    expect(find.text('Add Expense'), findsOneWidget);
-    expect(find.byIcon(Icons.account_balance_wallet_outlined), findsOneWidget);
+    // Verify that the app shows the title.
+    expect(find.text('Well Spent'), findsWidgets);
   });
 
-  testWidgets('Quick add modal renders liquid glass category chips', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: QuickAddModal())));
+  testWidgets('Quick add modal renders liquid glass category chips and headers', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => ExpenseProvider(),
+        child: const CupertinoApp(
+          home: CupertinoPageScaffold(
+            child: QuickAddModal(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
 
-    expect(find.text('Category'), findsOneWidget);
+    expect(find.text('Quick Add Expense'), findsOneWidget);
+    expect(find.text('CATEGORY'), findsOneWidget);
     expect(find.byType(LiquidGlassChip), findsWidgets);
   });
 }

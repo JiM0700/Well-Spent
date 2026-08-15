@@ -163,3 +163,101 @@ class Expense {
     );
   }
 }
+
+class RecurringBill {
+  final int id;
+  final String title;
+  final double amount;
+  final ExpenseCategory category;
+  final int dueDay; // 1 - 31
+  final String frequency; // 'monthly' | 'yearly'
+  final bool isActive;
+  final DateTime? lastPaidDate;
+
+  RecurringBill({
+    required this.id,
+    required this.title,
+    required this.amount,
+    required this.category,
+    required this.dueDay,
+    this.frequency = 'monthly',
+    this.isActive = true,
+    this.lastPaidDate,
+  });
+
+  bool isPaidForCycle(DateTime cycleStart, DateTime cycleEnd) {
+    if (lastPaidDate == null) return false;
+    return (lastPaidDate!.isAfter(cycleStart.subtract(const Duration(seconds: 1))) ||
+            lastPaidDate!.isAtSameMomentAs(cycleStart)) &&
+        (lastPaidDate!.isBefore(cycleEnd.add(const Duration(seconds: 1))) ||
+            lastPaidDate!.isAtSameMomentAs(cycleEnd));
+  }
+
+  int daysUntilDue(DateTime now) {
+    final currentYear = now.year;
+    final currentMonth = now.month;
+    final maxDaysThisMonth = DateTime(currentYear, currentMonth + 1, 0).day;
+    final day = dueDay.clamp(1, maxDaysThisMonth);
+    DateTime dueDate = DateTime(currentYear, currentMonth, day);
+
+    if (dueDate.isBefore(DateTime(now.year, now.month, now.day))) {
+      final nextMonth = currentMonth == 12 ? 1 : currentMonth + 1;
+      final nextYear = currentMonth == 12 ? currentYear + 1 : currentYear;
+      final maxDaysNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
+      dueDate = DateTime(nextYear, nextMonth, dueDay.clamp(1, maxDaysNextMonth));
+    }
+
+    return dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+  }
+
+  RecurringBill copyWith({
+    int? id,
+    String? title,
+    double? amount,
+    ExpenseCategory? category,
+    int? dueDay,
+    String? frequency,
+    bool? isActive,
+    DateTime? lastPaidDate,
+  }) {
+    return RecurringBill(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      dueDay: dueDay ?? this.dueDay,
+      frequency: frequency ?? this.frequency,
+      isActive: isActive ?? this.isActive,
+      lastPaidDate: lastPaidDate ?? this.lastPaidDate,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'amount': amount,
+      'category': category.name,
+      'dueDay': dueDay,
+      'frequency': frequency,
+      'isActive': isActive ? 1 : 0,
+      'lastPaidDate': lastPaidDate?.toIso8601String(),
+    };
+  }
+
+  factory RecurringBill.fromMap(Map<String, dynamic> map) {
+    return RecurringBill(
+      id: (map['id'] as num).toInt(),
+      title: map['title'] as String,
+      amount: (map['amount'] as num).toDouble(),
+      category: ExpenseCategory.values.firstWhere(
+        (e) => e.name == (map['category'] as String? ?? ''),
+        orElse: () => ExpenseCategory.bills,
+      ),
+      dueDay: (map['dueDay'] as num?)?.toInt() ?? 1,
+      frequency: map['frequency'] as String? ?? 'monthly',
+      isActive: map['isActive'] == 1 || map['isActive'] == true,
+      lastPaidDate: map['lastPaidDate'] != null ? DateTime.tryParse(map['lastPaidDate'] as String) : null,
+    );
+  }
+}

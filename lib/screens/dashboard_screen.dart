@@ -12,6 +12,7 @@ import '../widgets/forecast_card.dart';
 import '../widgets/liquid_glass_chip.dart';
 import '../widgets/liquid_glass_container.dart';
 import '../widgets/quick_add_modal.dart';
+import '../widgets/recurring_bills_card.dart';
 import '../widgets/summary_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -326,6 +327,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Liquid Glass Forecast Card
                   ForecastCard(forecast: provider.forecast),
+                  const SizedBox(height: 16),
+
+                  // Recurring Bills & Subscriptions Card
+                  const RecurringBillsCard(),
                   const SizedBox(height: 24),
 
                   // Transactions Header
