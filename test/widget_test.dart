@@ -11,8 +11,8 @@ void main() {
     await tester.pumpWidget(const WellSpentApp());
     await tester.pump();
 
-    // Verify that the app shows the title.
-    expect(find.text('Well Spent'), findsWidgets);
+    // Verify that the app shows the navigation title.
+    expect(find.text('Overview'), findsWidgets);
   });
 
   testWidgets('Quick add modal renders liquid glass category chips and headers', (WidgetTester tester) async {

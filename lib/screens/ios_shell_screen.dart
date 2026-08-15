@@ -65,86 +65,102 @@ class _IosSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ExpenseProvider>();
+    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Settings'),
-      ),
-      child: SafeArea(
-        child: ListView(
-          children: [
-            const SizedBox(height: 22),
-            _sectionHeader(context, 'BUDGETING'),
-            CupertinoListSection.insetGrouped(
-              children: [
-                CupertinoListTile(
-                  title: const Text('Export CSV'),
-                  leading: const Icon(CupertinoIcons.arrow_up_doc),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _exportCsv(context, provider),
-                ),
-                CupertinoListTile(
-                  title: const Text('Import CSV'),
-                  leading: const Icon(CupertinoIcons.arrow_down_doc),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _importCsv(context, provider),
-                ),
-                CupertinoListTile(
-                  title: const Text('Monthly budget'),
-                  additionalInfo: Text('₹${provider.monthlyBudget.toStringAsFixed(0)}'),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _editBudget(context, provider),
-                ),
-                CupertinoListTile(
-                  title: const Text('Cycle starts on'),
-                  additionalInfo: Text('Day ${provider.cycleStartDay}'),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _editCycleDay(context, provider),
-                ),
-                CupertinoListTile(
-                  title: const Text('Monthly income'),
-                  additionalInfo: Text('₹${provider.baseMonthlyIncome.toStringAsFixed(0)}'),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _editIncome(context, provider),
-                ),
-                CupertinoListTile(
-                  title: const Text('Payday'),
-                  additionalInfo: Text('Day ${provider.payDay}'),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _editPayday(context, provider),
-                ),
-              ],
+      backgroundColor: isDark ? const Color(0xFF06080E) : const Color(0xFFF1F3F6),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: const Text(
+              'Settings',
+              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
             ),
-            _sectionHeader(context, 'SUMMARIES'),
-            CupertinoListSection.insetGrouped(
-              children: [
-                CupertinoListTile(
-                  title: const Text('Spending summary'),
-                  trailing: CupertinoSwitch(
-                    value: provider.summaryEnabled,
-                    onChanged: provider.updateSummaryEnabled,
+            backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.82),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.06),
+                width: 0.5,
+              ),
+            ),
+            stretch: true,
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 12),
+              _sectionHeader(context, 'BUDGETING'),
+              CupertinoListSection.insetGrouped(
+                children: [
+                  CupertinoListTile(
+                    title: const Text('Export CSV'),
+                    leading: const Icon(CupertinoIcons.arrow_up_doc),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _exportCsv(context, provider),
                   ),
-                ),
-                CupertinoListTile(
-                  title: const Text('Summary period'),
-                  additionalInfo: Text(_periodLabel(provider.summaryPeriod)),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _choosePeriod(context, provider),
-                ),
-              ],
-            ),
-            _sectionHeader(context, 'ABOUT'),
-            CupertinoListSection.insetGrouped(
-              children: const [
-                CupertinoListTile(
-                  title: Text('Well Spent'),
-                  additionalInfo: Text('Offline-first'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
+                  CupertinoListTile(
+                    title: const Text('Import CSV'),
+                    leading: const Icon(CupertinoIcons.arrow_down_doc),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _importCsv(context, provider),
+                  ),
+                  CupertinoListTile(
+                    title: const Text('Monthly budget'),
+                    additionalInfo: Text('₹${provider.monthlyBudget.toStringAsFixed(0)}'),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _editBudget(context, provider),
+                  ),
+                  CupertinoListTile(
+                    title: const Text('Cycle starts on'),
+                    additionalInfo: Text('Day ${provider.cycleStartDay}'),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _editCycleDay(context, provider),
+                  ),
+                  CupertinoListTile(
+                    title: const Text('Monthly income'),
+                    additionalInfo: Text('₹${provider.baseMonthlyIncome.toStringAsFixed(0)}'),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _editIncome(context, provider),
+                  ),
+                  CupertinoListTile(
+                    title: const Text('Payday'),
+                    additionalInfo: Text('Day ${provider.payDay}'),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _editPayday(context, provider),
+                  ),
+                ],
+              ),
+              _sectionHeader(context, 'SUMMARIES'),
+              CupertinoListSection.insetGrouped(
+                children: [
+                  CupertinoListTile(
+                    title: const Text('Spending summary'),
+                    trailing: CupertinoSwitch(
+                      value: provider.summaryEnabled,
+                      onChanged: provider.updateSummaryEnabled,
+                    ),
+                  ),
+                  CupertinoListTile(
+                    title: const Text('Summary period'),
+                    additionalInfo: Text(_periodLabel(provider.summaryPeriod)),
+                    trailing: const CupertinoListTileChevron(),
+                    onTap: () => _choosePeriod(context, provider),
+                  ),
+                ],
+              ),
+              _sectionHeader(context, 'ABOUT'),
+              CupertinoListSection.insetGrouped(
+                children: const [
+                  CupertinoListTile(
+                    title: Text('Well Spent'),
+                    additionalInfo: Text('Offline-first'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+            ]),
+          ),
+        ],
       ),
     );
   }

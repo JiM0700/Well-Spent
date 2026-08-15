@@ -54,6 +54,37 @@ class CategoryLibraryScreen extends StatelessWidget {
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
+            if (showNavigationBar)
+              CupertinoSliverNavigationBar(
+                largeTitle: const Text(
+                  'Categories',
+                  style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
+                ),
+                backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.82),
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.06),
+                    width: 0.5,
+                  ),
+                ),
+                stretch: true,
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '${provider.currentPeriodLabel} Cycle',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: secondaryLabel,
+                    ),
+                  ),
+                ),
+              ),
+
             // Top instructions & context banner
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
@@ -153,26 +184,7 @@ class CategoryLibraryScreen extends StatelessWidget {
 
     return CupertinoPageScaffold(
       backgroundColor: isDark ? const Color(0xFF06080E) : const Color(0xFFF1F3F6),
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.85),
-        middle: const Text('Category Envelopes', style: TextStyle(fontWeight: FontWeight.w700)),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: Text(
-            '${provider.currentPeriodLabel} Cycle',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: secondaryLabel,
-            ),
-          ),
-        ),
-      ),
-      child: SafeArea(child: content),
+      child: content,
     );
   }
 

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -61,92 +60,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showDataMenu(BuildContext context, ExpenseProvider provider) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => CupertinoActionSheet(
-        actions: [
-          CupertinoActionSheetAction(
-            child: const Text('Export CSV'),
-            onPressed: () {
-              Navigator.pop(context);
-              _exportCsv(context, provider);
-            },
-          ),
-          CupertinoActionSheetAction(
-            child: const Text('Import CSV'),
-            onPressed: () {
-              Navigator.pop(context);
-              _importCsv(context, provider);
-            },
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          child: const Text('Cancel'),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _exportCsv(BuildContext context, ExpenseProvider provider) async {
-    await Clipboard.setData(ClipboardData(text: provider.exportCsv()));
-    if (!context.mounted) return;
-    showCupertinoDialog<void>(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('CSV copied'),
-        content: const Text('Your data was copied to the clipboard.'),
-        actions: [
-          CupertinoDialogAction(child: const Text('Done'), onPressed: () => Navigator.pop(context)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _importCsv(BuildContext context, ExpenseProvider provider) async {
-    final controller = TextEditingController();
-    await showCupertinoDialog<void>(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('Import CSV'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
-            controller: controller,
-            maxLines: 8,
-            placeholder: 'Paste a Well Spent CSV export here',
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Replace data'),
-            onPressed: () async {
-              final count = await provider.importCsv(controller.text);
-              if (context.mounted) {
-                Navigator.pop(context);
-                showCupertinoDialog<void>(
-                  context: context,
-                  builder: (_) => CupertinoAlertDialog(
-                    title: const Text('Import complete'),
-                    content: Text('$count entries imported.'),
-                    actions: [
-                      CupertinoDialogAction(
-                          child: const Text('Done'), onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-  }
-
   IconData _getCategoryIcon(ExpenseCategory category) {
     switch (category) {
       case ExpenseCategory.food:
@@ -171,7 +84,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ExpenseProvider>(context);
-    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
     final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
 
     final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
@@ -198,57 +110,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return CupertinoPageScaffold(
       backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFF2F4F7),
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: (isDark ? const Color(0xFF0B0F18) : CupertinoColors.systemBackground).withValues(alpha: 0.85),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? CupertinoColors.white.withValues(alpha: 0.12) : CupertinoColors.black.withValues(alpha: 0.08),
-            width: 0.8,
-          ),
-        ),
-        middle: const Text(
-          'Well Spent',
-          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isIOS)
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                child: Icon(CupertinoIcons.arrow_up_arrow_down, size: 20, color: labelColor),
-                onPressed: () => _showDataMenu(context, provider),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: const Text(
+              'Overview',
+              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
+            ),
+            backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.82),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.06),
+                width: 0.5,
               ),
-            if (!isIOS) const SizedBox(width: 14),
-            CupertinoButton(
+            ),
+            stretch: true,
+            trailing: CupertinoButton(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
+              onPressed: () => _showAddExpenseModal(context),
               child: Container(
-                padding: const EdgeInsets.all(4),
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.2),
+                  color: primaryColor.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(CupertinoIcons.plus, size: 20, color: primaryColor),
+                child: Icon(CupertinoIcons.plus, size: 18, color: primaryColor),
               ),
-              onPressed: () => _showAddExpenseModal(context),
             ),
-          ],
-        ),
-      ),
-      child: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Liquid Glass Period Selector
-                  SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<String>(
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Liquid Glass Period Selector
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoSlidingSegmentedControl<String>(
                       groupValue: provider.viewMode,
                       backgroundColor: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
                       thumbColor: isDark ? const Color(0xFF1B2232) : CupertinoColors.white,
@@ -504,8 +404,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
