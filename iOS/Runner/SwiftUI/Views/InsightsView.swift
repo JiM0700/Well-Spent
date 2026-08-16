@@ -11,14 +11,10 @@ public struct InsightsView: View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 18) {
-                    // ── Header Section ─────────────────────────────────────
-                    headerSection
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-
                     // ── Spending Velocity & Projections ───────────────────
                     velocityCard
                         .padding(.horizontal, 20)
+                        .padding(.top, 8)
 
                     // ── Charts & Breakdown Section ────────────────────────
                     #if os(macOS)
@@ -29,40 +25,19 @@ public struct InsightsView: View {
                     .padding(.horizontal, 20)
                     #else
                     categoryDistributionSection
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 20)
 
                     recurringBillsSection
-                        .padding(.horizontal, 16)
-                    #endif
-
-                    #if os(iOS)
-                    Spacer(minLength: 120)
-                    #else
-                    Spacer(minLength: 40)
+                        .padding(.horizontal, 20)
                     #endif
                 }
                 .padding(.vertical, 8)
             }
+            .navigationTitle("Trends")
             #if os(iOS)
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.large)
             #endif
-            .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
-        }
-    }
-
-    // ── Header Section ────────────────────────────────────────────────────
-
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Insights")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.primary)
-                Text("Financial Trajectory & Spending Breakdown")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
+            .background(Color.appGroupedBackground)
         }
     }
 
@@ -74,15 +49,15 @@ public struct InsightsView: View {
 
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("SPENDING VELOCITY & TRAJECTORY")
-                    .font(.system(size: 10, weight: .bold))
+                Text("Spending Velocity & Trajectory")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .foregroundStyle(store.accentColor)
             }
 
-            HStack(spacing: 24) {
+            HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Daily Average")
                         .font(.system(size: 11, weight: .medium))
@@ -95,9 +70,11 @@ public struct InsightsView: View {
                             .font(.system(size: 24, weight: .heavy, design: .rounded))
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
                     .opacity(0.3)
+                    .padding(.horizontal, 8)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Projected Month-End")
@@ -112,28 +89,32 @@ public struct InsightsView: View {
                             .foregroundStyle(isOver ? Color.red : Color.primary)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
                     .opacity(0.3)
+                    .padding(.horizontal, 8)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Pace Status")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                     Text(isOver ? "Over Pace" : "Controlled")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(isOver ? Color.red : Color.green)
-                        .padding(.horizontal, 8)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isOver ? Color.red : Color.secondary)
+                        .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background((isOver ? Color.red : Color.green).opacity(0.15))
+                        .background(isOver ? Color.red.opacity(0.12) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
                         .clipShape(Capsule())
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
+        .liquidGlassCard(cornerRadius: 20)
     }
 
     // ── Category Distribution (Swift Charts) ──────────────────────────────
@@ -162,46 +143,53 @@ public struct InsightsView: View {
                 }
                 .frame(height: 180)
                 .padding(.vertical, 4)
-            }
 
-            VStack(spacing: 10) {
-                ForEach(ExpenseCategory.allCases) { cat in
-                    let amt = store.categoryBreakdown[cat] ?? 0.0
-                    let pct = total > 0 ? (amt / total) : 0.0
+                VStack(spacing: 10) {
+                    ForEach(ExpenseCategory.allCases) { cat in
+                        let amt = store.categoryBreakdown[cat] ?? 0.0
+                        let pct = total > 0 ? (amt / total) : 0.0
 
-                    if amt > 0 {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                HStack(spacing: 6) {
-                                    Circle()
-                                        .fill(cat.color)
-                                        .frame(width: 8, height: 8)
-                                    Text(cat.displayName)
-                                        .font(.system(size: 12.5, weight: .semibold))
+                        if amt > 0 {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    HStack(spacing: 6) {
+                                        Circle()
+                                            .fill(cat.color)
+                                            .frame(width: 8, height: 8)
+                                        Text(cat.displayName)
+                                            .font(.system(size: 12.5, weight: .semibold))
+                                    }
+                                    Spacer()
+                                    Text("₹\(String(format: "%.2f", amt)) (\(Int(pct * 100))%)")
+                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.secondary)
                                 }
-                                Spacer()
-                                Text("₹\(String(format: "%.2f", amt)) (\(Int(pct * 100))%)")
-                                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                            }
 
-                            // Glowing Progress track
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
-                                        .frame(height: 5)
-                                    Capsule()
-                                        .fill(cat.color)
-                                        .frame(width: max(4, geo.size.width * CGFloat(pct)), height: 5)
+                                // Glowing Progress track
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
+                                            .frame(height: 5)
+                                        Capsule()
+                                            .fill(cat.color)
+                                            .frame(width: max(4, geo.size.width * CGFloat(pct)), height: 5)
+                                    }
                                 }
+                                .frame(height: 5)
                             }
-                            .frame(height: 5)
                         }
                     }
                 }
+            } else {
+                Text("No transactions in current cycle to chart.")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 14)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .liquidGlassCard(cornerRadius: 16)
     }
@@ -262,6 +250,7 @@ public struct InsightsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .liquidGlassCard(cornerRadius: 16)
     }

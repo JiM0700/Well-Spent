@@ -56,6 +56,19 @@ public enum PlatformFeedback {
         #endif
     }
 
+    public static func success() {
+        #if os(iOS)
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+        #elseif os(macOS)
+        NSHapticFeedbackManager.defaultPerformer.perform(
+            .levelChange,
+            performanceTime: .default
+        )
+        #endif
+    }
+
     public enum ImpactStyle {
         case light, medium, heavy, rigid, soft
     }

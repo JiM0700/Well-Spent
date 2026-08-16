@@ -99,9 +99,9 @@ Phase 7: Future Advanced Roadmap     ───▶ [PLANNED]
 
 ### ✅ Phase 4: macOS Desktop Transformation (Complete)
 - [x] Translucent vibrant left sidebar navigation inspired by macOS Apple Music and Apple TV apps.
-- [x] Grouped sections (`Library`: Overview, Categories, Insights; `System`: Settings) with item count badges.
+- [x] Grouped sections (`Library`: Home, Budgets, Trends; `System`: Settings) with item count badges.
 - [x] Integrated sidebar footer mini-envelope budget gauge.
-- [x] Multi-column responsive desktop grids for Overview, Categories, and Swift Charts.
+- [x] Multi-column responsive desktop grids for Home, Budgets, and Swift Charts.
 - [x] Redesigned macOS Settings page with symmetrical $50\% / 50\%$ two-column grid.
 - [x] Full window dragging, transparent titlebar, and keyboard shortcuts (`⌘N`).
 

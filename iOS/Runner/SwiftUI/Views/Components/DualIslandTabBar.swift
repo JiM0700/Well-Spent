@@ -1,28 +1,25 @@
 import SwiftUI
 
-public enum TabSelection: Int, CaseIterable, Identifiable {
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
+
+// ── Tab Selection Enum (SF Symbols Hierarchical & Fill Variants) ──────────────
+
+public enum TabSelection: Int, CaseIterable {
     case overview = 0
     case categories = 1
     case insights = 2
     case settings = 3
 
-    public var id: Int { rawValue }
-
     public var title: String {
         switch self {
-        case .overview: return "Overview"
-        case .categories: return "Categories"
-        case .insights: return "Insights"
+        case .overview: return "Home"
+        case .categories: return "Budgets"
+        case .insights: return "Trends"
         case .settings: return "Settings"
-        }
-    }
-
-    public var icon: String {
-        switch self {
-        case .overview: return "house"
-        case .categories: return "square.grid.2x2"
-        case .insights: return "chart.bar"
-        case .settings: return "gearshape"
         }
     }
 
@@ -30,238 +27,252 @@ public enum TabSelection: Int, CaseIterable, Identifiable {
         switch self {
         case .overview: return "house.fill"
         case .categories: return "square.grid.2x2.fill"
-        case .insights: return "chart.bar.fill"
+        case .insights: return "chart.bar.xaxis"
         case .settings: return "gearshape.fill"
+        }
+    }
+
+    public var inactiveIcon: String {
+        switch self {
+        case .overview: return "house"
+        case .categories: return "square.grid.2x2"
+        case .insights: return "chart.bar.xaxis"
+        case .settings: return "gearshape"
         }
     }
 }
 
+// ── Apple HIG Liquid Glass Floating Dock (Full Height 62pt) ──────────────────
+
 public struct DualIslandTabBar: View {
-    @EnvironmentObject var store: ExpenseStore
     @Binding var selectedTab: TabSelection
     var onAddTapped: () -> Void
+    @EnvironmentObject var store: ExpenseStore
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
-    // ── Interactive State ──────────────────────────────────────────────────
-    @State private var isLongPressing: Bool = false
-    @State private var pressedTab: TabSelection? = nil
-
-    public init(selectedTab: Binding<TabSelection>, onAddTapped: @escaping () -> Void) {
+    public init(
+        selectedTab: Binding<TabSelection>,
+        onAddTapped: @escaping () -> Void
+    ) {
         self._selectedTab = selectedTab
         self.onAddTapped = onAddTapped
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
-            // ── Primary 56pt Liquid Glass Dock with Optical Corner Refraction ──
-            GeometryReader { geo in
-                let totalSlots: CGFloat = 5 // 4 tabs + 1 center action button
-                let availableWidth = geo.size.width - 8
-                let slotWidth = availableWidth / totalSlots
+        GeometryReader { geo in
+            let dockHeight: CGFloat = 62
+            let podSize: CGFloat = 62
+            let gap: CGFloat = 12
+            let horizontalMargin: CGFloat = 16
+            let totalAvailableWidth = geo.size.width - (horizontalMargin * 2)
+            let navCapsuleWidth = totalAvailableWidth - podSize - gap
+            let tabCount: CGFloat = 4
+            let slotWidth = navCapsuleWidth / tabCount
+            let bubbleInset: CGFloat = 4.5
+            let bubbleWidth = slotWidth - (bubbleInset * 2)
+            let bubbleHeight = dockHeight - (bubbleInset * 2)
 
-                // Calculate visual thumb offset based on selected tab index
-                let thumbSlotIndex: CGFloat = {
-                    switch selectedTab {
-                    case .overview: return 0
-                    case .categories: return 1
-                    case .insights: return 3
-                    case .settings: return 4
-                    }
-                }()
+            VStack {
+                Spacer()
 
-                ZStack(alignment: .leading) {
-                    // 1. Base Liquid Glass Capsule with Authentic Apple Optics
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            // Inset Caustic Refraction Line (Inner Surface)
-                            Capsule()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(colorScheme == .dark ? 0.35 : 0.55),
-                                            Color.white.opacity(colorScheme == .dark ? 0.05 : 0.10),
-                                            Color.clear,
-                                            Color.white.opacity(colorScheme == .dark ? 0.15 : 0.25)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
-                                    lineWidth: 0.7
-                                )
-                                .padding(0.7)
-                        )
-                        .overlay(
-                            // Outer Specular Meniscus Highlight Rim
-                            Capsule()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(colorScheme == .dark ? 0.75 : 0.95),
-                                            Color.white.opacity(colorScheme == .dark ? 0.20 : 0.40),
-                                            Color.clear,
-                                            Color.white.opacity(colorScheme == .dark ? 0.18 : 0.30)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
-                                    lineWidth: 0.9
-                                )
-                        )
-                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.55 : 0.10), radius: 18, x: 0, y: 5)
+                HStack(spacing: gap) {
+                    // ── Island 1: Navigation Liquid Glass Capsule ───────────────
+                    ZStack(alignment: .leading) {
+                        // 1. Inherent Optical Glass Substrate
+                        if reduceTransparency {
+                            Capsule(style: .continuous)
+                                .fill(colorScheme == .dark ? Color(white: 0.14) : Color(white: 0.94))
+                        } else {
+                            Capsule(style: .continuous)
+                                .fill(.ultraThinMaterial)
+                        }
 
-                    // 2. Dynamic Liquid Light Aura under Active Selection
-                    RadialGradient(
-                        colors: [
-                            store.accentColor.opacity(isLongPressing ? 0.50 : 0.28),
-                            store.accentColor.opacity(0.08),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 2,
-                        endRadius: isLongPressing ? 44 : 30
-                    )
-                    .frame(width: slotWidth + 20, height: 56)
-                    .offset(x: (4 + thumbSlotIndex * slotWidth) - 10)
-                    .animation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2), value: selectedTab)
-                    .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
-
-                    // 3. Sliding Liquid Water Droplet Lens Thumb
-                    ZStack {
-                        Capsule()
-                            .fill(
-                                store.accentColor.opacity(isLongPressing ? 0.24 : 0.15)
+                        // 2. Uniform 0.5pt Specular Meniscus Rim
+                        Capsule(style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    stops: [
+                                        .init(color: colorScheme == .dark ? Color.white.opacity(0.30) : Color.white.opacity(0.85), location: 0.0),
+                                        .init(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.25), location: 0.35),
+                                        .init(color: colorScheme == .dark ? Color.white.opacity(0.02) : Color.black.opacity(0.04), location: 0.75),
+                                        .init(color: colorScheme == .dark ? Color.black.opacity(0.25) : Color.black.opacity(0.08), location: 1.0)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 0.5
                             )
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(colorScheme == .dark ? 0.70 : 0.90),
-                                                store.accentColor.opacity(0.40),
-                                                Color.clear
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 0.9
+                            .shadow(
+                                color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.08),
+                                radius: 14,
+                                x: 0,
+                                y: 5
+                            )
+
+                        // 3. Stained Liquid Glass Active Droplet Lens
+                        ZStack {
+                            if reduceTransparency {
+                                RoundedRectangle(cornerRadius: bubbleHeight / 2, style: .continuous)
+                                    .fill(colorScheme == .dark ? Color.white.opacity(0.20) : Color.black.opacity(0.08))
+                            } else {
+                                RoundedRectangle(cornerRadius: bubbleHeight / 2, style: .continuous)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: bubbleHeight / 2, style: .continuous)
+                                            .fill(
+                                                store.accentColor.opacity(colorScheme == .dark ? 0.14 : 0.10)
+                                            )
                                     )
-                            )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: bubbleHeight / 2, style: .continuous)
+                                            .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.white.opacity(0.25))
+                                    )
+                            }
+
+                            // Specular Top Glint on Active Droplet
+                            RoundedRectangle(cornerRadius: bubbleHeight / 2, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: colorScheme == .dark ? Color.white.opacity(0.40) : Color.white.opacity(0.95), location: 0.0),
+                                            .init(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.04), location: 1.0)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        }
+                        .frame(width: bubbleWidth, height: bubbleHeight)
+                        .shadow(
+                            color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.06),
+                            radius: 4,
+                            x: 0,
+                            y: 2
+                        )
+                        .offset(x: bubbleInset + CGFloat(selectedTab.rawValue) * slotWidth, y: 0)
+                        .animation(
+                            reduceMotion
+                                ? .none
+                                : .spring(response: 0.28, dampingFraction: 0.72, blendDuration: 0.15),
+                            value: selectedTab
+                        )
+
+                        // 4. Tab Navigation Items
+                        HStack(spacing: 0) {
+                            ForEach(TabSelection.allCases, id: \.self) { tab in
+                                tabButton(for: tab, slotWidth: slotWidth, height: dockHeight)
+                            }
+                        }
                     }
-                    .frame(width: slotWidth - 4, height: 46)
-                    .scaleEffect(isLongPressing ? CGSize(width: 1.10, height: 1.06) : CGSize(width: 1.0, height: 1.0))
-                    .offset(x: 6 + thumbSlotIndex * slotWidth)
-                    .animation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2), value: selectedTab)
-                    .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
+                    .frame(width: navCapsuleWidth, height: dockHeight)
 
-                    // 4. Tab Items & Centered Quick Add Action
-                    HStack(spacing: 0) {
-                        tabButton(for: .overview, slotWidth: slotWidth)
-                        tabButton(for: .categories, slotWidth: slotWidth)
+                    // ── Island 2: Detached Quick Action Pure Glass Pod (62pt) ─
+                    Button(action: {
+                        PlatformFeedback.impact()
+                        onAddTapped()
+                    }) {
+                        ZStack {
+                            if reduceTransparency {
+                                Circle()
+                                    .fill(colorScheme == .dark ? Color(white: 0.14) : Color(white: 0.94))
+                            } else {
+                                Circle()
+                                    .fill(.ultraThinMaterial)
+                            }
 
-                        // Center Floating Action Pod
-                        centerAddButton(slotWidth: slotWidth)
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: colorScheme == .dark ? Color.white.opacity(0.30) : Color.white.opacity(0.85), location: 0.0),
+                                            .init(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.25), location: 0.35),
+                                            .init(color: colorScheme == .dark ? Color.white.opacity(0.02) : Color.black.opacity(0.04), location: 0.75),
+                                            .init(color: colorScheme == .dark ? Color.black.opacity(0.25) : Color.black.opacity(0.08), location: 1.0)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                                .shadow(
+                                    color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.08),
+                                    radius: 14,
+                                    x: 0,
+                                    y: 5
+                                )
 
-                        tabButton(for: .insights, slotWidth: slotWidth)
-                        tabButton(for: .settings, slotWidth: slotWidth)
+                            Image(systemName: "plus")
+                                .font(.system(size: 21, weight: .semibold))
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(colorScheme == .dark ? Color.white : Color.primary)
+                        }
+                        .frame(width: podSize, height: podSize)
                     }
-                    .padding(.horizontal, 4)
+                    .buttonStyle(SquishButtonStyle())
                 }
+                .padding(.horizontal, horizontalMargin)
+                .padding(.bottom, 12)
             }
-            .frame(height: 56)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, -8)
+        .frame(height: 88)
     }
 
-    // ── Tab Item Button ───────────────────────────────────────────────────
+    // ── Tab Item Button with SF Symbols HIG ───────────────────────────────
 
-    private func tabButton(for tab: TabSelection, slotWidth: CGFloat) -> some View {
+    private func tabButton(for tab: TabSelection, slotWidth: CGFloat, height: CGFloat) -> some View {
         let isSelected = selectedTab == tab
+        let activeColor = store.accentColor
 
         return Button(action: {
             if selectedTab != tab {
                 PlatformFeedback.selection()
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.72, blendDuration: 0.2)) {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.72, blendDuration: 0.15)) {
                     selectedTab = tab
                 }
             }
         }) {
-            VStack(spacing: 2) {
-                Image(systemName: isSelected ? tab.activeIcon : tab.icon)
-                    .font(.system(size: 19, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.15, green: 0.15, blue: 0.17)))
-                    .scaleEffect(isSelected && isLongPressing ? 1.12 : 1.0)
-                    .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isLongPressing)
+            VStack(spacing: 3) {
+                Image(systemName: isSelected ? tab.activeIcon : tab.inactiveIcon)
+                    .font(.system(size: 18.5, weight: isSelected ? .semibold : .regular))
+                    .symbolRenderingMode(isSelected ? .hierarchical : .monochrome)
+                    .symbolEffect(.bounce.byLayer, value: isSelected)
+                    .foregroundStyle(
+                        isSelected
+                            ? activeColor
+                            : (colorScheme == .dark ? Color.white.opacity(0.72) : Color.primary.opacity(0.60))
+                    )
+                    .frame(height: 24)
+                    .scaleEffect(isSelected ? 1.04 : 1.0)
+                    .animation(.spring(response: 0.22, dampingFraction: 0.75), value: isSelected)
 
                 Text(tab.title)
-                    .font(.system(size: 10, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? store.accentColor : (colorScheme == .dark ? Color.white.opacity(0.85) : Color(red: 0.15, green: 0.15, blue: 0.17)))
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .medium, design: .rounded))
+                    .foregroundStyle(
+                        isSelected
+                            ? activeColor
+                            : (colorScheme == .dark ? Color.white.opacity(0.72) : Color.primary.opacity(0.60))
+                    )
                     .lineLimit(1)
             }
-            .frame(width: slotWidth, height: 50)
+            .frame(width: slotWidth, height: height)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.25)
-                .onEnded { _ in
-                    PlatformFeedback.impact()
-                    withAnimation(.spring(response: 0.22, dampingFraction: 0.65)) {
-                        selectedTab = tab
-                        isLongPressing = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isLongPressing = false
-                        }
-                    }
-                }
-        )
-    }
-
-    // ── Center Quick Add Action Button ────────────────────────────────────
-
-    private func centerAddButton(slotWidth: CGFloat) -> some View {
-        Button(action: {
-            PlatformFeedback.impact()
-            onAddTapped()
-        }) {
-            ZStack {
-                Circle()
-                    .fill(store.accentColor)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.65),
-                                        Color.white.opacity(0.15)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.0
-                            )
-                    )
-                    .shadow(color: store.accentColor.opacity(0.45), radius: 8, x: 0, y: 2)
-
-                Image(systemName: "plus")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            .frame(width: 42, height: 42)
-            .frame(width: slotWidth, height: 50)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(SquishButtonStyle())
     }
 }
 
-struct SquishButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
+// ── Physical Squish Button Physics ───────────────────────────────────────────
+
+public struct SquishButtonStyle: ButtonStyle {
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.90 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.65), value: configuration.isPressed)
+            .animation(.spring(response: 0.18, dampingFraction: 0.70), value: configuration.isPressed)
     }
 }

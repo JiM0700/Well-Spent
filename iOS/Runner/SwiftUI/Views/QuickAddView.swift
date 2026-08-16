@@ -10,6 +10,7 @@ public struct QuickAddView: View {
     @State private var date: Date = Date()
     @State private var notes: String = ""
     @State private var isExpense: Bool = true
+    @FocusState private var isAmountFocused: Bool
     @Environment(\.colorScheme) var colorScheme
 
     public init() {}
@@ -20,8 +21,8 @@ public struct QuickAddView: View {
                 VStack(spacing: 20) {
                     // ── Hero Amount Input ─────────────────────────────────
                     VStack(spacing: 6) {
-                        Text("TRANSACTION AMOUNT")
-                            .font(.system(size: 10.5, weight: .bold))
+                        Text("Transaction Amount")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -31,6 +32,7 @@ public struct QuickAddView: View {
 
                             TextField("0.00", text: $amountString)
                                 .font(.system(size: 44, weight: .heavy, design: .rounded))
+                                .focused($isAmountFocused)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
                                 #endif
@@ -45,8 +47,8 @@ public struct QuickAddView: View {
 
                     // ── Category Selector Grid ────────────────────────────
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("SELECT CATEGORY")
-                            .font(.system(size: 10.5, weight: .bold))
+                        Text("Select Category")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal)
 
@@ -83,9 +85,9 @@ public struct QuickAddView: View {
                                 .font(.system(size: 15, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                     }
-                    .buttonStyle(LiquidGlassButtonStyle(tintColor: store.accentColor, cornerRadius: 14))
+                    .buttonStyle(LiquidGlassProminentButtonStyle(tintColor: store.accentColor, cornerRadius: 16))
                     .padding(.horizontal)
                     .padding(.top, 4)
                 }
@@ -102,8 +104,21 @@ public struct QuickAddView: View {
                         dismiss()
                     }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveTransaction()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(Double(amountString) == nil || (Double(amountString) ?? 0) <= 0)
+                }
             }
             .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
+            .scrollDismissesKeyboard(.interactively)
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isAmountFocused = true
+                }
+            }
         }
     }
 
@@ -143,7 +158,10 @@ public struct QuickAddView: View {
     }
 
     private func saveTransaction() {
-        guard let amount = Double(amountString), amount > 0 else { return }
+        guard let amount = Double(amountString), amount > 0 else {
+            PlatformFeedback.warning()
+            return
+        }
         let trimmedTitle = title.trimmingCharacters(in: .whitespaces).isEmpty ? selectedCategory.displayName : title
 
         let expense = Expense(

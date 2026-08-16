@@ -6,21 +6,20 @@ public struct CategoriesView: View {
     @State private var newBudgetString: String = ""
     @State private var showEditDialog: Bool = false
     @Environment(\.colorScheme) var colorScheme
+    @Binding var showQuickAdd: Bool
 
-    public init() {}
+    public init(showQuickAdd: Binding<Bool>? = nil) {
+        self._showQuickAdd = showQuickAdd ?? .constant(false)
+    }
 
     public var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 18) {
-                    // ── Header Section ─────────────────────────────────────
-                    headerSection
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-
                     // ── Allocation Summary Bar ────────────────────────────
                     allocationSummaryCard
                         .padding(.horizontal, 20)
+                        .padding(.top, 8)
 
                     // ── Category Envelope Grid ────────────────────────────
                     #if os(macOS)
@@ -36,21 +35,27 @@ public struct CategoriesView: View {
                             envelopeCard(for: category)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    #endif
-
-                    #if os(iOS)
-                    Spacer(minLength: 120)
-                    #else
-                    Spacer(minLength: 40)
+                    .padding(.horizontal, 20)
                     #endif
                 }
                 .padding(.vertical, 8)
             }
+            .navigationTitle("Budgets")
             #if os(iOS)
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        PlatformFeedback.impact()
+                        showQuickAdd = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                }
+            }
             #endif
-            .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
+            .background(Color.appGroupedBackground)
             .alert("Edit Category Budget Target", isPresented: $showEditDialog) {
                 TextField("Target Amount", text: $newBudgetString)
                     #if os(iOS)
@@ -58,29 +63,16 @@ public struct CategoriesView: View {
                     #endif
                 Button("Save Target") {
                     if let cat = selectedCategoryForEdit, let amt = Double(newBudgetString) {
-                        store.updateCategoryBudget(category: cat, amount: amt)
+                        PlatformFeedback.success()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            store.updateCategoryBudget(category: cat, amount: amt)
+                        }
                     }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text(selectedCategoryForEdit?.displayName ?? "")
             }
-        }
-    }
-
-    // ── Header Section ────────────────────────────────────────────────────
-
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Categories")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.primary)
-                Text("Envelope Budgeting & Target Allocations")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
         }
     }
 
@@ -93,116 +85,60 @@ public struct CategoriesView: View {
 
         return HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("TOTAL ALLOCATED TARGETS")
-                    .font(.system(size: 10, weight: .bold))
+                Text("Total Allocated Targets")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("₹")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Text("\(Int(totalAllocated))")
-                        .font(.system(size: 22, weight: .heavy, design: .rounded))
-                    Text("of ₹\(Int(budget))")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
+                Text("₹\(Int(totalAllocated))")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.primary)
+                Text("of ₹\(Int(budget)) monthly cap")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text("ENVELOPE COVERAGE")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
-                Text("\(Int(percentAllocated * 100))% Allocated")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(percentAllocated > 1.0 ? Color.orange : store.accentColor)
+                Text("\(Int(percentAllocated * 100))% Target Allocated")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(percentAllocated > 1.0 ? Color.red : store.accentColor)
+
+                ProgressView(value: min(1.0, percentAllocated))
+                    .frame(width: 110)
+                    .tint(percentAllocated > 1.0 ? Color.red : store.accentColor)
             }
         }
-        .padding(14)
-        .liquidGlassCard(cornerRadius: 14)
+        .padding(16)
+        .liquidGlassCard(cornerRadius: 16)
     }
 
-    // ── Envelope Card with Liquid Glass ───────────────────────────────────
+    // ── Envelope Card ─────────────────────────────────────────────────────
 
     private func envelopeCard(for category: ExpenseCategory) -> some View {
-        let amount = store.categoryBreakdown[category] ?? 0.0
         let budget = store.getCategoryBudget(category: category)
-        let hasBudget = budget > 0
-        let progress = hasBudget ? (amount / budget) : (store.currentPeriodTotal > 0 ? (amount / store.currentPeriodTotal) : 0.0)
-        let isOver = hasBudget && amount > budget
-        let isWarning = hasBudget && amount >= budget * 0.8 && !isOver
-        let barColor: Color = isOver ? .red : (isWarning ? .orange : category.color)
-        let remaining = budget - amount
+        let spent = store.categoryBreakdown[category] ?? 0.0
+        let usage = budget > 0 ? min(1.0, spent / budget) : 0.0
+        let isOver = spent > budget && budget > 0
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                // Category Icon with Glowing Ring
                 ZStack {
                     Circle()
-                        .fill(barColor.opacity(0.18))
-                        .frame(width: 40, height: 40)
-                        .overlay(
-                            Circle()
-                                .stroke(barColor.opacity(0.3), lineWidth: 0.8)
-                        )
+                        .fill(category.color.opacity(0.18))
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: category.sfSymbol)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(barColor)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(category.color)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(category.displayName)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color.primary)
-                    Text(hasBudget ? "₹\(Int(budget)) Monthly Target" : "No Target Set")
-                        .font(.system(size: 11.5))
+                        .font(.headline.weight(.bold))
+                    Text("Budget: ₹\(Int(budget))")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("₹")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.secondary)
-                        Text(String(format: "%.2f", amount))
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                    }
-                    Text(hasBudget ? (isOver ? "Over by ₹\(Int(abs(remaining)))" : "₹\(Int(remaining)) left") : "\(Int(progress * 100))% of spend")
-                        .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(isOver ? Color.red : (isWarning ? Color.orange : Color.green))
-                }
-            }
-
-            // Glowing Liquid Glass Progress Bar
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
-                        .frame(height: 6)
-
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: isOver ? [Color.orange, Color.red] : [barColor, barColor.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: max(6, geo.size.width * CGFloat(min(1.0, progress))), height: 6)
-                        .shadow(color: barColor.opacity(0.35), radius: 3, x: 0, y: 1)
-                }
-            }
-            .frame(height: 6)
-
-            // Quick Edit Button on Hover / Click
-            HStack {
-                Text("\(Int(progress * 100))% used")
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundStyle(.secondary)
 
                 Spacer()
 
@@ -212,17 +148,38 @@ public struct CategoriesView: View {
                     newBudgetString = String(format: "%.0f", budget)
                     showEditDialog = true
                 }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 10))
-                        Text(hasBudget ? "Edit Target" : "Set Target")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
+                    Image(systemName: "pencil")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color.appSecondaryGroupedBackground)
+                        .clipShape(Circle())
                 }
-                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 8))
+                .buttonStyle(PlainButtonStyle())
+            }
+
+            ProgressView(value: usage)
+                .tint(isOver ? Color.red : category.color)
+
+            HStack {
+                Text("Spent: ₹\(Int(spent))")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(isOver ? Color.red : Color.primary)
+
+                Spacer()
+
+                if isOver {
+                    Text("Over by ₹\(Int(spent - budget))")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.red)
+                } else {
+                    Text("₹\(Int(max(0, budget - spent))) left")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding(14)
+        .padding(16)
         .liquidGlassCard(cornerRadius: 16)
     }
 }

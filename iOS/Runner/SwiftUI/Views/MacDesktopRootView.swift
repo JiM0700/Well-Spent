@@ -91,28 +91,28 @@ public struct MacDesktopRootView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     // Section 1: Pulse / Library
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("LIBRARY")
-                            .font(.system(size: 10, weight: .bold))
+                        Text("Library")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 4)
 
                         sidebarItem(
-                            title: "Overview",
+                            title: "Home",
                             icon: "house.fill",
                             tab: .overview,
                             badge: "\(store.expenses.count)"
                         )
 
                         sidebarItem(
-                            title: "Categories",
+                            title: "Budgets",
                             icon: "square.grid.2x2.fill",
                             tab: .categories,
                             badge: "\(ExpenseCategory.allCases.count)"
                         )
 
                         sidebarItem(
-                            title: "Insights & Charts",
+                            title: "Trends",
                             icon: "chart.xyaxis.line",
                             tab: .insights,
                             badge: nil
@@ -121,14 +121,14 @@ public struct MacDesktopRootView: View {
 
                     // Section 2: Management & Preferences
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("SYSTEM")
-                            .font(.system(size: 10, weight: .bold))
+                        Text("System")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 4)
 
                         sidebarItem(
-                            title: "Settings & Backup",
+                            title: "Settings",
                             icon: "gearshape.fill",
                             tab: .settings,
                             badge: nil
@@ -274,7 +274,7 @@ public struct MacDesktopRootView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
             }
-            .buttonStyle(LiquidGlassButtonStyle(tintColor: store.accentColor, cornerRadius: 10))
+            .buttonStyle(LiquidGlassProminentButtonStyle(tintColor: store.accentColor, cornerRadius: 10))
             .padding(.bottom, 12)
         }
         .padding(.horizontal, 12)

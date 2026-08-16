@@ -13,31 +13,32 @@ public struct WellSpentRootView: View {
             .environmentObject(store)
             .preferredColorScheme(store.colorSchemeForTheme)
         #else
-        ZStack(alignment: .bottom) {
-            // ── Primary View Body ─────────────────────────────────────────
-            Group {
-                switch selectedTab {
-                case .overview:
-                    OverviewView()
-                case .categories:
-                    CategoriesView()
-                case .insights:
-                    InsightsView()
-                case .settings:
-                    SettingsView()
+        TabView(selection: $selectedTab) {
+            OverviewView(showQuickAdd: $showQuickAdd)
+                .tabItem {
+                    Label("Home", systemImage: selectedTab == .overview ? "house.fill" : "house")
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .tag(TabSelection.overview)
 
-            // ── Apple Dual-Island Floating Tab Bar ────────────────────────
-            DualIslandTabBar(
-                selectedTab: $selectedTab,
-                onAddTapped: {
-                    showQuickAdd = true
+            CategoriesView(showQuickAdd: $showQuickAdd)
+                .tabItem {
+                    Label("Budgets", systemImage: selectedTab == .categories ? "square.grid.2x2.fill" : "square.grid.2x2")
                 }
-            )
+                .tag(TabSelection.categories)
+
+            InsightsView()
+                .tabItem {
+                    Label("Trends", systemImage: "chart.bar.xaxis")
+                }
+                .tag(TabSelection.insights)
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: selectedTab == .settings ? "gearshape.fill" : "gearshape")
+                }
+                .tag(TabSelection.settings)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .tint(store.accentColor)
         .preferredColorScheme(store.colorSchemeForTheme)
         .environmentObject(store)
         .sheet(isPresented: $showQuickAdd) {

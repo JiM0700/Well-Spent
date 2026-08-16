@@ -1,14 +1,16 @@
 import SwiftUI
 
-// ── Liquid Glass Card Modifier ─────────────────────────────────────────────
+// ── Apple Liquid Glass Card Modifier ──────────────────────────────────────────
 
 public struct LiquidGlassCardModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     var cornerRadius: CGFloat
     var interactiveHover: Bool
     @State private var isHovered: Bool = false
 
-    public init(cornerRadius: CGFloat = 18, interactiveHover: Bool = true) {
+    public init(cornerRadius: CGFloat = 20, interactiveHover: Bool = true) {
         self.cornerRadius = cornerRadius
         self.interactiveHover = interactiveHover
     }
@@ -17,63 +19,52 @@ public struct LiquidGlassCardModifier: ViewModifier {
         content
             .background(
                 ZStack {
-                    // Base Glass Blur Material
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.04) : Color.white.opacity(0.7))
-                        .background(
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                        )
-
-                    // Interactive Ambient Hover Glow
-                    if interactiveHover && isHovered {
+                    if reduceTransparency {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.08),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 10,
-                                    endRadius: 180
-                                )
+                            .fill(colorScheme == .dark ? Color(red: 0.12, green: 0.12, blue: 0.14) : Color(red: 0.95, green: 0.95, blue: 0.97))
+                    } else {
+                        // Base Glass Blur Substrate
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.65))
+                            .background(
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .fill(.ultraThinMaterial)
                             )
+                    }
+
+                    // Muted Ambient Hover Highlight (macOS/iPadOS pointer)
+                    if interactiveHover && isHovered && !reduceTransparency {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.02))
                             .transition(.opacity)
                     }
 
-                    // Specular Meniscus Refraction Border
+                    // Uniform Apple 0.5pt Hairline Glass Rim
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .strokeBorder(
-                            LinearGradient(
-                                colors: colorScheme == .dark ? [
-                                    Color.white.opacity(isHovered ? 0.28 : 0.18),
-                                    Color.white.opacity(0.06),
-                                    Color.white.opacity(isHovered ? 0.15 : 0.08)
-                                ] : [
-                                    Color.white.opacity(0.9),
-                                    Color.black.opacity(0.05),
-                                    Color.white.opacity(0.6)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: isHovered ? 1.2 : 0.9
+                            colorScheme == .dark
+                                ? Color.white.opacity(isHovered ? 0.18 : 0.10)
+                                : Color.black.opacity(isHovered ? 0.08 : 0.05),
+                            lineWidth: 0.5
                         )
                 }
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .shadow(
-                color: Color.black.opacity(colorScheme == .dark ? (isHovered ? 0.35 : 0.25) : (isHovered ? 0.08 : 0.04)),
-                radius: isHovered ? 14 : 8,
+                color: Color.black.opacity(colorScheme == .dark ? (isHovered ? 0.28 : 0.15) : (isHovered ? 0.06 : 0.03)),
+                radius: isHovered ? 12 : 6,
                 x: 0,
-                y: isHovered ? 6 : 3
+                y: isHovered ? 4 : 2
             )
             #if os(macOS)
             .onHover { hovering in
                 if interactiveHover {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                    if reduceMotion {
                         isHovered = hovering
+                    } else {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                            isHovered = hovering
+                        }
                     }
                 }
             }
@@ -82,95 +73,122 @@ public struct LiquidGlassCardModifier: ViewModifier {
 }
 
 public extension View {
-    func liquidGlassCard(cornerRadius: CGFloat = 18, interactiveHover: Bool = true) -> some View {
+    func liquidGlassCard(cornerRadius: CGFloat = 20, interactiveHover: Bool = true) -> some View {
         self.modifier(LiquidGlassCardModifier(cornerRadius: cornerRadius, interactiveHover: interactiveHover))
     }
 }
 
-// ── Liquid Glass Button Style ──────────────────────────────────────────────
+// ── Apple Liquid Glass Standard Button Styles ────────────────────────────────
 
 public struct LiquidGlassButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) var colorScheme
-    var tintColor: Color? = nil
-    var cornerRadius: CGFloat = 12
+    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
+    var cornerRadius: CGFloat = 14
 
-    public init(tintColor: Color? = nil, cornerRadius: CGFloat = 12) {
+    public init(cornerRadius: CGFloat = 14) {
+        self.cornerRadius = cornerRadius
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .semibold, design: .rounded))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                ZStack {
+                    if reduceTransparency {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.08))
+                    } else {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04))
+                            .background(
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                            )
+                    }
+
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(
+                            colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06),
+                            lineWidth: 0.5
+                        )
+                }
+            )
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.75), value: configuration.isPressed)
+    }
+}
+
+public struct LiquidGlassProminentButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) var colorScheme
+    var tintColor: Color? = nil
+    var cornerRadius: CGFloat = 14
+
+    public init(tintColor: Color? = nil, cornerRadius: CGFloat = 14) {
         self.tintColor = tintColor
         self.cornerRadius = cornerRadius
     }
 
     public func makeBody(configuration: Configuration) -> some View {
-        LiquidGlassButtonBody(
-            configuration: configuration,
-            tintColor: tintColor,
-            cornerRadius: cornerRadius,
-            colorScheme: colorScheme
-        )
-    }
+        let accent = tintColor ?? Color.accentColor
 
-    private struct LiquidGlassButtonBody: View {
-        let configuration: Configuration
-        let tintColor: Color?
-        let cornerRadius: CGFloat
-        let colorScheme: ColorScheme
-        @State private var isHovered: Bool = false
+        configuration.label
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(accent)
 
-        var body: some View {
-            let baseTint = tintColor ?? Color.accentColor
-
-            configuration.label
-                .font(.system(size: 13, weight: .semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    ZStack {
-                        if tintColor != nil {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .fill(baseTint.opacity(configuration.isPressed ? 0.9 : (isHovered ? 0.85 : 0.75)))
-                        } else {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .fill(colorScheme == .dark ? Color.white.opacity(isHovered ? 0.12 : 0.07) : Color.black.opacity(isHovered ? 0.08 : 0.04))
-                                .background(
-                                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                )
-                        }
-
-                        // Specular Border
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(colorScheme == .dark ? 0.3 : 0.6),
-                                        Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.9
-                            )
-                    }
-                )
-                .foregroundColor(tintColor != nil ? .white : .primary)
-                .scaleEffect(configuration.isPressed ? 0.97 : (isHovered ? 1.02 : 1.0))
-                .shadow(
-                    color: (tintColor ?? Color.clear).opacity(isHovered ? 0.35 : 0.15),
-                    radius: isHovered ? 8 : 4,
-                    x: 0,
-                    y: 2
-                )
-                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
-                .animation(.spring(response: 0.15, dampingFraction: 0.8), value: configuration.isPressed)
-                #if os(macOS)
-                .onHover { hovering in
-                    isHovered = hovering
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(
+                            colorScheme == .dark ? Color.white.opacity(0.18) : Color.white.opacity(0.35),
+                            lineWidth: 0.5
+                        )
                 }
-                #endif
-        }
+            )
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.30 : 0.10), radius: 6, x: 0, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.18, dampingFraction: 0.70), value: configuration.isPressed)
     }
 }
 
-// ── Liquid Glass Toggle Style ──────────────────────────────────────────────
+public struct LiquidGlassIconButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) var colorScheme
+    var size: CGFloat = 40
+
+    public init(size: CGFloat = 40) {
+        self.size = size
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: size, height: size)
+            .background(
+                ZStack {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .background(
+                            Circle()
+                                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.40))
+                        )
+
+                    Circle()
+                        .strokeBorder(
+                            colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06),
+                            lineWidth: 0.5
+                        )
+                }
+            )
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.spring(response: 0.18, dampingFraction: 0.70), value: configuration.isPressed)
+    }
+}
+
+// ── Liquid Glass Toggle Style ────────────────────────────────────────────────
 
 public struct LiquidGlassToggleStyle: ToggleStyle {
     @Environment(\.colorScheme) var colorScheme
@@ -178,54 +196,10 @@ public struct LiquidGlassToggleStyle: ToggleStyle {
     public init() {}
 
     public func makeBody(configuration: Configuration) -> some View {
-        HStack {
+        Toggle(isOn: configuration.$isOn) {
             configuration.label
-
-            Spacer()
-
-            Button(action: {
-                PlatformFeedback.selection()
-                withAnimation(.spring(response: 0.28, dampingFraction: 0.7)) {
-                    configuration.isOn.toggle()
-                }
-            }) {
-                ZStack(alignment: configuration.isOn ? .trailing : .leading) {
-                    // Pill Track
-                    Capsule()
-                        .fill(
-                            configuration.isOn
-                                ? Color.accentColor.opacity(0.85)
-                                : (colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.08))
-                        )
-                        .frame(width: 44, height: 26)
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(colorScheme == .dark ? 0.25 : 0.5),
-                                            Color.white.opacity(0.05)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
-                                    lineWidth: 0.8
-                                )
-                        )
-
-                    // Glass Knob
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 22, height: 22)
-                        .padding(2)
-                        .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 1)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.8), lineWidth: 0.5)
-                        )
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
         }
+        .toggleStyle(.switch)
+        .tint(.accentColor)
     }
 }

@@ -112,6 +112,9 @@ public final class ExpenseStore: ObservableObject {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(PersistedData.self, from: data)
             self.expenses = decoded.expenses
+            if self.expenses.isEmpty {
+                seedInitialData()
+            }
             self.monthlyBudget = decoded.monthlyBudget
             self.cycleStartDay = decoded.cycleStartDay
             self.baseMonthlyIncome = decoded.baseMonthlyIncome
@@ -216,6 +219,21 @@ public final class ExpenseStore: ObservableObject {
     public var budgetBurnPercentage: Double {
         guard monthlyBudget > 0 else { return 0.0 }
         return min(1.0, currentPeriodTotal / monthlyBudget)
+    }
+
+    public var dailyBudget: Double {
+        let calendar = Calendar.current
+        let daysInMonth = calendar.range(of: .day, in: .month, for: Date())?.count ?? 30
+        return monthlyBudget > 0 ? (monthlyBudget / Double(daysInMonth)) : 1500.0
+    }
+
+    public var todayRemainingBudget: Double {
+        max(0.0, dailyBudget - todaySpend)
+    }
+
+    public var todayBudgetBurnPercentage: Double {
+        guard dailyBudget > 0 else { return 0.0 }
+        return min(1.0, todaySpend / dailyBudget)
     }
 
     public func spentForCategory(_ category: ExpenseCategory) -> Double {

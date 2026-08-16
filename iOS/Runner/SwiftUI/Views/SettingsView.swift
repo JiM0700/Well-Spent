@@ -20,11 +20,6 @@ public struct SettingsView: View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 20) {
-                    // ── Header Section ─────────────────────────────────────
-                    headerSection
-                        .padding(.horizontal, 24)
-                        .padding(.top, 14)
-
                     #if os(macOS)
                     // ── Widescreen Balanced 2-Column Desktop Grid ─────────
                     HStack(alignment: .top, spacing: 20) {
@@ -43,7 +38,8 @@ public struct SettingsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .top)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                     #else
                     // ── Mobile Single Column Stack ────────────────────────
                     VStack(spacing: 16) {
@@ -53,19 +49,15 @@ public struct SettingsView: View {
                         dataManagementSection
                         aboutSection
                     }
-                    .padding(.horizontal, 16)
-                    #endif
-
-                    #if os(iOS)
-                    Spacer(minLength: 100)
-                    #else
-                    Spacer(minLength: 40)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                     #endif
                 }
                 .padding(.vertical, 8)
             }
+            .navigationTitle("Settings")
             #if os(iOS)
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showExportShareSheet) {
                 ShareSheet(activityItems: [exportCsvString])
             }
@@ -86,7 +78,7 @@ public struct SettingsView: View {
             ) { result in
                 handleFileImport(result: result)
             }
-            .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
+            .background(Color.appGroupedBackground)
             .alert("Paste CSV Data", isPresented: $showPasteAlert) {
                 TextField("Paste CSV text here", text: $importInputString)
                 Button("Import") {
@@ -113,28 +105,12 @@ public struct SettingsView: View {
         }
     }
 
-    // ── Header Section ────────────────────────────────────────────────────
-
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Settings")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.primary)
-                Text("Preferences, Budgets & Data Management")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-    }
-
     // ── Appearance & Color Theme ──────────────────────────────────────────
 
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("APPEARANCE & ACCENT")
-                .font(.system(size: 10, weight: .bold))
+            Text("Appearance & Accent")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             // Theme Mode Selector
@@ -162,13 +138,10 @@ public struct SettingsView: View {
                     ("purple", Color.purple, "Purple"),
                     ("orange", Color.orange, "Orange"),
                     ("teal", Color.teal, "Teal"),
-                    ("pink", Color.pink, "Pink")
                 ]
 
                 HStack(spacing: 12) {
                     ForEach(colorOptions, id: \.name) { opt in
-                        let isSelected = store.appAccentColorName == opt.name
-
                         Button(action: {
                             PlatformFeedback.selection()
                             withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
@@ -180,35 +153,36 @@ public struct SettingsView: View {
                                 Circle()
                                     .fill(opt.color)
                                     .frame(width: 32, height: 32)
+                                    .shadow(color: Color.black.opacity(0.12), radius: 3, x: 0, y: 1)
 
-                                if isSelected {
+                                if store.appAccentColorName == opt.name {
+                                    Circle()
+                                        .strokeBorder(Color.white, lineWidth: 2.5)
+                                        .frame(width: 32, height: 32)
+
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 13, weight: .bold))
+                                        .font(.system(size: 12, weight: .bold))
                                         .foregroundStyle(.white)
                                 }
                             }
-                            .overlay(
-                                Circle()
-                                    .stroke(isSelected ? Color.primary : Color.clear, lineWidth: 2)
-                                    .frame(width: 38, height: 38)
-                            )
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
+                .padding(.vertical, 4)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
+        .liquidGlassCard(cornerRadius: 20)
     }
 
     // ── Budgeting & Cycles ────────────────────────────────────────────────
 
     private var budgetingSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("BUDGET & INCOME CYCLES")
-                .font(.system(size: 10, weight: .bold))
+            Text("Budget & Income Cycles")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             HStack {
@@ -260,15 +234,15 @@ public struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
+        .liquidGlassCard(cornerRadius: 20)
     }
 
     // ── Summaries & Notifications ─────────────────────────────────────────
 
     private var summariesSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("NOTIFICATIONS & SUMMARIES")
-                .font(.system(size: 10, weight: .bold))
+            Text("Notifications & Summaries")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             Toggle("Spending Summaries", isOn: $store.summaryEnabled)
@@ -288,15 +262,15 @@ public struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
+        .liquidGlassCard(cornerRadius: 20)
     }
 
     // ── Data Management ───────────────────────────────────────────────────
 
     private var dataManagementSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("DATA MANAGEMENT & BACKUP")
-                .font(.system(size: 10, weight: .bold))
+            Text("Data Management & Backup")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
@@ -307,7 +281,7 @@ public struct SettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 10))
+                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
 
                 Button(action: initiateCsvImport) {
                     HStack(spacing: 6) {
@@ -316,7 +290,7 @@ public struct SettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 10))
+                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
             }
 
             Divider()
@@ -331,19 +305,19 @@ public struct SettingsView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(LiquidGlassButtonStyle(tintColor: Color.red, cornerRadius: 10))
+            .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
+        .liquidGlassCard(cornerRadius: 20)
     }
 
     // ── About & Privacy ───────────────────────────────────────────────────
 
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ABOUT")
-                .font(.system(size: 10, weight: .bold))
+            Text("About")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             HStack {
@@ -410,6 +384,7 @@ public struct SettingsView: View {
             do {
                 let content = try String(contentsOf: url, encoding: .utf8)
                 let count = store.importCsv(content: content)
+                PlatformFeedback.success()
                 importMessage = "Successfully imported \(count) transactions from file."
                 showImportResult = true
             } catch {
