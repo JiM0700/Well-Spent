@@ -2,622 +2,442 @@
 <html lang="en-IN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Well Spent – Free, private, offline-first personal expense tracker with budget forecasting, category envelopes, recurring bills &amp; encrypted backup.">
-  <title>Well Spent – Expense Tracker &amp; Budget Forecast</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Well Spent – Private, offline-first personal expense tracker.">
+  <title>Well Spent</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#06080e">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Well Spent">
   <link rel="apple-touch-icon" href="icon.jpg">
   <link rel="icon" type="image/jpeg" href="icon.jpg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Subtle ambient glow background -->
-  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="shell">
 
-  <div class="app-layout">
-
-    <!-- ─── Desktop Split-View Sidebar (macOS Style) ────────────────────────── -->
-    <aside class="pwa-sidebar" id="pwaSidebar" aria-label="Desktop Navigation">
-      <div class="sidebar-brand">
-        <div class="sidebar-brand__icon">💳</div>
-        <div class="sidebar-brand__text">
-          <span class="sidebar-brand__name">Well Spent</span>
-          <span class="sidebar-brand__badge">Private · Encrypted · Offline</span>
+    <!-- ── Sidebar (Desktop) ─────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Navigation">
+      <div class="sidebar-top">
+        <div class="app-mark">
+          <span class="app-mark__logo">W</span>
+          <span class="app-mark__name">Well Spent</span>
         </div>
+
+        <nav class="sidebar-links" aria-label="Main navigation">
+          <button type="button" class="slink active" data-tab="overview">
+            <span class="slink__dot"></span>
+            <span>Overview</span>
+          </button>
+          <button type="button" class="slink" data-tab="categories">
+            <span class="slink__dot"></span>
+            <span>Budgets</span>
+          </button>
+          <button type="button" class="slink" data-tab="insights">
+            <span class="slink__dot"></span>
+            <span>Trends</span>
+          </button>
+          <button type="button" class="slink" data-tab="settings">
+            <span class="slink__dot"></span>
+            <span>Settings</span>
+          </button>
+        </nav>
       </div>
 
-      <!-- Navigation Links -->
-      <nav class="sidebar-nav" id="sidebarNav" aria-label="Main sidebar navigation">
-        <button type="button" class="sidebar-nav-btn active" data-tab="overview">
-          <span class="nav-icon">🏠</span>
-          <span class="nav-text">Overview</span>
-        </button>
-        <button type="button" class="sidebar-nav-btn" data-tab="categories">
-          <span class="nav-icon">🗂️</span>
-          <span class="nav-text">Category Envelopes</span>
-        </button>
-        <button type="button" class="sidebar-nav-btn" data-tab="insights">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Insights &amp; Forecast</span>
-        </button>
-        <button type="button" class="sidebar-nav-btn" data-tab="settings">
-          <span class="nav-icon">⚙️</span>
-          <span class="nav-text">Settings &amp; Vault</span>
-        </button>
-      </nav>
-
-      <!-- Sidebar Cycle Status Gauge Widget -->
-      <div class="sidebar-gauge lg-card">
-        <div class="sidebar-gauge__head">
-          <span class="sidebar-gauge__title">CYCLE STATUS</span>
-          <span class="sidebar-gauge__pct" id="sidebarGaugePct">0%</span>
+      <div class="sidebar-bottom">
+        <div class="sidebar-gauge" id="sidebarGauge">
+          <div class="sidebar-gauge__labels">
+            <span id="sidebarSpentMeta">₹0 spent</span>
+            <span id="sidebarGaugePct">0%</span>
+          </div>
+          <div class="gauge-track">
+            <div class="gauge-fill" id="sidebarGaugeFill"></div>
+          </div>
+          <span class="sidebar-gauge__sub" id="sidebarLeftMeta">₹0 remaining</span>
         </div>
-        <div class="sidebar-gauge__track">
-          <div class="sidebar-gauge__fill" id="sidebarGaugeFill"></div>
-        </div>
-        <div class="sidebar-gauge__meta" id="sidebarGaugeMeta">₹0 of ₹0</div>
+        <button type="button" class="add-btn" id="sidebarAddBtn">+ New Transaction</button>
       </div>
-
-      <!-- Quick Add Action in Sidebar -->
-      <button type="button" class="sidebar-add-btn" id="sidebarAddBtn">
-        <span class="sidebar-add-icon">＋</span>
-        <span>Log Entry (⌘N)</span>
-      </button>
     </aside>
 
-    <!-- ─── Main Content Pane ──────────────────────────────────────────────── -->
-    <div class="main-pane">
+    <!-- ── Main Content ──────────────────────────────────────────────────── -->
+    <div class="main-wrap">
+      <main class="main" id="main">
 
-      <!-- Top Toolbar -->
-      <header class="main-toolbar glass-bar">
-        <div class="toolbar-left">
-          <div class="mobile-brand">
-            <span class="mobile-brand__icon">💳</span>
-            <span class="mobile-brand__name">Well Spent</span>
-          </div>
-
-          <h1 class="toolbar-title" id="pageTitle">Monthly Overview</h1>
-
-          <!-- Period Switcher -->
-          <nav class="glass-segmented" id="viewModeSwitcher" aria-label="Select period">
-            <button type="button" class="segment-btn"        data-mode="weekly"  aria-pressed="false">Weekly</button>
-            <button type="button" class="segment-btn active" data-mode="monthly" aria-pressed="true" >Monthly</button>
-            <button type="button" class="segment-btn"        data-mode="yearly"  aria-pressed="false">Yearly</button>
-          </nav>
-        </div>
-
-        <div class="toolbar-right">
-          <!-- Search Box -->
-          <div class="toolbar-search">
-            <span class="toolbar-search__icon">🔍</span>
-            <input type="text" id="txSearchInput" class="toolbar-search__input" placeholder="Search transactions…" autocomplete="off">
-          </div>
-
-          <!-- Data Menu -->
-          <div class="data-menu-wrap">
-            <button type="button" class="glass-pill" id="dataMenuBtn" aria-label="Import, export or sync vault" aria-expanded="false" aria-haspopup="true">
-              ⇅ Vault
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB: OVERVIEW                                                   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="tabOverview" class="tab active">
+          <header class="page-head">
+            <div class="page-head__left">
+              <h1 class="page-h1">Overview</h1>
+              <div class="period-toggle" id="viewModeSwitcher">
+                <button class="period-btn active" data-mode="monthwise">Month</button>
+                <button class="period-btn" data-mode="daywise">Today</button>
+              </div>
+            </div>
+            <button type="button" class="icon-btn" id="openAddModalBtn" aria-label="Add transaction">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+              </svg>
             </button>
-            <div class="data-menu" id="dataMenu" role="menu">
-              <button type="button" id="exportEncryptedVaultBtn" role="menuitem">🔐 Export Encrypted (.wsbackup)</button>
-              <button type="button" id="importEncryptedVaultBtn" role="menuitem">🔓 Restore Encrypted Vault</button>
-              <button type="button" id="openQrSyncBtn" role="menuitem">📱 QR Instant Sync</button>
-              <button type="button" id="exportCsvBtn" role="menuitem">📥 Export Clean CSV</button>
-              <button type="button" id="importCsvBtn" role="menuitem">📤 Import CSV File</button>
+          </header>
+
+          <!-- Summary Block -->
+          <div class="summary-block">
+            <div class="summary-amount">
+              <span class="summary-eyebrow" id="pulseEyebrow">Monthly Spend</span>
+              <span class="summary-figure" id="pulseAmountDisplay">₹0.00</span>
+              <span class="summary-sub" id="pulseSubDisplay">of ₹0 monthly budget</span>
+            </div>
+            <div class="summary-bar-wrap">
+              <div class="summary-bar">
+                <div class="summary-bar__fill" id="pulseProgressFill"></div>
+              </div>
+              <span class="summary-bar__label" id="pulseStatusBadge">On Track</span>
+            </div>
+            <div class="summary-stats">
+              <div class="stat">
+                <span class="stat__val" id="pulseRemainingDisplay">₹0</span>
+                <span class="stat__lbl">Remaining</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat">
+                <span class="stat__val" id="pulseBurnDisplay">₹0/day</span>
+                <span class="stat__lbl">Daily Burn</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat">
+                <span class="stat__val" id="pulseMonthEndDisplay">₹0</span>
+                <span class="stat__lbl">Est. Month-End</span>
+              </div>
             </div>
           </div>
-          <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
-          <input id="importVaultInput" type="file" accept=".wsbackup,.json" hidden>
 
-          <!-- Add Button in Toolbar -->
-          <button type="button" class="primary-btn" id="openAddModalBtn">
-            <span>＋ Add</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Main Views Container -->
-      <main class="main-body" id="mainBody">
-
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <!-- TAB 1 · OVERVIEW                                                  -->
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <div id="tabOverview" class="tab-view active">
-          <div class="overview-grid">
-
-            <!-- ── LEFT COLUMN (Summary + Forecast + Recurring Bills) ────── -->
-            <div class="col-left">
-
-              <!-- Hero Summary Card -->
-              <section class="lg-card hero-card" aria-label="Period Summary">
-                <div class="hero-card__header">
-                  <div>
-                    <p class="eyebrow" id="heroEyebrow">Monthly Cycle</p>
-                    <p class="cycle-date" id="heroCycleDate">—</p>
-                  </div>
-                  <button class="info-tooltip" id="cycleInfo" type="button"
-                          aria-label="View cycle details"
-                          data-tooltip="Cycle details">i</button>
-                </div>
-                <div class="hero-amount" id="monthlyTotalDisplay" aria-live="polite">₹0.00</div>
-                <p class="hero-sub">Spent of <strong id="monthlyBudgetDisplay">₹25,000</strong> budget</p>
-                <div class="progress-wrap">
-                  <div class="progress-track" role="progressbar"
-                       aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
-                    <div class="progress-fill" id="budgetProgressBar"></div>
-                    <div class="progress-glow"  id="budgetProgressGlow"></div>
-                  </div>
-                  <div class="progress-labels">
-                    <span id="progressSpentLabel">₹0 spent</span>
-                    <span id="progressPct">0% used</span>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Forecast Card -->
-              <section class="lg-card forecast-card" id="forecastCard" aria-label="Forecast">
-                <div class="forecast-header">
-                  <div>
-                    <p class="eyebrow">📈 Velocity &amp; Burn</p>
-                    <p class="forecast-title">Period Projection</p>
-                  </div>
-                  <span class="chip-days" id="daysLeftChip">— days left</span>
-                </div>
-
-                <div class="forecast-body">
-                  <div class="forecast-stat">
-                    <p class="forecast-stat__label">Projected Total</p>
-                    <p class="forecast-stat__val" id="projectedTotalDisplay" aria-live="polite">₹0.00</p>
-                  </div>
-                  <div class="forecast-stat forecast-stat--right">
-                    <p class="forecast-stat__label">Daily Velocity</p>
-                    <p class="forecast-stat__val forecast-stat__val--sm" id="dailyVelocityDisplay">₹0.00 / day</p>
-                  </div>
-                </div>
-
-                <div class="safe-burn-row">
-                  <span>Safe Daily Burn</span>
-                  <span id="safeBurnDisplay">₹0.00 / day</span>
-                </div>
-                <div class="forecast-status" id="forecastStatusMsg" aria-live="polite">Calculating velocity…</div>
-              </section>
-
-              <!-- Recurring Bills & Subscriptions Card -->
-              <section class="lg-card recurring-card" aria-label="Recurring Bills">
-                <div class="recurring-card__header">
-                  <div>
-                    <p class="eyebrow">🗓️ Fixed Commitments</p>
-                    <h3 class="recurring-title">Recurring Bills &amp; Subs</h3>
-                  </div>
-                  <button type="button" class="glass-pill-sm" id="openAddBillModalBtn">＋ Add Bill</button>
-                </div>
-                <div class="recurring-summary-bar">
-                  <span>Upcoming this cycle:</span>
-                  <strong id="upcomingBillsTotalDisplay">₹0.00</strong>
-                </div>
-                <div class="recurring-bills-list" id="recurringBillsList">
-                  <!-- Rendered dynamically by app.js -->
-                </div>
-              </section>
-
-            </div><!-- /col-left -->
-
-            <!-- ── RIGHT COLUMN (Trends Chart + Recent Activity Feed) ───── -->
-            <div class="col-right">
-
-              <!-- Chart Card -->
-              <section class="lg-card chart-card" aria-label="Spending chart">
-                <div class="chart-card__header">
-                  <div>
-                    <p class="eyebrow">Visual Analytics</p>
-                    <h2 class="chart-title">Spending Trends</h2>
-                  </div>
-                  <nav class="chart-mode-toggle" id="chartModeToggle" aria-label="Chart mode">
-                    <button type="button" class="cchip active" data-chartmode="daywise"   aria-pressed="true" >Day-wise</button>
-                    <button type="button" class="cchip"        data-chartmode="monthwise" aria-pressed="false">Month-wise</button>
-                  </nav>
-                </div>
-                <div class="chart-wrap" id="chartContainer">
-                  <svg id="chartSvg" class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="xMidYMax meet"></svg>
-                  <div class="chart-tooltip" id="chartTooltip" role="tooltip" aria-hidden="true"></div>
-                </div>
-                <div class="chart-footer">
-                  <span class="chart-stat-pill" id="chartPeakLabel">Peak: —</span>
-                  <span class="chart-stat-pill" id="chartAvgLabel">Average: —</span>
-                  <span class="chart-stat-pill" id="chartTotalLabel">Total: —</span>
-                </div>
-              </section>
-
-              <!-- Activity Feed Card (100% Flex height & internally scrollable) -->
-              <section class="lg-card tx-card" aria-label="Activity Feed">
-                <div class="tx-card__header">
-                  <div class="tx-card__title-wrap">
-                    <h2 class="tx-card-title">Recent Activity</h2>
-                    <span class="tx-count" id="txCount">0 entries</span>
-                  </div>
-
-                  <!-- Category filter chips -->
-                  <nav class="filter-row" id="categoryFilterChips" aria-label="Filter by category">
-                    <button type="button" class="fchip active" data-cat="all"           aria-pressed="true" >All</button>
-                    <button type="button" class="fchip"        data-cat="food"          aria-pressed="false">🍔 Food</button>
-                    <button type="button" class="fchip"        data-cat="transport"     aria-pressed="false">🚗 Transport</button>
-                    <button type="button" class="fchip"        data-cat="bills"         aria-pressed="false">📄 Bills</button>
-                    <button type="button" class="fchip"        data-cat="shopping"      aria-pressed="false">🛍️ Shopping</button>
-                    <button type="button" class="fchip"        data-cat="healthcare"    aria-pressed="false">🏥 Health</button>
-                    <button type="button" class="fchip"        data-cat="entertainment" aria-pressed="false">🎬 Fun</button>
-                    <button type="button" class="fchip"        data-cat="invest"        aria-pressed="false">💰 Invest</button>
-                    <button type="button" class="fchip"        data-cat="other"         aria-pressed="false">🌐 Other</button>
-                  </nav>
-                </div>
-
-                <!-- Hidden helper selectors for filter toggles -->
-                <div class="filter-pills-row" style="display:none;">
-                  <div id="typeFilterToggle"><button data-typefilter="all" class="active"></button><button data-typefilter="expense"></button><button data-typefilter="income"></button></div>
-                  <div id="kindFilterToggle"><button data-kindfilter="all" class="active"></button><button data-kindfilter="variable"></button><button data-kindfilter="fixed"></button></div>
-                </div>
-
-                <!-- Scrollable Transaction List -->
-                <div class="tx-list" id="transactionsList" aria-live="polite"></div>
-              </section>
-
-            </div><!-- /col-right -->
-          </div><!-- /overview-grid -->
-        </div><!-- /tabOverview -->
-
-
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <!-- TAB 2 · CATEGORY BUDGET ENVELOPES                                 -->
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <div id="tabCategories" class="tab-view">
-          <div class="tab-inner">
-            <div class="cat-tab-header">
-              <div>
-                <p class="eyebrow">Envelopes &amp; Limits</p>
-                <h2 class="section-title">Category Budget Envelopes</h2>
-                <p class="section-sub">Set target budget envelopes per category. Tap any card to customize its target limit.</p>
-              </div>
-              <span class="cat-tab-period" id="categoryPeriodLabel">This Cycle</span>
-            </div>
-            <div class="category-grid" id="categoriesGridContainer" aria-label="Category cards grid">
-              <!-- Rendered dynamically by app.js -->
+          <!-- Search & Filters -->
+          <div class="filter-row">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="txSearchInput" class="search-input" placeholder="Search transactions…" autocomplete="off">
             </div>
           </div>
-        </div>
+
+          <div class="chip-row" id="categoryFilterChips">
+            <button type="button" class="chip active" data-cat="all">All</button>
+            <button type="button" class="chip" data-cat="food">Food</button>
+            <button type="button" class="chip" data-cat="transport">Transport</button>
+            <button type="button" class="chip" data-cat="bills">Bills</button>
+            <button type="button" class="chip" data-cat="shopping">Shopping</button>
+            <button type="button" class="chip" data-cat="healthcare">Health</button>
+            <button type="button" class="chip" data-cat="entertainment">Entertainment</button>
+            <button type="button" class="chip" data-cat="invest">Invest</button>
+            <button type="button" class="chip" data-cat="other">Other</button>
+          </div>
+
+          <!-- Transaction List -->
+          <div class="list-head">
+            <span class="list-head__title" id="activityHeading">Transactions</span>
+            <span class="list-head__count" id="activitySubheading">0 entries</span>
+          </div>
+
+          <div class="tx-list" id="transactionList"></div>
+        </section>
 
 
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <!-- TAB 3 · INSIGHTS & FORECAST                                       -->
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <div id="tabInsights" class="tab-view">
-          <div class="tab-inner insights-scroll-view">
-            <div class="insights-grid">
-              <!-- Cash Flow Overview -->
-              <section class="lg-card insight-card">
-                <p class="eyebrow">Financial Flow</p>
-                <h3 class="insight-card-title">Cash Flow &amp; Savings</h3>
-                <div class="insight-stat-row">
-                  <span class="insight-stat-name">Base Income</span>
-                  <span class="insight-stat-val text-success" id="insBaseIncome">₹0.00</span>
-                </div>
-                <div class="insight-stat-row">
-                  <span class="insight-stat-name">Total Spent</span>
-                  <span class="insight-stat-val text-danger" id="insTotalSpent">₹0.00</span>
-                </div>
-                <div class="insight-stat-row insight-stat-row--total">
-                  <span class="insight-stat-name">Net Saved</span>
-                  <span class="insight-stat-val text-accent" id="insNetSavings">₹0.00</span>
-                </div>
-              </section>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB: BUDGETS                                                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="tabCategories" class="tab">
+          <header class="page-head">
+            <h1 class="page-h1">Budgets</h1>
+            <button type="button" class="icon-btn" id="openAddModalBtn2" aria-label="Add transaction">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+              </svg>
+            </button>
+          </header>
 
-              <!-- Category Distribution -->
-              <section class="lg-card insight-card">
-                <p class="eyebrow">Breakdown</p>
-                <h3 class="insight-card-title">Category Distribution</h3>
-                <div id="categoryBreakdownList" class="cat-list">
-                  <div class="empty-msg">No expense data available for this cycle.</div>
-                </div>
-              </section>
+          <div class="summary-block">
+            <div class="summary-amount">
+              <span class="summary-eyebrow">Monthly Allocation</span>
+              <span class="summary-figure" id="allocationTotalDisplay">₹0.00</span>
+            </div>
+            <div class="summary-bar-wrap">
+              <div class="summary-bar">
+                <div class="summary-bar__fill" id="allocationProgressFill"></div>
+              </div>
+              <span class="summary-bar__label" id="allocationStatusBadge">0% used</span>
+            </div>
+            <div class="summary-stats">
+              <div class="stat">
+                <span class="stat__val" id="allocationSpentText">₹0</span>
+                <span class="stat__lbl">Spent</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat">
+                <span class="stat__val" id="allocationRemainingText">₹0</span>
+                <span class="stat__lbl">Remaining</span>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div class="section-label">Category Envelopes <span class="section-label__hint">tap to edit</span></div>
+          <div class="envelope-list" id="envelopesGrid"></div>
+        </section>
 
 
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <!-- TAB 4 · SETTINGS & VAULT                                          -->
-        <!-- ═════════════════════════════════════════════════════════════════ -->
-        <div id="tabSettings" class="tab-view">
-          <div class="tab-inner settings-container">
-            <div class="settings-box lg-card">
-              <div class="settings-box__header">
-                <p class="eyebrow">Cycle &amp; Targets</p>
-                <h2 class="section-title">Preferences &amp; Vault</h2>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB: TRENDS                                                     -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="tabInsights" class="tab">
+          <header class="page-head">
+            <h1 class="page-h1">Trends</h1>
+          </header>
+
+          <!-- Velocity -->
+          <div class="card">
+            <div class="card__label">Spending Velocity</div>
+            <div class="vel-stats">
+              <div class="stat">
+                <span class="stat__val" id="velBurnVal">₹0</span>
+                <span class="stat__lbl">Daily Burn</span>
               </div>
-
-              <div class="settings-grouped-list">
-                <div class="setting-item">
-                  <div class="setting-item__info">
-                    <span class="setting-item__label">Monthly Budget</span>
-                    <span class="setting-item__hint">Total cycle budget ceiling</span>
-                  </div>
-                  <div class="setting-item__input-wrap">
-                    <span class="currency-prefix">₹</span>
-                    <input type="number" id="tabSettingMonthlyBudget" class="setting-number-input" min="0" step="500" placeholder="25000">
-                  </div>
-                </div>
-
-                <div class="setting-item">
-                  <div class="setting-item__info">
-                    <span class="setting-item__label">Cycle Start Day</span>
-                    <span class="setting-item__hint">Day of month budget cycle resets</span>
-                  </div>
-                  <input type="number" id="tabSettingCycleStartDay" class="setting-number-input" min="1" max="28" value="1">
-                </div>
-
-                <div class="setting-item">
-                  <div class="setting-item__info">
-                    <span class="setting-item__label">Base Monthly Income</span>
-                    <span class="setting-item__hint">Used to calculate net savings rate</span>
-                  </div>
-                  <div class="setting-item__input-wrap">
-                    <span class="currency-prefix">₹</span>
-                    <input type="number" id="tabSettingBaseIncome" class="setting-number-input" min="0" step="1000" placeholder="50000">
-                  </div>
-                </div>
-
-                <div class="setting-item">
-                  <div class="setting-item__info">
-                    <span class="setting-item__label">Payday</span>
-                    <span class="setting-item__hint">Day salary arrives</span>
-                  </div>
-                  <input type="number" id="tabSettingPayDay" class="setting-number-input" min="1" max="31" value="1">
-                </div>
+              <div class="stat-divider"></div>
+              <div class="stat">
+                <span class="stat__val" id="velProjectedVal">₹0</span>
+                <span class="stat__lbl">Projected Total</span>
               </div>
-
-              <div class="settings-actions">
-                <button type="button" class="primary-btn" id="saveTabSettingsBtn">Save Preferences</button>
+              <div class="stat-divider"></div>
+              <div class="stat">
+                <span class="stat__val" id="velRemainingVal">0d</span>
+                <span class="stat__lbl">Days Left</span>
               </div>
-
-              <div class="vault-tools-section">
-                <p class="eyebrow" style="margin-top: 10px;">🔒 Encrypted Zero-Knowledge Vault</p>
-                <div class="vault-tools-grid">
-                  <button type="button" class="vault-btn" id="tabExportVaultBtn">
-                    <span>🔐</span>
-                    <div class="vault-btn-text">
-                      <strong>Export Encrypted Vault</strong>
-                      <small>AES-GCM-256 .wsbackup file</small>
-                    </div>
-                  </button>
-                  <button type="button" class="vault-btn" id="tabImportVaultBtn">
-                    <span>🔓</span>
-                    <div class="vault-btn-text">
-                      <strong>Restore Vault Backup</strong>
-                      <small>Decrypt with password</small>
-                    </div>
-                  </button>
-                  <button type="button" class="vault-btn" id="tabQrSyncBtn">
-                    <span>📱</span>
-                    <div class="vault-btn-text">
-                      <strong>Device QR Sync</strong>
-                      <small>Instant offline phone transfer</small>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
             </div>
+            <div class="vel-bar">
+              <div class="vel-bar__fill" id="velocityBurnFill"></div>
+            </div>
+            <p class="vel-status" id="velocityStatusMsg">Calculating…</p>
           </div>
-        </div>
+
+          <!-- Distribution -->
+          <div class="section-label">Category Breakdown</div>
+          <div class="card">
+            <div class="dist-list" id="categoryDistributionList"></div>
+          </div>
+
+          <!-- Recurring Bills -->
+          <div class="section-label">
+            Recurring Bills
+            <button type="button" class="text-btn" id="openAddBillModalBtn">+ Add</button>
+          </div>
+
+          <div class="card">
+            <div class="recurring-summary">
+              <span>Upcoming this cycle</span>
+              <span class="mono" id="upcomingBillsTotalDisplay">₹0.00</span>
+            </div>
+            <div class="recurring-list" id="recurringBillsList"></div>
+          </div>
+        </section>
+
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB: SETTINGS                                                   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="tabSettings" class="tab">
+          <header class="page-head">
+            <h1 class="page-h1">Settings</h1>
+          </header>
+
+          <div class="settings-stack">
+
+            <div class="settings-group">
+              <div class="settings-group__label">Budget & Cycle</div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-info__title">Monthly Budget</span>
+                  <span class="setting-info__sub">Total spending allowance</span>
+                </div>
+                <div class="setting-input-wrap">
+                  <span class="setting-prefix">₹</span>
+                  <input type="number" id="settingMonthlyBudget" class="setting-input" min="0" step="500" placeholder="25000">
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-info__title">Cycle Reset Day</span>
+                  <span class="setting-info__sub">Day of month budget restarts</span>
+                </div>
+                <input type="number" id="settingCycleStartDay" class="setting-input setting-input--short" min="1" max="28" value="1">
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-info__title">Monthly Income</span>
+                  <span class="setting-info__sub">For net savings calculation</span>
+                </div>
+                <div class="setting-input-wrap">
+                  <span class="setting-prefix">₹</span>
+                  <input type="number" id="settingBaseIncome" class="setting-input" min="0" step="1000" placeholder="50000">
+                </div>
+              </div>
+              <button type="button" class="primary-btn" id="saveSettingsBtn">Save</button>
+            </div>
+
+            <div class="settings-group">
+              <div class="settings-group__label">Appearance</div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-info__title">Theme</span>
+                </div>
+                <select id="themeSelect" class="setting-select">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <div class="settings-group__label">Data</div>
+              <div class="data-actions">
+                <button type="button" class="data-btn" id="exportCsvBtn">Export CSV</button>
+                <button type="button" class="data-btn" id="importCsvBtn">Import CSV</button>
+                <button type="button" class="data-btn" id="exportVaultBtn">Export Backup</button>
+                <button type="button" class="data-btn" id="importVaultBtn">Restore Backup</button>
+              </div>
+              <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
+              <input id="importVaultInput" type="file" accept=".wsbackup,.json" hidden>
+              <button type="button" class="danger-btn" id="clearAllDataBtn">Erase All Records</button>
+            </div>
+
+          </div>
+        </section>
 
       </main>
 
-      <!-- ── Next-Gen Dual-Island Mobile Navigation Bar ────────────────── -->
-      <div class="pwa-dock-container" id="pwaDockContainer">
-        <nav class="pwa-tabbar glass-bar" id="pwaTabBar" aria-label="Mobile Navigation">
-          <button type="button" class="pwa-tab-btn active" data-tab="overview">🏠 <span>Overview</span></button>
-          <button type="button" class="pwa-tab-btn"        data-tab="categories">🗂️ <span>Categories</span></button>
-          <button type="button" class="pwa-tab-btn"        data-tab="insights">📊 <span>Insights</span></button>
-          <button type="button" class="pwa-tab-btn"        data-tab="settings">⚙️ <span>Settings</span></button>
-        </nav>
-        <button type="button" class="pwa-dock-add-btn glass-bar" id="pwaDockAddBtn" aria-label="Add entry" title="Quick Add">
-          <span>＋</span>
+      <!-- ── Mobile Bottom Nav ─────────────────────────────────────────── -->
+      <nav class="bottom-nav" id="bottomNav" aria-label="Mobile navigation">
+        <button type="button" class="bnav-btn active" data-tab="overview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span>Overview</span>
         </button>
+        <button type="button" class="bnav-btn" data-tab="categories">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="9" height="9"/><rect x="13" y="3" width="9" height="9"/><rect x="2" y="14" width="9" height="7"/><rect x="13" y="14" width="9" height="7"/>
+          </svg>
+          <span>Budgets</span>
+        </button>
+        <button type="button" class="bnav-btn bnav-center" data-tab="overview" id="mobileAddBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button type="button" class="bnav-btn" data-tab="insights">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span>Trends</span>
+        </button>
+        <button type="button" class="bnav-btn" data-tab="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+
+  <!-- ── Add Transaction Modal ──────────────────────────────────────────── -->
+  <div class="overlay" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal__bar"></div>
+      <div class="modal__head">
+        <button type="button" class="modal__dismiss" id="modalCancelBtn">Cancel</button>
+        <span class="modal__title" id="modalTitle">New Entry</span>
+        <button type="button" class="modal__confirm" id="modalSaveBtn">Save</button>
       </div>
-
-    </div><!-- /main-pane -->
-  </div><!-- /app-layout -->
-
-
-  <!-- ── Quick Add Modal ───────────────────────────────────────────────────── -->
-  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-card lg-card">
-      <div class="modal-card__header">
-        <h2 class="modal-title" id="modalTitle">Quick Add Expense</h2>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <!-- Smart Receipt OCR Scan trigger -->
-          <label class="receipt-scan-btn" title="Scan receipt or bill image">
-            <input type="file" id="receiptScanInput" accept="image/*" style="display:none;">
-            <span>📷 Scan Receipt</span>
-          </label>
-          <button type="button" class="modal-close-btn" id="closeModalBtn" aria-label="Close dialog">✕</button>
+      <form id="addExpenseForm" class="modal__body">
+        <div class="amount-field">
+          <span class="amount-field__cur">₹</span>
+          <input type="text" id="expenseAmountInput" inputmode="decimal" placeholder="0.00" required autocomplete="off">
         </div>
-      </div>
-
-      <!-- Expense vs Income Segmented Toggle -->
-      <div class="modal-segment-wrap" id="entryTypeSwitcher" role="tablist">
-        <button type="button" class="modal-segment-btn active" data-entry-type="expense">💸 Expense</button>
-        <button type="button" class="modal-segment-btn"        data-entry-type="income">💰 Income</button>
-      </div>
-
-      <form id="expenseForm" autocomplete="off">
-        <input type="hidden" id="entryType" name="entryType" value="expense">
-        <input type="hidden" id="expenseKind" name="expenseKind" value="variable">
-
         <div class="field-group">
-          <label for="expTitle" class="field__label">Description</label>
-          <input type="text" id="expTitle" class="field__input" placeholder="e.g. Swiggy, Groceries, Metro" required autofocus>
+          <div class="field-row">
+            <label class="field-row__label">Description</label>
+            <input type="text" id="expenseTitleInput" placeholder="Coffee, groceries…" required autocomplete="off">
+          </div>
+          <div class="field-row field-row--divider">
+            <label class="field-row__label">Notes</label>
+            <input type="text" id="expenseNotesInput" placeholder="Optional" autocomplete="off">
+          </div>
+          <div class="field-row field-row--divider">
+            <label class="field-row__label">Date</label>
+            <input type="date" id="expenseDateInput" required>
+          </div>
         </div>
-
         <div class="field-group">
-          <div class="field__label-row">
-            <label for="expAmount" class="field__label">Amount (₹)</label>
-            <span class="formula-preview-badge" id="expFormulaBadge"></span>
-          </div>
-          <div class="amount-input-wrap">
-            <span class="amount-prefix">₹</span>
-            <input type="text" id="expAmount" class="field__input amount-field" placeholder="0.00 or 250+75" required inputmode="text">
-          </div>
+          <div class="cat-label">Category</div>
+          <div class="cat-grid" id="modalCategoryGrid"></div>
         </div>
-
-        <!-- Quick Date Toggles -->
-        <div class="field-group">
-          <label class="field__label">Date</label>
-          <div class="quick-dates-row">
-            <button type="button" class="quick-date-btn active" id="quickDateToday">Today</button>
-            <button type="button" class="quick-date-btn" id="quickDateYesterday">Yesterday</button>
-            <input type="date" id="expDate" class="field__input date-input-inline" required>
-          </div>
-        </div>
-
-        <!-- Category Grid in Modal -->
-        <div class="field-group" id="expenseCategoryField">
-          <label class="field__label">Category</label>
-          <div class="category-chips-grid" id="modalCategoryChips">
-            <label class="modal-cat-chip active">
-              <input type="radio" name="modalCat" value="food" checked>
-              <span>🍔 Food</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="transport">
-              <span>🚗 Transport</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="bills">
-              <span>📄 Bills</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="shopping">
-              <span>🛍️ Shopping</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="healthcare">
-              <span>🏥 Health</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="entertainment">
-              <span>🎬 Fun</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="invest">
-              <span>💰 Invest</span>
-            </label>
-            <label class="modal-cat-chip">
-              <input type="radio" name="modalCat" value="other">
-              <span>🌐 Other</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Live Envelope Warning Banner -->
-        <div id="modalEnvelopeWarning" class="envelope-warning-banner" style="display:none;"></div>
-
-        <button type="submit" class="submit-btn">Save Entry</button>
       </form>
     </div>
   </div>
 
-
-  <!-- ── Category Envelope Edit & Detail Modal ─────────────────────────────── -->
-  <div class="modal-backdrop" id="categoryDetailModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal-card lg-card">
-      <div class="modal-card__header">
-        <h2 class="modal-title" id="catDetailModalTitle">Category Envelope</h2>
-        <button type="button" class="modal-close-btn" id="closeCatDetailModalBtn" aria-label="Close dialog">✕</button>
+  <!-- ── Budget Edit Modal ──────────────────────────────────────────────── -->
+  <div class="overlay" id="budgetModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal modal--compact">
+      <div class="modal__bar"></div>
+      <div class="modal__head">
+        <button type="button" class="modal__dismiss" id="budgetCancelBtn">Cancel</button>
+        <span class="modal__title" id="budgetEditTitle">Edit Target</span>
+        <button type="button" class="modal__confirm" id="budgetSaveBtn">Update</button>
       </div>
-
-      <!-- Envelope Target Setter Form -->
-      <div class="envelope-setter-box">
-        <label for="catEnvelopeInput" class="field__label">Target Budget Envelope (₹)</label>
-        <div style="display:flex; gap:8px; margin-top:4px;">
-          <input type="number" id="catEnvelopeInput" class="field__input" placeholder="e.g. 6000" style="flex:1;">
-          <button type="button" class="primary-btn" id="saveCatEnvelopeBtn" style="padding:0 16px;">Set Limit</button>
-          <button type="button" class="glass-pill" id="clearCatEnvelopeBtn" style="color:var(--text-danger);">Clear</button>
+      <div class="modal__body">
+        <p class="modal__desc">Set spending envelope limit for this category.</p>
+        <div class="amount-field">
+          <span class="amount-field__cur">₹</span>
+          <input type="number" id="budgetEditInput" min="0" step="100" placeholder="5000">
         </div>
       </div>
-
-      <div class="cat-detail-content" id="catDetailContent"></div>
     </div>
   </div>
 
-
-  <!-- ── Add Recurring Bill Modal ─────────────────────────────────────────── -->
-  <div class="modal-backdrop" id="addBillModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal-card lg-card">
-      <div class="modal-card__header">
-        <h2 class="modal-title">Add Recurring Bill / Subscription</h2>
-        <button type="button" class="modal-close-btn" id="closeAddBillModalBtn" aria-label="Close dialog">✕</button>
+  <!-- ── Add Bill Modal ────────────────────────────────────────────────── -->
+  <div class="overlay" id="billModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal modal--compact">
+      <div class="modal__bar"></div>
+      <div class="modal__head">
+        <button type="button" class="modal__dismiss" id="billCancelBtn">Cancel</button>
+        <span class="modal__title">Add Bill</span>
+        <button type="button" class="modal__confirm" id="billSaveBtn">Add</button>
       </div>
-
-      <form id="addBillForm" autocomplete="off">
+      <div class="modal__body">
         <div class="field-group">
-          <label for="billTitle" class="field__label">Bill Name / Service</label>
-          <input type="text" id="billTitle" class="field__input" placeholder="e.g. Netflix, House Rent, Wi-Fi" required>
-        </div>
-
-        <div class="field-group">
-          <label for="billAmount" class="field__label">Amount (₹)</label>
-          <input type="number" id="billAmount" class="field__input" placeholder="e.g. 649" min="1" step="1" required>
-        </div>
-
-        <div class="field-group">
-          <label for="billDueDay" class="field__label">Due Day of Month (1 - 31)</label>
-          <input type="number" id="billDueDay" class="field__input" min="1" max="31" value="5" required>
-        </div>
-
-        <div class="field-group">
-          <label for="billCategory" class="field__label">Category</label>
-          <select id="billCategory" class="field__input">
-            <option value="bills">📄 Bills &amp; Utilities</option>
-            <option value="entertainment">🎬 Entertainment / Subs</option>
-            <option value="food">🍔 Food / Tiffin</option>
-            <option value="transport">🚗 Transport / Metro</option>
-            <option value="shopping">🛍️ Shopping / Memberships</option>
-            <option value="healthcare">🏥 Healthcare / Insurance</option>
-            <option value="invest">💰 Investments / SIP</option>
-            <option value="other">🌐 General / Other</option>
-          </select>
-        </div>
-
-        <button type="submit" class="submit-btn">Save Recurring Bill</button>
-      </form>
-    </div>
-  </div>
-
-
-  <!-- ── Encrypted QR Sync Modal ───────────────────────────────────────────── -->
-  <div class="modal-backdrop" id="qrSyncModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal-card lg-card">
-      <div class="modal-card__header">
-        <h2 class="modal-title">📱 Instant Offline Device Sync</h2>
-        <button type="button" class="modal-close-btn" id="closeQrSyncModalBtn" aria-label="Close dialog">✕</button>
-      </div>
-      <p class="field__label" style="line-height:1.4;">Transfer your complete encrypted vault to another device offline using an encrypted transfer payload.</p>
-      
-      <div class="qr-payload-wrap">
-        <label for="qrSyncPayloadArea" class="field__label">Encrypted Vault Code</label>
-        <textarea id="qrSyncPayloadArea" class="field__input" rows="5" readonly style="font-family:monospace; font-size:0.75rem; word-break:break-all;"></textarea>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button type="button" class="primary-btn" id="copySyncPayloadBtn" style="flex:1;">📋 Copy Sync Payload</button>
-          <button type="button" class="glass-pill" id="pasteImportSyncPayloadBtn" style="flex:1;">📥 Paste &amp; Import</button>
+          <div class="field-row">
+            <label class="field-row__label">Name</label>
+            <input type="text" id="billTitleInput" placeholder="Netflix, Spotify…" required>
+          </div>
+          <div class="field-row field-row--divider">
+            <label class="field-row__label">Amount (₹)</label>
+            <input type="number" id="billAmountInput" min="0" placeholder="499" required>
+          </div>
+          <div class="field-row field-row--divider">
+            <label class="field-row__label">Due Day</label>
+            <input type="number" id="billDayInput" min="1" max="31" value="1" required>
+          </div>
         </div>
       </div>
     </div>
