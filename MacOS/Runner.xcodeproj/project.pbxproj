@@ -47,6 +47,7 @@
 		A0010000000000000000000D /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000D /* WidgetDataManager.swift */; };
 		A0010000000000000000000E /* TodayExpenseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000E /* TodayExpenseWidget.swift */; };
 		A0010000000000000000000F /* CsvEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000F /* CsvEngine.swift */; };
+		A00100000000000000000010 /* SwipeableTransactionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000010 /* SwipeableTransactionRow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -123,6 +124,7 @@
 		A0020000000000000000000D /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
 		A0020000000000000000000E /* TodayExpenseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayExpenseWidget.swift; sourceTree = "<group>"; };
 		A0020000000000000000000F /* CsvEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CsvEngine.swift; sourceTree = "<group>"; };
+		A00200000000000000000010 /* SwipeableTransactionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeableTransactionRow.swift; sourceTree = "<group>"; };
 		D578F2F5BE5176896CD459C2 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -290,6 +292,7 @@
 				A0020000000000000000000A /* DualIslandTabBar.swift */,
 				A0020000000000000000000B /* LiquidGlassStyles.swift */,
 				A0020000000000000000000E /* TodayExpenseWidget.swift */,
+				A00200000000000000000010 /* SwipeableTransactionRow.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -558,6 +561,7 @@
 				A0010000000000000000000D /* WidgetDataManager.swift in Sources */,
 				A0010000000000000000000E /* TodayExpenseWidget.swift in Sources */,
 				A0010000000000000000000F /* CsvEngine.swift in Sources */,
+				A00100000000000000000010 /* SwipeableTransactionRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

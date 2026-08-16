@@ -17,7 +17,32 @@ public struct OverviewView: View {
     public var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 18) {
+                VStack(spacing: 16) {
+                    // ── Clean Page Header (No empty space above page name) ─
+                    HStack(alignment: .center) {
+                        Text("Home")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.primary)
+
+                        Spacer()
+
+                        Button(action: {
+                            PlatformFeedback.impact()
+                            showQuickAdd = true
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(Color.primary)
+                                .frame(width: 36, height: 36)
+                                .background(Color.appSecondaryGroupedBackground)
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("New Transaction")
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
                     // ── Period Picker (Segmented Control) ─────────────────
                     Picker("Period", selection: $store.currentViewMode) {
                         Text("Monthwise").tag("monthwise")
@@ -25,7 +50,6 @@ public struct OverviewView: View {
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
 
                     // ── Hero Summary Cards ────────────────────────────────
                     #if os(macOS)
@@ -52,16 +76,24 @@ public struct OverviewView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
 
-                    // ── Transaction Feed ──────────────────────────────────
+                    // ── Transaction Feed with Slide-to-Delete ─────────────
                     if filteredExpenses.isEmpty {
                         emptyState
                             .padding(.horizontal, 20)
                     } else {
                         LazyVStack(spacing: 8) {
                             ForEach(filteredExpenses) { expense in
-                                transactionRow(for: expense)
+                                SwipeableTransactionRow(
+                                    expense: expense,
+                                    formattedDate: formattedDate,
+                                    onDelete: {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                            store.deleteExpense(id: expense.id)
+                                        }
+                                    }
+                                )
                             }
                         }
                         .padding(.horizontal, 20)
@@ -69,20 +101,8 @@ public struct OverviewView: View {
                 }
                 .padding(.vertical, 8)
             }
-            .navigationTitle("Home")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        PlatformFeedback.impact()
-                        showQuickAdd = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .scrollDismissesKeyboard(.interactively)
             #endif
             .background(Color.appGroupedBackground)

@@ -19,7 +19,18 @@ public struct SettingsView: View {
     public var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
+                    // ── Clean Page Header (No empty space above page name) ─
+                    HStack(alignment: .center) {
+                        Text("Settings")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.primary)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
                     #if os(macOS)
                     // ── Widescreen Balanced 2-Column Desktop Grid ─────────
                     HStack(alignment: .top, spacing: 20) {
@@ -39,7 +50,6 @@ public struct SettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .top)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
                     #else
                     // ── Mobile Single Column Stack ────────────────────────
                     VStack(spacing: 16) {
@@ -50,14 +60,12 @@ public struct SettingsView: View {
                         aboutSection
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
                     #endif
                 }
                 .padding(.vertical, 8)
             }
-            .navigationTitle("Settings")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showExportShareSheet) {
                 ShareSheet(activityItems: [exportCsvString])
             }

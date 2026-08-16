@@ -27,6 +27,7 @@
 		AA00000C0000000000000002 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000C0000000000000001 /* WidgetDataManager.swift */; };
 		AA00000D0000000000000002 /* TodayExpenseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000D0000000000000001 /* TodayExpenseWidget.swift */; };
 		AA00000E0000000000000002 /* CsvEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000E0000000000000001 /* CsvEngine.swift */; };
+		AA00000F0000000000000002 /* SwipeableTransactionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000F0000000000000001 /* SwipeableTransactionRow.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -84,6 +85,7 @@
 		AA00000C0000000000000001 /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/WidgetDataManager.swift"; sourceTree = "<group>"; };
 		AA00000D0000000000000001 /* TodayExpenseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/Components/TodayExpenseWidget.swift"; sourceTree = "<group>"; };
 		AA00000E0000000000000001 /* CsvEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Services/CsvEngine.swift"; sourceTree = "<group>"; };
+		AA00000F0000000000000001 /* SwipeableTransactionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI/Views/Components/SwipeableTransactionRow.swift"; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -208,6 +210,7 @@
 				AA00000C0000000000000001 /* WidgetDataManager.swift */,
 				AA00000D0000000000000001 /* TodayExpenseWidget.swift */,
 				AA00000E0000000000000001 /* CsvEngine.swift */,
+				AA00000F0000000000000001 /* SwipeableTransactionRow.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -443,6 +446,7 @@
 				AA00000C0000000000000002 /* WidgetDataManager.swift in Sources */,
 				AA00000D0000000000000002 /* TodayExpenseWidget.swift in Sources */,
 				AA00000E0000000000000002 /* CsvEngine.swift in Sources */,
+				AA00000F0000000000000002 /* SwipeableTransactionRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

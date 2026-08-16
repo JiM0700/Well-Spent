@@ -15,11 +15,35 @@ public struct CategoriesView: View {
     public var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 18) {
+                VStack(spacing: 16) {
+                    // ── Clean Page Header (No empty space above page name) ─
+                    HStack(alignment: .center) {
+                        Text("Budgets")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.primary)
+
+                        Spacer()
+
+                        Button(action: {
+                            PlatformFeedback.impact()
+                            showQuickAdd = true
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(Color.primary)
+                                .frame(width: 36, height: 36)
+                                .background(Color.appSecondaryGroupedBackground)
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("New Transaction")
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
                     // ── Allocation Summary Bar ────────────────────────────
                     allocationSummaryCard
                         .padding(.horizontal, 20)
-                        .padding(.top, 8)
 
                     // ── Category Envelope Grid ────────────────────────────
                     #if os(macOS)
@@ -40,20 +64,8 @@ public struct CategoriesView: View {
                 }
                 .padding(.vertical, 8)
             }
-            .navigationTitle("Budgets")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        PlatformFeedback.impact()
-                        showQuickAdd = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             #endif
             .background(Color.appGroupedBackground)
             .alert("Edit Category Budget Target", isPresented: $showEditDialog) {

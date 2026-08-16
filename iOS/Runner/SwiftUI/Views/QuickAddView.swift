@@ -9,7 +9,6 @@ public struct QuickAddView: View {
     @State private var selectedCategory: ExpenseCategory = .food
     @State private var date: Date = Date()
     @State private var notes: String = ""
-    @State private var isExpense: Bool = true
     @FocusState private var isAmountFocused: Bool
     @Environment(\.colorScheme) var colorScheme
 
@@ -22,16 +21,16 @@ public struct QuickAddView: View {
                     // ── Hero Amount Input ─────────────────────────────────
                     VStack(spacing: 6) {
                         Text("Transaction Amount")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
 
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
                             Text("₹")
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundStyle(store.accentColor)
 
                             TextField("0.00", text: $amountString)
-                                .font(.system(size: 44, weight: .heavy, design: .rounded))
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
                                 .focused($isAmountFocused)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
@@ -40,15 +39,16 @@ public struct QuickAddView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .padding(.vertical, 18)
+                    .padding(.vertical, 20)
                     .frame(maxWidth: .infinity)
-                    .liquidGlassCard(cornerRadius: 20)
+                    .background(Color.appSecondaryGroupedBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .padding(.horizontal)
 
                     // ── Category Selector Grid ────────────────────────────
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Select Category")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal)
 
@@ -64,15 +64,18 @@ public struct QuickAddView: View {
                     VStack(spacing: 12) {
                         TextField("Description (e.g. Blue Tokai Coffee)", text: $title)
                             .padding(14)
-                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
+                            .background(Color.appSecondaryGroupedBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                         DatePicker("Date", selection: $date, displayedComponents: .date)
                             .padding(14)
-                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
+                            .background(Color.appSecondaryGroupedBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                         TextField("Optional Notes", text: $notes)
                             .padding(14)
-                            .liquidGlassCard(cornerRadius: 14, interactiveHover: false)
+                            .background(Color.appSecondaryGroupedBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .padding(.horizontal)
 
@@ -85,9 +88,11 @@ public struct QuickAddView: View {
                                 .font(.system(size: 15, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 8)
                     }
-                    .buttonStyle(LiquidGlassProminentButtonStyle(tintColor: store.accentColor, cornerRadius: 16))
+                    .buttonStyle(.borderedProminent)
+                    .tint(store.accentColor)
+                    .controlSize(.large)
                     .padding(.horizontal)
                     .padding(.top, 4)
                 }
@@ -112,7 +117,7 @@ public struct QuickAddView: View {
                     .disabled(Double(amountString) == nil || (Double(amountString) ?? 0) <= 0)
                 }
             }
-            .background(colorScheme == .dark ? Color.black : Color.appGroupedBackground)
+            .background(Color.appGroupedBackground)
             .scrollDismissesKeyboard(.interactively)
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -124,57 +129,58 @@ public struct QuickAddView: View {
 
     private func categoryChip(for category: ExpenseCategory) -> some View {
         let isSelected = selectedCategory == category
-
         return Button(action: {
             PlatformFeedback.selection()
-            selectedCategory = category
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                selectedCategory = category
+            }
         }) {
             VStack(spacing: 6) {
                 ZStack {
                     Circle()
-                        .fill(isSelected ? category.color.opacity(0.28) : (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
+                        .fill(category.color.opacity(isSelected ? 0.25 : 0.12))
                         .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle()
-                                .stroke(isSelected ? category.color : Color.clear, lineWidth: 1.5)
-                                .shadow(color: isSelected ? category.color.opacity(0.5) : Color.clear, radius: 4)
-                        )
 
                     Image(systemName: category.sfSymbol)
-                        .font(.system(size: 18))
-                        .foregroundStyle(isSelected ? category.color : .secondary)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(category.color)
                 }
 
-                Text(category.displayName.components(separatedBy: " ").first ?? "")
-                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? Color.primary : .secondary)
+                Text(category.displayName)
+                    .font(.system(size: 11, weight: isSelected ? .bold : .medium, design: .rounded))
+                    .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .liquidGlassCard(cornerRadius: 14, interactiveHover: !isSelected)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? category.color.opacity(0.12) : Color.appSecondaryGroupedBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isSelected ? category.color : Color.clear, lineWidth: 1.5)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
 
     private func saveTransaction() {
-        guard let amount = Double(amountString), amount > 0 else {
-            PlatformFeedback.warning()
-            return
-        }
-        let trimmedTitle = title.trimmingCharacters(in: .whitespaces).isEmpty ? selectedCategory.displayName : title
+        guard let amount = Double(amountString), amount > 0 else { return }
+        let transactionTitle = title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? selectedCategory.displayName
+            : title.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let expense = Expense(
-            title: trimmedTitle,
+        PlatformFeedback.success()
+        let newExpense = Expense(
+            title: transactionTitle,
             amount: amount,
             category: selectedCategory,
             date: date,
-            notes: notes,
-            isExpense: isExpense
+            notes: notes
         )
-
-        PlatformFeedback.impact()
-        store.addExpense(expense)
+        store.addExpense(newExpense)
         dismiss()
     }
 }

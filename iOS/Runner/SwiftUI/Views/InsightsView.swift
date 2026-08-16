@@ -10,11 +10,21 @@ public struct InsightsView: View {
     public var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 18) {
+                VStack(spacing: 16) {
+                    // ── Clean Page Header (No empty space above page name) ─
+                    HStack(alignment: .center) {
+                        Text("Trends")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.primary)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
                     // ── Spending Velocity & Projections ───────────────────
                     velocityCard
                         .padding(.horizontal, 20)
-                        .padding(.top, 8)
 
                     // ── Charts & Breakdown Section ────────────────────────
                     #if os(macOS)
@@ -33,9 +43,8 @@ public struct InsightsView: View {
                 }
                 .padding(.vertical, 8)
             }
-            .navigationTitle("Trends")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
             #endif
             .background(Color.appGroupedBackground)
         }
