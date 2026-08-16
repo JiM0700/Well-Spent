@@ -1,8 +1,10 @@
-name: Deploy GitHub Pages
+name: Deploy PWA to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - main
   workflow_dispatch:
 
 permissions:
@@ -24,13 +26,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare PWA Artifacts
+        run: |
+          mkdir -p dist
+          cp index.html styles.css app.js sw.js manifest.json icon.jpg icon.svg .nojekyll dist/ 2>/dev/null || cp index.html styles.css app.js sw.js manifest.json icon.jpg .nojekyll dist/
+          touch dist/.nojekyll
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
