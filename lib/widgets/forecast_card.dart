@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import '../services/forecast_service.dart';
+import 'liquid_glass_container.dart';
 
-/// Clean Apple-native forecast card. No glass effects — just standard
-/// Cupertino colours with green / red semantic indicators.
+/// Apple-native Liquid Glass Forecast Card (iOS / macOS 26 style).
 class ForecastCard extends StatelessWidget {
   final MonthlyForecast forecast;
 
@@ -16,32 +16,36 @@ class ForecastCard extends StatelessWidget {
     final dangerColor = CupertinoColors.systemRed.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
     final accentColor = isWarning ? dangerColor : primaryColor;
 
-    return Container(
+    return LiquidGlassContainer(
+      borderRadius: 22,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      fillOpacity: 0.08,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row
           Row(
             children: [
-              Icon(
-                isWarning ? CupertinoIcons.arrow_up_right : CupertinoIcons.graph_square,
-                color: accentColor,
-                size: 20,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isWarning ? CupertinoIcons.arrow_up_right : CupertinoIcons.chart_bar_alt_fill,
+                  color: accentColor,
+                  size: 16,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
-                'Projected Period End',
+                'Period Forecast',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: labelColor,
                 ),
               ),
@@ -50,7 +54,7 @@ class ForecastCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${forecast.daysRemaining} days left',
@@ -63,24 +67,31 @@ class ForecastCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Numbers row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Projected Total',
-                      style: TextStyle(fontSize: 13, color: secondaryLabel)),
-                  const SizedBox(height: 2),
+                  Text(
+                    'PROJECTED TOTAL',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: secondaryLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     '₹${forecast.projectedMonthEnd.toStringAsFixed(2)}',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
                       color: accentColor,
                     ),
                   ),
@@ -89,14 +100,21 @@ class ForecastCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Daily Velocity',
-                      style: TextStyle(fontSize: 13, color: secondaryLabel)),
-                  const SizedBox(height: 2),
                   Text(
-                    '₹${forecast.dailyVelocity.toStringAsFixed(2)} / day',
+                    'DAILY VELOCITY',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: secondaryLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${forecast.dailyVelocity.toStringAsFixed(0)} / day',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                       color: labelColor,
                     ),
                   ),
@@ -104,43 +122,40 @@ class ForecastCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // Safe Burn Row
+          // Safe Burn Indicator Banner
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
-              borderRadius: BorderRadius.circular(8),
+              color: (forecast.safeBurnRate > 0 ? primaryColor : dangerColor).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: (forecast.safeBurnRate > 0 ? primaryColor : dangerColor).withValues(alpha: 0.25),
+                width: 0.8,
+              ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Safe Daily Burn',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelColor),
+                Icon(
+                  forecast.safeBurnRate > 0 ? CupertinoIcons.shield_lefthalf_fill : CupertinoIcons.exclamationmark_triangle_fill,
+                  size: 16,
+                  color: forecast.safeBurnRate > 0 ? primaryColor : dangerColor,
                 ),
-                Text(
-                  '₹${forecast.safeBurnRate.toStringAsFixed(2)} / day',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: primaryColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    forecast.safeBurnRate > 0
+                        ? 'Safe daily burn: ₹${forecast.safeBurnRate.toStringAsFixed(0)}/day to stay on budget'
+                        : 'Budget exceeded. Reduce daily spend to recover.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: labelColor,
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${forecast.daysUntilPayday} days left until payday · ₹${forecast.remainingIncome.toStringAsFixed(2)} available income',
-            style: TextStyle(fontSize: 11, color: secondaryLabel),
-          ),
-          const SizedBox(height: 10),
-
-          // Status message
-          Text(
-            forecast.statusMessage,
-            style: TextStyle(
-              fontSize: 13,
-              fontStyle: FontStyle.italic,
-              color: isWarning ? dangerColor : secondaryLabel,
             ),
           ),
         ],

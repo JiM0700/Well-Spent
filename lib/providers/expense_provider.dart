@@ -86,6 +86,8 @@ class ExpenseProvider extends ChangeNotifier {
   String _summaryPeriod = 'daily';
   String _viewMode = 'monthly';
   String _chartMode = 'daywise';
+  Map<ExpenseCategory, double> _categoryBudgets = {};
+  List<RecurringBill> _recurringBills = [];
 
   List<Expense> get expenses => _selectedCategoryFilter == null
       ? _expenses
@@ -101,6 +103,64 @@ class ExpenseProvider extends ChangeNotifier {
   bool get summaryEnabled => _summaryEnabled;
   String get summaryPeriod => _summaryPeriod;
   String get viewMode => _viewMode;
+  Map<ExpenseCategory, double> get categoryBudgets => _categoryBudgets;
+  List<RecurringBill> get recurringBills => _recurringBills;
+
+  double getCategoryBudget(ExpenseCategory category) => _categoryBudgets[category] ?? 0.0;
+
+  Future<void> updateCategoryBudget(ExpenseCategory category, double budget) async {
+    if (budget > 0) {
+      _categoryBudgets[category] = budget;
+    } else {
+      _categoryBudgets.remove(category);
+    }
+    await _dbService.setCategoryBudgets(_categoryBudgets);
+    notifyListeners();
+  }
+
+  Future<void> addRecurringBill(RecurringBill bill) async {
+    _recurringBills.add(bill);
+    await _dbService.setRecurringBills(_recurringBills);
+    notifyListeners();
+  }
+
+  Future<void> updateRecurringBill(RecurringBill bill) async {
+    final idx = _recurringBills.indexWhere((b) => b.id == bill.id);
+    if (idx != -1) {
+      _recurringBills[idx] = bill;
+      await _dbService.setRecurringBills(_recurringBills);
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteRecurringBill(int id) async {
+    _recurringBills.removeWhere((b) => b.id == id);
+    await _dbService.setRecurringBills(_recurringBills);
+    notifyListeners();
+  }
+
+  Future<void> markBillPaid(RecurringBill bill) async {
+    final now = DateTime.now();
+    await addExpense(
+      Expense(
+        title: bill.title,
+        amount: bill.amount,
+        category: bill.category,
+        date: now,
+        note: 'Recurring subscription / bill',
+        type: ExpenseType.expense,
+        expenseKind: ExpenseKind.fixed,
+      ),
+    );
+    await updateRecurringBill(bill.copyWith(lastPaidDate: now));
+  }
+
+  double get upcomingBillsTotal {
+    final range = currentPeriodRange;
+    return _recurringBills
+        .where((b) => b.isActive && !b.isPaidForCycle(range.startDate, range.endDate))
+        .fold<double>(0.0, (sum, b) => sum + b.amount);
+  }
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -116,6 +176,8 @@ class ExpenseProvider extends ChangeNotifier {
       _summaryPeriod = await _dbService.getSummaryPeriod();
       _viewMode = await _dbService.getViewMode();
       _chartMode = await _dbService.getChartMode();
+      _categoryBudgets = await _dbService.getCategoryBudgets();
+      _recurringBills = await _dbService.getRecurringBills();
     } catch (e) {
       if (kDebugMode) print('Error loading DB data: $e');
     } finally {

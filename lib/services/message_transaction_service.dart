@@ -57,12 +57,17 @@ class MessageTransactionService {
       _controller.add(items);
       return items;
     } on MissingPluginException {
+      // Message plugin unavailable on current platform
       return const [];
     }
   }
 
   Future<void> remove(PendingTransaction transaction) async {
-    try { await _channel.invokeMethod('removePending', transaction.toMap()); } on MissingPluginException { }
+    try {
+      await _channel.invokeMethod('removePending', transaction.toMap());
+    } on MissingPluginException {
+      // Ignored if plugin unavailable
+    }
   }
 
   void dispose() => _controller.close();

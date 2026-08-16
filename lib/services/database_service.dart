@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/expense.dart';
@@ -51,6 +52,8 @@ class DatabaseService {
         await db.insert('settings', {'key': 'summary_period', 'value': 'daily'});
         await db.insert('settings', {'key': 'view_mode', 'value': 'monthly'});
         await db.insert('settings', {'key': 'chart_mode', 'value': 'daywise'});
+        await db.insert('settings', {'key': 'category_budgets', 'value': '{}'});
+        await db.insert('settings', {'key': 'recurring_bills', 'value': '[]'});
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -110,24 +113,34 @@ class DatabaseService {
     );
   }
 
+  Future<int> clearAllExpenses() async {
+    final db = await database;
+    return await db.delete('expenses');
+  }
+
   Future<void> replaceAllExpenses(List<Expense> expenses) async {
     final db = await database;
     await db.transaction((txn) async {
       await txn.delete('expenses');
-      for (final expense in expenses) {
-        final values = Map<String, dynamic>.from(expense.toMap())..remove('id');
-        await txn.insert('expenses', values);
+      for (final e in expenses) {
+        await txn.insert('expenses', e.toMap());
       }
     });
   }
 
-  // --- SETTINGS OPERATIONS ---
+  // --- SETTINGS KEY-VALUE STORE ---
 
   Future<String?> getSetting(String key) async {
     final db = await database;
-    final res = await db.query('settings', where: 'key = ?', whereArgs: [key]);
+    final res = await db.query(
+      'settings',
+      columns: ['value'],
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
     if (res.isNotEmpty) {
-      return res.first['value'] as String?;
+      return res.first['value'] as String;
     }
     return null;
   }
@@ -225,5 +238,46 @@ class DatabaseService {
 
   Future<void> setChartMode(String mode) async {
     await setSetting('chart_mode', mode);
+  }
+
+  Future<Map<ExpenseCategory, double>> getCategoryBudgets() async {
+    final raw = await getSetting('category_budgets');
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final result = <ExpenseCategory, double>{};
+      for (final entry in decoded.entries) {
+        final cat = ExpenseCategory.values.firstWhere(
+          (e) => e.name == entry.key,
+          orElse: () => ExpenseCategory.other,
+        );
+        final val = (entry.value as num?)?.toDouble() ?? 0.0;
+        if (val > 0) result[cat] = val;
+      }
+      return result;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> setCategoryBudgets(Map<ExpenseCategory, double> budgets) async {
+    final mapped = budgets.map((key, value) => MapEntry(key.name, value));
+    await setSetting('category_budgets', jsonEncode(mapped));
+  }
+
+  Future<List<RecurringBill>> getRecurringBills() async {
+    final raw = await getSetting('recurring_bills');
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.map((e) => RecurringBill.fromMap(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> setRecurringBills(List<RecurringBill> bills) async {
+    final mapped = bills.map((b) => b.toMap()).toList();
+    await setSetting('recurring_bills', jsonEncode(mapped));
   }
 }

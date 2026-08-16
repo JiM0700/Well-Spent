@@ -2,14 +2,15 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../widgets/forecast_card.dart';
-import '../widgets/quick_add_modal.dart';
+import '../widgets/liquid_glass_chip.dart';
+import '../widgets/liquid_glass_container.dart';
+import '../widgets/recurring_bills_card.dart';
 import '../widgets/summary_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -20,14 +21,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
-  void _showAddExpenseModal(BuildContext context) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => const QuickAddModal(),
-    );
-  }
-
   void _showSetBudgetDialog(BuildContext context, ExpenseProvider provider) {
     final controller = TextEditingController(text: provider.monthlyBudget.toStringAsFixed(0));
     showCupertinoDialog<void>(
@@ -58,106 +51,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showDataMenu(BuildContext context, ExpenseProvider provider) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => CupertinoActionSheet(
-        actions: [
-          CupertinoActionSheetAction(
-            child: const Text('Export CSV'),
-            onPressed: () {
-              Navigator.pop(context);
-              _exportCsv(context, provider);
-            },
-          ),
-          CupertinoActionSheetAction(
-            child: const Text('Import CSV'),
-            onPressed: () {
-              Navigator.pop(context);
-              _importCsv(context, provider);
-            },
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          child: const Text('Cancel'),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _exportCsv(BuildContext context, ExpenseProvider provider) async {
-    await Clipboard.setData(ClipboardData(text: provider.exportCsv()));
-    if (!context.mounted) return;
-    showCupertinoDialog<void>(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('CSV copied'),
-        content: const Text('Your data was copied to the clipboard.'),
-        actions: [
-          CupertinoDialogAction(child: const Text('Done'), onPressed: () => Navigator.pop(context)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _importCsv(BuildContext context, ExpenseProvider provider) async {
-    final controller = TextEditingController();
-    await showCupertinoDialog<void>(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('Import CSV'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
-            controller: controller,
-            maxLines: 8,
-            placeholder: 'Paste a Well Spent CSV export here',
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Replace data'),
-            onPressed: () async {
-              final count = await provider.importCsv(controller.text);
-              if (context.mounted) {
-                Navigator.pop(context);
-                showCupertinoDialog<void>(
-                  context: context,
-                  builder: (_) => CupertinoAlertDialog(
-                    title: const Text('Import complete'),
-                    content: Text('$count entries imported.'),
-                    actions: [
-                      CupertinoDialogAction(
-                          child: const Text('Done'), onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-  }
-
   IconData _getCategoryIcon(ExpenseCategory category) {
     switch (category) {
       case ExpenseCategory.food:
-        return CupertinoIcons.cart;
+        return CupertinoIcons.cart_fill;
       case ExpenseCategory.transport:
         return CupertinoIcons.car_detailed;
       case ExpenseCategory.bills:
-        return CupertinoIcons.doc_text;
+        return CupertinoIcons.doc_text_fill;
       case ExpenseCategory.shopping:
-        return CupertinoIcons.bag;
+        return CupertinoIcons.bag_fill;
       case ExpenseCategory.healthcare:
-        return CupertinoIcons.heart;
+        return CupertinoIcons.heart_fill;
       case ExpenseCategory.entertainment:
-        return CupertinoIcons.film;
+        return CupertinoIcons.film_fill;
       case ExpenseCategory.invest:
         return CupertinoIcons.chart_bar_alt_fill;
       case ExpenseCategory.other:
@@ -168,13 +75,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ExpenseProvider>(context);
-    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
 
     final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
     final labelColor = CupertinoColors.label.resolveFrom(context);
     final secondaryLabel = CupertinoColors.secondaryLabel.resolveFrom(context);
-    final cardBg = CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
-    final bgColor = CupertinoColors.systemGroupedBackground.resolveFrom(context);
 
     if (provider.isLoading) {
       return const CupertinoPageScaffold(
@@ -183,64 +88,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    // View mode segments
     final viewModeSegments = <String, Widget>{
-      'weekly': const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Weekly')),
-      'monthly': const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Monthly')),
-      'yearly': const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Yearly')),
+      'weekly': const Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6), child: Text('Weekly')),
+      'monthly': const Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6), child: Text('Monthly')),
+      'yearly': const Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6), child: Text('Yearly')),
     };
 
-    // Chart mode segments
     final chartModeSegments = <String, Widget>{
-      'daywise': const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Daywise')),
-      'monthwise': const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Monthwise')),
+      'daywise': const Padding(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4), child: Text('Daywise')),
+      'monthwise': const Padding(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4), child: Text('Monthwise')),
     };
 
     return CupertinoPageScaffold(
-      backgroundColor: bgColor,
-      navigationBar: CupertinoNavigationBar(
-        middle: const Text('Well Spent'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isIOS)
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                child: const Icon(CupertinoIcons.arrow_up_arrow_down, size: 22),
-                onPressed: () => _showDataMenu(context, provider),
-              ),
-            if (!isIOS) const SizedBox(width: 12),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              child: const Icon(CupertinoIcons.add, size: 26),
-              onPressed: () => _showAddExpenseModal(context),
+      backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFF2F4F7),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: const Text(
+              'Overview',
+              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.6),
             ),
-          ],
-        ),
-      ),
-      child: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Period selector
-                  SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<String>(
+            backgroundColor: (isDark ? const Color(0xFF0A0E18) : CupertinoColors.systemBackground).withValues(alpha: 0.82),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.06),
+                width: 0.5,
+              ),
+            ),
+            stretch: true,
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Liquid Glass Period Selector
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoSlidingSegmentedControl<String>(
                       groupValue: provider.viewMode,
+                      backgroundColor: isDark ? CupertinoColors.white.withValues(alpha: 0.08) : CupertinoColors.black.withValues(alpha: 0.05),
+                      thumbColor: isDark ? const Color(0xFF1B2232) : CupertinoColors.white,
                       children: viewModeSegments,
                       onValueChanged: (val) {
-                        if (val != null) provider.updateViewMode(val);
+                        if (val != null) {
+                          HapticFeedback.selectionClick();
+                          provider.updateViewMode(val);
+                        }
                       },
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
-                  // Summary card
+                  // Liquid Glass Summary Card
                   SummaryCard(
                     periodLabel: provider.currentPeriodLabel,
                     periodTotal: provider.currentPeriodTotal,
@@ -255,38 +155,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Chart section
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  // Liquid Glass Chart Section
+                  LiquidGlassContainer(
+                    borderRadius: 22,
+                    padding: const EdgeInsets.all(18),
+                    fillOpacity: 0.08,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          provider.chartMode == 'monthwise' ? 'Monthly Chart' : 'Daywise Chart',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: labelColor,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              provider.chartMode == 'monthwise' ? 'Spending Trend (Monthly)' : 'Spending Trend (Daily)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                                color: labelColor,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
                           child: CupertinoSlidingSegmentedControl<String>(
                             groupValue: provider.chartMode,
+                            thumbColor: isDark ? const Color(0xFF1E2638) : CupertinoColors.white,
                             children: chartModeSegments,
                             onValueChanged: (val) {
-                              if (val != null) provider.updateChartMode(val);
+                              if (val != null) {
+                                HapticFeedback.selectionClick();
+                                provider.updateChartMode(val);
+                              }
                             },
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         SizedBox(
-                          height: 200,
+                          height: 180,
                           child: _ExpenseChart(provider: provider),
                         ),
                       ],
@@ -294,19 +202,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Forecast card
+                  // Liquid Glass Forecast Card
                   ForecastCard(forecast: provider.forecast),
+                  const SizedBox(height: 16),
+
+                  // Recurring Bills & Subscriptions Card
+                  const RecurringBillsCard(),
                   const SizedBox(height: 24),
 
-                  // Transactions header
+                  // Transactions Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Transactions',
+                        'Recent Activity',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
                           color: labelColor,
                         ),
                       ),
@@ -314,63 +227,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         CupertinoButton(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
-                          child: Text('Clear Filter',
-                              style: TextStyle(fontSize: 15, color: primaryColor)),
+                          child: Text('Reset Filter',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryColor)),
                           onPressed: () => provider.filterByCategory(null),
                         ),
                     ],
                   ),
                   const SizedBox(height: 12),
 
-                  // Category filter chips
+                  // Category Filter Chips
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _FilterChip(
-                          label: 'All',
-                          selected: provider.selectedCategoryFilter == null,
-                          onTap: () => provider.filterByCategory(null),
+                        LiquidGlassChip(
+                          label: 'All Activity',
+                          isSelected: provider.selectedCategoryFilter == null,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            provider.filterByCategory(null);
+                          },
                         ),
-                        ...ExpenseCategory.values.map((cat) => _FilterChip(
-                              label: cat.displayName,
-                              selected: provider.selectedCategoryFilter == cat,
-                              onTap: () => provider.filterByCategory(cat),
+                        const SizedBox(width: 8),
+                        ...ExpenseCategory.values.map((cat) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: LiquidGlassChip(
+                                label: cat.displayName,
+                                isSelected: provider.selectedCategoryFilter == cat,
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  provider.filterByCategory(cat);
+                                },
+                              ),
                             )),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                 ]),
               ),
             ),
 
-            // Transaction list
+            // Transactions List
             if (provider.expenses.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(CupertinoIcons.doc_text, size: 56, color: secondaryLabel),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No expenses recorded yet.',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: secondaryLabel),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap + to add your first entry!',
-                        style: TextStyle(fontSize: 15, color: secondaryLabel),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.sparkles, size: 48, color: secondaryLabel),
+                        const SizedBox(height: 14),
+                        Text(
+                          'No entries in this period',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: labelColor),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Tap + to log your first transaction.',
+                          style: TextStyle(fontSize: 14, color: secondaryLabel),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -381,75 +307,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         background: Container(
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
-                          margin: const EdgeInsets.only(bottom: 1),
+                          margin: const EdgeInsets.only(bottom: 6),
                           decoration: BoxDecoration(
                             color: CupertinoColors.systemRed.resolveFrom(context),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Icon(CupertinoIcons.delete, color: CupertinoColors.white),
+                          child: const Icon(CupertinoIcons.delete_solid, color: CupertinoColors.white),
                         ),
                         onDismissed: (_) {
                           if (item.id != null) {
+                            HapticFeedback.lightImpact();
                             provider.deleteExpense(item.id!);
                           }
                         },
                         child: Container(
-                          margin: const EdgeInsets.only(bottom: 1),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(
-                              _transactionRadius(index, provider.expenses.length),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              // Category icon
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          child: LiquidGlassContainer(
+                            borderRadius: 16,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            fillOpacity: 0.06,
+                            child: Row(
+                              children: [
+                                // Category icon in frosted circle
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: (item.isIncome ? primaryColor : CupertinoColors.activeBlue)
+                                        .withValues(alpha: 0.16),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _getCategoryIcon(item.category),
+                                    size: 18,
+                                    color: item.isIncome ? primaryColor : CupertinoColors.activeBlue,
+                                  ),
                                 ),
-                                child: Icon(
-                                  _getCategoryIcon(item.category),
-                                  size: 18,
-                                  color: primaryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Title & subtitle
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: labelColor,
+                                const SizedBox(width: 12),
+                                // Title & subtitle
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.title,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: labelColor,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${item.category.displayName} · ${DateFormat('MMM d').format(item.date)}',
-                                      style: TextStyle(fontSize: 13, color: secondaryLabel),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${item.category.displayName} · ${DateFormat('MMM d').format(item.date)}',
+                                        style: TextStyle(fontSize: 12, color: secondaryLabel),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              // Amount
-                              Text(
-                                '${item.isIncome ? '+' : '-'}₹${item.amount.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: item.isIncome ? primaryColor : labelColor,
+                                // Amount
+                                Text(
+                                  '${item.isIncome ? '+' : '-'}₹${item.amount.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: item.isIncome ? primaryColor : labelColor,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -458,157 +384,85 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 90)),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Round the top corners of the first item and bottom corners of the last
-  /// to form grouped-style list sections.
-  double _transactionRadius(int index, int total) {
-    if (total == 1) return 12;
-    if (index == 0 || index == total - 1) return 12;
-    return 0;
+      );
   }
 }
-
-// ─── Filter chip ────────────────────────────────────────────────────────────
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-    final fillColor = CupertinoColors.tertiarySystemFill.resolveFrom(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: selected ? primaryColor : fillColor,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? CupertinoColors.white : labelColor,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Chart ──────────────────────────────────────────────────────────────────
 
 class _ExpenseChart extends StatelessWidget {
   final ExpenseProvider provider;
-
   const _ExpenseChart({required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    final dataPoints = provider.chartData;
-    if (dataPoints.isEmpty) {
+    final chartPoints = provider.chartData;
+    final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
+
+    if (chartPoints.isEmpty || chartPoints.every((s) => s.amount == 0)) {
       return Center(
         child: Text(
-          'No chart data available yet.',
+          'No chart data available yet',
           style: TextStyle(
-            fontSize: 15,
             color: CupertinoColors.secondaryLabel.resolveFrom(context),
+            fontSize: 13,
           ),
         ),
       );
     }
 
-    final primaryColor = CupertinoColors.systemGreen.resolveFrom(context);
-    final gridColor = CupertinoColors.separator.resolveFrom(context);
-    final labelColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+    final spots = <FlSpot>[];
+    for (int i = 0; i < chartPoints.length; i++) {
+      spots.add(FlSpot(i.toDouble(), chartPoints[i].amount));
+    }
 
-    final maxValue = dataPoints.map((p) => p.amount).fold<double>(0.0, (prev, value) => max(prev, value));
-    final spots = List.generate(dataPoints.length, (index) {
-      return FlSpot(index.toDouble(), dataPoints[index].amount);
-    });
+    final maxY = spots.map((s) => s.y).reduce(max);
+    final effectiveMaxY = maxY > 0 ? maxY * 1.2 : 100.0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxValue > 0 ? maxValue / 4 : 1,
-            getDrawingHorizontalLine: (value) => FlLine(
-              color: gridColor.withValues(alpha: 0.3),
-              strokeWidth: 0.5,
-            ),
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (val) => FlLine(
+            color: CupertinoColors.separator.resolveFrom(context).withValues(alpha: 0.3),
+            strokeWidth: 0.8,
           ),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                interval: maxValue > 0 ? maxValue / 4 : 1,
-                reservedSize: 42,
-                getTitlesWidget: (value, meta) => Text(
-                  value == 0 ? '0' : value.toStringAsFixed(0),
-                  style: TextStyle(fontSize: 10, color: labelColor),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                interval: 1,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index < 0 || index >= dataPoints.length) return const SizedBox.shrink();
-                  final label = dataPoints[index].label;
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    child: Text(label, style: TextStyle(fontSize: 10, color: labelColor)),
-                  );
-                },
-              ),
-            ),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          minY: 0,
-          maxY: maxValue * 1.1,
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: primaryColor,
-              barWidth: 2.5,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: primaryColor.withValues(alpha: 0.12),
-              ),
-            ),
-          ],
         ),
+        titlesData: const FlTitlesData(
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: spots.first.x,
+        maxX: spots.last.x,
+        minY: 0,
+        maxY: effectiveMaxY,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            curveSmoothness: 0.35,
+            color: primaryColor,
+            barWidth: 2.5,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  primaryColor.withValues(alpha: 0.3),
+                  primaryColor.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

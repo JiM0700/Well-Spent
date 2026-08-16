@@ -22,7 +22,13 @@ class UrlSchemeService {
   final _controller = StreamController<UrlTransaction>.broadcast();
   Stream<UrlTransaction> get transactions => _controller.stream;
 
-  Future<void> start() async { try { await _channel.invokeMethod('getInitialURL'); } on MissingPluginException { } }
+  Future<void> start() async {
+    try {
+      await _channel.invokeMethod('getInitialURL');
+    } on MissingPluginException {
+      // Ignored if URL scheme plugin is unavailable on current platform
+    }
+  }
 
   UrlTransaction? _parse(Map<dynamic, dynamic> args) {
     final amount = double.tryParse('${args['amount']}');

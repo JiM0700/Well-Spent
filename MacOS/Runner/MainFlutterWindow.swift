@@ -1,15 +1,19 @@
 import Cocoa
-import FlutterMacOS
+import SwiftUI
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
-    let flutterViewController = FlutterViewController()
-    let windowFrame = self.frame
-    self.contentViewController = flutterViewController
+    let hostingController = NSHostingController(rootView: WellSpentRootView())
+    let windowFrame = NSRect(x: 0, y: 0, width: 1050, height: 720)
+    self.contentViewController = hostingController
     self.setFrame(windowFrame, display: true)
+    self.minSize = NSSize(width: 860, height: 580)
+    self.center()
 
-    RegisterGeneratedPlugins(registry: flutterViewController)
-    MessageFetchHandler.register(with: flutterViewController.registrar(forPlugin: "MessageFetchHandler"))
+    self.titleVisibility = .hidden
+    self.titlebarAppearsTransparent = true
+    self.styleMask.insert([.fullSizeContentView, .titled, .closable, .miniaturizable, .resizable])
+    self.isMovableByWindowBackground = true
 
     super.awakeFromNib()
   }

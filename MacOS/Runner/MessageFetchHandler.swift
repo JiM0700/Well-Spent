@@ -7,7 +7,7 @@ final class MessageFetchHandler: NSObject, FlutterPlugin {
   }
   private let reader = MessagesDatabaseReader()
   private var pending: [[String: Any]] = []
-  private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method { case "fetchPending": pending = reader.pendingTransactions(); result(pending); case "removePending": if !pending.isEmpty { pending.removeFirst() }; result(nil); default: result(FlutterMethodNotImplemented) }
   }
 }
