@@ -11,6 +11,8 @@ const TAB_KEY                = 'well_spent_current_tab_v1';
 const CATEGORY_BUDGETS_KEY   = 'well_spent_category_budgets_v1';
 const RECURRING_BILLS_KEY    = 'well_spent_recurring_bills_v1';
 const DISMISSED_PATTERNS_KEY = 'well_spent_dismissed_patterns_v1';
+const NET_WORTH_KEY          = 'well_spent_net_worth_v1';
+const GOALS_KEY              = 'well_spent_goals_v1';
 const PALETTE_KEY            = 'well_spent_palette_v1';
 
 const CATEGORIES = {
@@ -34,12 +36,18 @@ let currentTab        = localStorage.getItem(TAB_KEY)                     || 'ov
 let categoryBudgets   = loadCategoryBudgets();
 let recurringBills    = loadRecurringBills();
 let dismissedPatterns = loadJSON(DISMISSED_PATTERNS_KEY, []);
+let netWorth          = loadJSON(NET_WORTH_KEY, { assets: 0, liabilities: 0, configured: false });
+let goals             = loadJSON(GOALS_KEY, []);
 let currentPalette    = localStorage.getItem(PALETTE_KEY)                 || 'blue';
 
 let activeCategoryFilter  = 'all';
 let searchQuery           = '';
 let selectedCategoryModal = 'food';
 let editingCategoryKey    = null;
+
+let selectedGoalIcon      = '🛡️';
+let editingGoalId         = null;
+let contributingGoalId    = null;
 
 // Ensure all existing expenses have valid duplicate fingerprints
 if (Array.isArray(expenses) && expenses.length > 0) {
@@ -70,6 +78,8 @@ function saveExpenses()          { localStorage.setItem(STORAGE_KEY, JSON.string
 function saveCategoryBudgets()   { localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(categoryBudgets)); }
 function saveRecurringBills()    { localStorage.setItem(RECURRING_BILLS_KEY, JSON.stringify(recurringBills)); }
 function saveDismissedPatterns() { localStorage.setItem(DISMISSED_PATTERNS_KEY, JSON.stringify(dismissedPatterns)); }
+function saveNetWorth()          { localStorage.setItem(NET_WORTH_KEY, JSON.stringify(netWorth)); }
+function saveGoals()             { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); }
 
 let toastTimeout = null;
 function showToast(msg, duration = 3000) {
@@ -623,6 +633,66 @@ function renderOverview(metrics) {
   }
 
   renderTransactionList(list);
+  renderNetWorthCard();
+}
+
+// ── Net Worth Balance Sheet Engine ────────────────────────────────────────
+function renderNetWorthCard() {
+  const container = document.getElementById('netWorthCardBody');
+  if (!container) return;
+
+  const configureLink = document.getElementById('netWorthSettingsLinkBtn');
+  if (configureLink) {
+    configureLink.onclick = () => {
+      triggerHaptic();
+      currentTab = 'settings';
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('settingTotalAssets');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+        }
+      }, 100);
+    };
+  }
+
+  if (!netWorth || !netWorth.configured) {
+    container.innerHTML = `
+      <div class="m3-networth-body">
+        <div class="m3-networth-hero unconfigured">Not configured</div>
+        <div class="m3-networth-sub">Configure your assets & liabilities in Settings to track your balance sheet.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const assets = Number(netWorth.assets) || 0;
+  const liabilities = Number(netWorth.liabilities) || 0;
+  const calculatedNW = assets - liabilities;
+  const formattedNW = inr(calculatedNW);
+  const isPositive = calculatedNW >= 0;
+
+  container.innerHTML = `
+    <div class="m3-networth-body">
+      <div class="m3-networth-hero" style="color:${isPositive ? 'var(--md-on-surface)' : 'var(--md-error)'};">
+        ${formattedNW}
+      </div>
+      <div class="m3-networth-sub">Total Assets minus Total Liabilities</div>
+
+      <div class="m3-networth-stats-row">
+        <div class="m3-nw-stat">
+          <span class="m3-nw-label">Assets</span>
+          <span class="m3-nw-val asset">${inrCompact(assets)}</span>
+        </div>
+        <div class="m3-stat-pod-divider"></div>
+        <div class="m3-nw-stat">
+          <span class="m3-nw-label">Liabilities</span>
+          <span class="m3-nw-val debt">${inrCompact(liabilities)}</span>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ── Interactive SVG Sparkline Engine ──────────────────────────────────────
@@ -906,6 +976,9 @@ function renderBudgets(metrics) {
       openBudgetEditModal(card.dataset.cat);
     });
   });
+
+  // Render Financial Goals & Savings Targets
+  renderGoals();
 }
 
 function openBudgetEditModal(catKey) {
@@ -918,6 +991,229 @@ function openBudgetEditModal(catKey) {
   if (input) input.value = categoryBudgets[catKey] || 3000;
 
   openModal('budgetModalBackdrop');
+}
+
+// ── Financial Goals & Savings Targets Engine ──────────────────────────────
+function renderGoals() {
+  const grid = document.getElementById('goalsGrid');
+  if (!grid) return;
+
+  if (!Array.isArray(goals) || goals.length === 0) {
+    grid.innerHTML = `
+      <div class="m3-empty-state" style="grid-column: 1 / -1; padding: 28px 16px;">
+        <div class="m3-empty-icon" style="font-size: 2rem;">🎯</div>
+        <div class="m3-empty-title" style="font-size: 0.95rem;">No Financial Goals Yet</div>
+        <p class="m3-empty-desc" style="font-size: 0.78rem;">Create savings targets for an emergency fund, dream vacation, gadget upgrade, or home deposit.</p>
+        <button type="button" class="m3-filled-btn" id="emptyAddGoalBtn" style="margin-top: 14px; padding: 8px 18px; font-size: 0.8rem;">
+          ＋ Create First Goal
+        </button>
+      </div>
+    `;
+    document.getElementById('emptyAddGoalBtn')?.addEventListener('click', openAddGoalModal);
+    return;
+  }
+
+  grid.innerHTML = goals.map(goal => {
+    const saved = Number(goal.currentAmount) || 0;
+    const target = Number(goal.targetAmount) || 1;
+    const pct = Math.min(100, Math.round((saved / target) * 100));
+    const isCompleted = saved >= target;
+    const remaining = Math.max(0, target - saved);
+
+    let dueText = 'No deadline';
+    if (goal.targetDate) {
+      const dt = new Date(goal.targetDate);
+      if (!isNaN(dt)) {
+        dueText = isCompleted ? '✓ Completed' : `By ${dt.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}`;
+      }
+    } else if (isCompleted) {
+      dueText = '✓ Completed';
+    }
+
+    return `
+      <div class="m3-goal-card ${isCompleted ? 'completed' : ''}" data-goal="${goal.id}">
+        <div class="m3-goal-header">
+          <div class="m3-goal-title-wrap">
+            <span class="m3-goal-icon">${goal.icon || '🎯'}</span>
+            <span class="m3-goal-name" title="${escapeHtml(goal.name)}">${escapeHtml(goal.name)}</span>
+          </div>
+          <span class="m3-goal-due ${isCompleted ? 'completed' : ''}">${dueText}</span>
+        </div>
+
+        <div class="m3-goal-amounts-row">
+          <span class="m3-goal-saved">${inrCompact(saved)}</span>
+          <span class="m3-goal-target">Target: ${inrCompact(target)}</span>
+        </div>
+
+        <div class="m3-progress-track">
+          <div class="m3-progress-indicator" style="width: ${pct}%; background: ${isCompleted ? '#00c853' : 'var(--md-primary)'};"></div>
+        </div>
+
+        <div class="m3-goal-footer">
+          <span>${pct}% funded</span>
+          <span>${isCompleted ? '🎉 Target reached!' : `${inrCompact(remaining)} to go`}</span>
+        </div>
+
+        <div class="m3-goal-actions">
+          <button type="button" class="m3-goal-contribute-btn" data-contribute-goal="${goal.id}">
+            ＋ Add Savings
+          </button>
+          <button type="button" class="m3-goal-del-btn" data-del-goal="${goal.id}" aria-label="Delete goal" title="Delete goal">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('[data-contribute-goal]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openContributeGoalModal(btn.dataset.contributeGoal);
+    });
+  });
+
+  grid.querySelectorAll('[data-del-goal]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerHaptic();
+      const id = btn.dataset.delGoal;
+      const g = goals.find(x => String(x.id) === String(id));
+      if (confirm(`Delete savings goal "${g?.name || 'this goal'}"?`)) {
+        goals = goals.filter(x => String(x.id) !== String(id));
+        saveGoals();
+        showToast('Goal deleted.');
+        render();
+      }
+    });
+  });
+}
+
+function openAddGoalModal() {
+  editingGoalId = null;
+  selectedGoalIcon = '🛡️';
+
+  const titleEl = document.getElementById('goalModalTitle');
+  if (titleEl) titleEl.textContent = 'Create Savings Goal';
+
+  const nameInput = document.getElementById('goalNameInput');
+  if (nameInput) nameInput.value = '';
+
+  const targetInput = document.getElementById('goalTargetInput');
+  if (targetInput) targetInput.value = '';
+
+  const currentInput = document.getElementById('goalCurrentInput');
+  if (currentInput) currentInput.value = '0';
+
+  const dateInput = document.getElementById('goalDateInput');
+  if (dateInput) dateInput.value = '';
+
+  renderGoalIconPicker();
+  openModal('goalModalBackdrop');
+  setTimeout(() => nameInput?.focus(), 120);
+}
+
+function renderGoalIconPicker() {
+  const picker = document.getElementById('goalIconPicker');
+  if (!picker) return;
+  picker.querySelectorAll('.m3-icon-choice').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.icon === selectedGoalIcon);
+    btn.onclick = () => {
+      triggerHaptic();
+      selectedGoalIcon = btn.dataset.icon;
+      renderGoalIconPicker();
+    };
+  });
+}
+
+function handleSaveGoal(e) {
+  e.preventDefault();
+  const name = document.getElementById('goalNameInput')?.value.trim();
+  const target = parseFloat(document.getElementById('goalTargetInput')?.value);
+  const current = parseFloat(document.getElementById('goalCurrentInput')?.value) || 0;
+  const targetDate = document.getElementById('goalDateInput')?.value || null;
+
+  if (!name || isNaN(target) || target <= 0) {
+    alert('Please enter a goal name and a valid target amount.');
+    return;
+  }
+
+  triggerHaptic();
+
+  const newGoal = {
+    id: editingGoalId || Date.now(),
+    name,
+    targetAmount: target,
+    currentAmount: Math.max(0, current),
+    targetDate,
+    icon: selectedGoalIcon || '🎯'
+  };
+
+  if (editingGoalId) {
+    const idx = goals.findIndex(g => g.id === editingGoalId);
+    if (idx >= 0) goals[idx] = newGoal;
+  } else {
+    goals.push(newGoal);
+  }
+
+  saveGoals();
+  closeModal('goalModalBackdrop');
+  showToast(`✓ Savings goal "${name}" saved.`);
+  render();
+}
+
+function openContributeGoalModal(goalId) {
+  contributingGoalId = goalId;
+  const goal = goals.find(g => String(g.id) === String(goalId));
+  if (!goal) return;
+
+  const titleEl = document.getElementById('contributeModalTitle');
+  if (titleEl) titleEl.textContent = `Deposit to ${goal.name}`;
+
+  const metaEl = document.getElementById('contributeGoalMeta');
+  if (metaEl) {
+    metaEl.textContent = `Current: ${inrCompact(goal.currentAmount)} of ${inrCompact(goal.targetAmount)} (${inrCompact(Math.max(0, goal.targetAmount - goal.currentAmount))} remaining)`;
+  }
+
+  const amtInput = document.getElementById('contributeAmountInput');
+  if (amtInput) amtInput.value = '';
+
+  document.querySelectorAll('#quickContributeChips .m3-chip-btn').forEach(btn => {
+    btn.onclick = () => {
+      triggerHaptic();
+      if (amtInput) amtInput.value = btn.dataset.add;
+    };
+  });
+
+  openModal('contributeGoalModalBackdrop');
+  setTimeout(() => amtInput?.focus(), 120);
+}
+
+function handleSaveContribution(e) {
+  e.preventDefault();
+  const goal = goals.find(g => String(g.id) === String(contributingGoalId));
+  if (!goal) return;
+
+  const amt = parseFloat(document.getElementById('contributeAmountInput')?.value);
+  if (isNaN(amt) || amt <= 0) {
+    alert('Please enter a valid deposit amount.');
+    return;
+  }
+
+  triggerHaptic();
+  goal.currentAmount = (Number(goal.currentAmount) || 0) + amt;
+  saveGoals();
+  closeModal('contributeGoalModalBackdrop');
+
+  if (goal.currentAmount >= goal.targetAmount) {
+    showToast(`🎉 Congratulations! "${goal.name}" has been 100% funded!`, 4500);
+  } else {
+    showToast(`✓ Added ${inr(amt)} to "${goal.name}".`);
+  }
+
+  render();
 }
 
 // ── Tab 3: Trends & Recurring Bills ───────────────────────────────────────
@@ -1153,6 +1449,50 @@ function renderSettings() {
   const incomeInput = document.getElementById('settingBaseIncome');
   if (incomeInput) incomeInput.value = baseIncome;
 
+  // Net Worth Balance Sheet Settings
+  const assetsInput = document.getElementById('settingTotalAssets');
+  const liabilitiesInput = document.getElementById('settingTotalLiabilities');
+  const nwPreview = document.getElementById('settingNetWorthPreview');
+
+  if (assetsInput && liabilitiesInput && nwPreview) {
+    assetsInput.value = (netWorth && netWorth.configured) ? (netWorth.assets || 0) : '';
+    liabilitiesInput.value = (netWorth && netWorth.configured) ? (netWorth.liabilities || 0) : '';
+
+    const updateNWPreview = () => {
+      const a = parseFloat(assetsInput.value) || 0;
+      const l = parseFloat(liabilitiesInput.value) || 0;
+      if (assetsInput.value === '' && liabilitiesInput.value === '') {
+        nwPreview.textContent = 'Not configured';
+        nwPreview.style.color = 'var(--md-on-surface-muted)';
+      } else {
+        const diff = a - l;
+        nwPreview.textContent = inr(diff);
+        nwPreview.style.color = diff >= 0 ? '#00c853' : '#ff5252';
+      }
+    };
+
+    updateNWPreview();
+    assetsInput.oninput = updateNWPreview;
+    liabilitiesInput.oninput = updateNWPreview;
+
+    const saveNWBtn = document.getElementById('saveNetWorthBtn');
+    if (saveNWBtn) {
+      saveNWBtn.onclick = () => {
+        triggerHaptic();
+        const a = parseFloat(assetsInput.value) || 0;
+        const l = parseFloat(liabilitiesInput.value) || 0;
+        netWorth = {
+          assets: a,
+          liabilities: l,
+          configured: true
+        };
+        saveNetWorth();
+        showToast('✓ Balance sheet saved successfully.');
+        render();
+      };
+    }
+  }
+
   const detectionDesc = document.getElementById('detectionStatusDesc');
   if (detectionDesc) {
     const suggs = detectRecurringPatterns(expenses, dismissedPatterns, recurringBills);
@@ -1374,6 +1714,37 @@ function setupEvents() {
         render();
       }
     });
+  }
+
+  // 🎯 Financial Goals Modal Listeners
+  const openAddGoalModalBtn = document.getElementById('openAddGoalModalBtn');
+  if (openAddGoalModalBtn) {
+    openAddGoalModalBtn.addEventListener('click', () => {
+      triggerHaptic();
+      openAddGoalModal();
+    });
+  }
+
+  const goalCancelBtn = document.getElementById('goalCancelBtn');
+  const goalCloseBtn = document.getElementById('goalCloseBtn');
+  [goalCancelBtn, goalCloseBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('goalModalBackdrop'));
+  });
+
+  const goalSaveBtn = document.getElementById('goalSaveBtn');
+  if (goalSaveBtn) {
+    goalSaveBtn.addEventListener('click', handleSaveGoal);
+  }
+
+  const contributeCancelBtn = document.getElementById('contributeCancelBtn');
+  const contributeCloseBtn = document.getElementById('contributeCloseBtn');
+  [contributeCancelBtn, contributeCloseBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('contributeGoalModalBackdrop'));
+  });
+
+  const contributeSaveBtn = document.getElementById('contributeSaveBtn');
+  if (contributeSaveBtn) {
+    contributeSaveBtn.addEventListener('click', handleSaveContribution);
   }
 
   document.querySelectorAll('.m3-scrim-backdrop').forEach(scrim => {
@@ -1664,7 +2035,7 @@ function parseDateFlexible(raw) {
 // ── Encrypted Vault Operations ────────────────────────────────────────────
 function exportVaultBackup() {
   const data = {
-    version: 5,
+    version: 6,
     exportedAt: new Date().toISOString(),
     expenses,
     monthlyBudget,
@@ -1673,6 +2044,8 @@ function exportVaultBackup() {
     categoryBudgets,
     recurringBills,
     dismissedPatterns,
+    netWorth,
+    goals,
     currentPalette
   };
 
@@ -1703,6 +2076,8 @@ function handleImportVault(e) {
         categoryBudgets = data.categoryBudgets || categoryBudgets;
         recurringBills = data.recurringBills || recurringBills;
         dismissedPatterns = data.dismissedPatterns || dismissedPatterns;
+        netWorth = data.netWorth || netWorth;
+        goals = data.goals || goals;
         currentPalette = data.currentPalette || currentPalette;
 
         // Ensure all restored expenses have fingerprints
@@ -1716,6 +2091,8 @@ function handleImportVault(e) {
         saveCategoryBudgets();
         saveRecurringBills();
         saveDismissedPatterns();
+        saveNetWorth();
+        saveGoals();
         localStorage.setItem(BUDGET_KEY, monthlyBudget);
         localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
         localStorage.setItem(BASE_INCOME_KEY, baseIncome);

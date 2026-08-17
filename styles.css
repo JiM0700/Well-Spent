@@ -2308,3 +2308,284 @@ html, body {
   }
 }
 
+/* ── Net Worth & Balance Sheet Styles ─────────────────────────────────── */
+.m3-networth-card {
+  border-left: 3.5px solid #00c853 !important;
+  background: linear-gradient(180deg, rgba(0, 200, 83, 0.03) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.m3-networth-body {
+  padding-top: 6px;
+}
+
+.m3-networth-hero {
+  font-family: var(--font-mono);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--md-on-surface);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.m3-networth-hero.unconfigured {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--md-on-surface-muted);
+}
+
+.m3-networth-sub {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-on-surface-muted);
+  margin-top: 4px;
+}
+
+.m3-networth-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.m3-nw-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m3-nw-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-on-surface-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.m3-nw-val {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--md-on-surface);
+}
+
+.m3-nw-val.asset {
+  color: #00c853;
+}
+
+.m3-nw-val.debt {
+  color: #ff5252;
+}
+
+.m3-networth-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--md-on-surface-muted);
+  padding: 12px 0 6px;
+}
+
+/* ── Financial Goals & Savings Targets ────────────────────────────────── */
+.m3-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.m3-goal-card {
+  background: var(--md-surface-cont-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--elevation-1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform var(--duration-short) ease, box-shadow var(--duration-short) ease;
+}
+
+.m3-goal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-2);
+}
+
+.m3-goal-card.completed {
+  border-color: rgba(0, 200, 83, 0.4);
+  background: linear-gradient(180deg, rgba(0, 200, 83, 0.04) 0%, var(--md-surface-cont-low) 100%);
+}
+
+.m3-goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.m3-goal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.m3-goal-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.m3-goal-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--md-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-goal-due {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--md-on-surface-muted);
+  flex-shrink: 0;
+}
+
+.m3-goal-due.completed {
+  background: rgba(0, 200, 83, 0.15);
+  color: #00c853;
+}
+
+.m3-goal-amounts-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.m3-goal-saved {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-on-surface);
+}
+
+.m3-goal-target {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-on-surface-muted);
+}
+
+.m3-goal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-on-surface-muted);
+}
+
+.m3-goal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.m3-goal-contribute-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-primary);
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+  text-align: center;
+}
+
+.m3-goal-contribute-btn:hover {
+  filter: brightness(1.08);
+}
+
+.m3-goal-del-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-outline-variant);
+  background: #ffffff;
+  color: var(--md-on-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-goal-del-btn:hover {
+  background: var(--md-error-container);
+  border-color: var(--md-error);
+  color: var(--md-error);
+}
+
+.m3-goal-icon-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.m3-icon-choice {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-cont-low);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-icon-choice.active {
+  border-color: var(--md-primary);
+  background: var(--md-primary-container);
+  transform: scale(1.08);
+}
+
+.m3-quick-contribute-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.m3-chip-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-cont-low);
+  color: var(--md-on-surface);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-chip-btn:hover {
+  background: var(--md-primary-container);
+  border-color: var(--md-primary);
+  color: var(--md-on-primary-cont);
+}
+
+

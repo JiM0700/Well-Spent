@@ -297,6 +297,23 @@
                   </div>
                 </article>
 
+                <!-- 💎 NET WORTH SUMMARY HERO CARD 💎 -->
+                <article class="m3-card m3-networth-card" id="overviewNetWorthCard" aria-label="Net Worth Summary" style="margin-top: 18px;">
+                  <div class="m3-card-header">
+                    <div>
+                      <span class="m3-badge-pill" style="background: rgba(0, 200, 83, 0.12); color: #00c853;">BALANCE SHEET</span>
+                      <h3 class="m3-card-heading">Net Worth</h3>
+                    </div>
+                    <button type="button" class="m3-tonal-pill-btn" id="netWorthSettingsLinkBtn" style="font-size: 0.72rem; padding: 4px 12px;">
+                      Configure
+                    </button>
+                  </div>
+
+                  <div id="netWorthCardBody">
+                    <!-- Rendered dynamically by app.js -->
+                  </div>
+                </article>
+
               </div><!-- /col-left -->
 
               <!-- Right Column: Monthly Transactions Feed with Filter Chips & Slide-to-Delete -->
@@ -390,6 +407,22 @@
 
             <!-- Envelope Cards Grid -->
             <div class="m3-envelopes-grid" id="envelopesGrid">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+
+            <!-- 🎯 FINANCIAL GOALS & SAVINGS TARGETS 🎯 -->
+            <div class="m3-section-title-bar" style="margin-top: 32px; display: flex; justify-content: space-between; align-items: center;">
+              <div class="m3-section-headings">
+                <h2 class="m3-section-title">Financial Goals</h2>
+                <span class="m3-section-subtitle">Track savings targets for emergencies, travel, and milestones</span>
+              </div>
+              <button type="button" class="m3-tonal-pill-btn" id="openAddGoalModalBtn">
+                <span>＋ Add Goal</span>
+              </button>
+            </div>
+
+            <!-- Goals Cards Grid -->
+            <div class="m3-goals-grid" id="goalsGrid">
               <!-- Rendered dynamically by app.js -->
             </div>
 
@@ -523,6 +556,44 @@
                     <button type="button" class="m3-palette-circle" data-pal="amber" style="background:#ff9100;" title="Solar Amber" aria-label="Solar Amber"></button>
                   </div>
                 </div>
+              </article>
+
+              <!-- Net Worth & Balance Sheet Configuration -->
+              <article class="m3-card m3-setting-card">
+                <div class="m3-card-header">
+                  <span class="m3-badge-pill">BALANCE SHEET &amp; NET WORTH</span>
+                </div>
+
+                <div class="m3-setting-item">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Total Assets</span>
+                    <span class="m3-setting-desc">Savings, investments, cash, and property values</span>
+                  </div>
+                  <div class="m3-input-affix-wrapper">
+                    <span>₹</span>
+                    <input type="number" id="settingTotalAssets" class="m3-text-field-clean" min="0" step="5000" placeholder="0">
+                  </div>
+                </div>
+
+                <div class="m3-setting-item" style="border-top: 1px solid var(--md-outline-variant);">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Total Liabilities</span>
+                    <span class="m3-setting-desc">Loans, credit card balances, and debts</span>
+                  </div>
+                  <div class="m3-input-affix-wrapper">
+                    <span>₹</span>
+                    <input type="number" id="settingTotalLiabilities" class="m3-text-field-clean" min="0" step="5000" placeholder="0">
+                  </div>
+                </div>
+
+                <div class="m3-networth-preview-row" id="netWorthLivePreview">
+                  <span>Calculated Net Worth:</span>
+                  <strong class="m3-mono-figure" id="settingNetWorthPreview">Not configured</strong>
+                </div>
+
+                <button type="button" class="m3-filled-btn" id="saveNetWorthBtn" style="margin-top: 14px;">
+                  Save Balance Sheet
+                </button>
               </article>
 
               <!-- Budget & Cycle Configuration -->
@@ -814,9 +885,99 @@
     </div>
   </div>
 
+
+  <!-- ── Add / Edit Financial Goal Modal ─────────────────────────────────── -->
+  <div class="m3-scrim-backdrop" id="goalModalBackdrop" role="dialog" aria-modal="true">
+    <div class="m3-dialog-card">
+      <div class="m3-sheet-header">
+        <h3 class="m3-sheet-title" id="goalModalTitle">Create Savings Goal</h3>
+        <button type="button" class="m3-close-sheet-btn" id="goalCancelBtn" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="m3-fields-card" style="margin-top: 14px;">
+        <div class="m3-field-row">
+          <label class="m3-field-label">Goal Name</label>
+          <input type="text" id="goalNameInput" class="m3-field-input" placeholder="e.g. Emergency Fund, Bali Vacation" required>
+        </div>
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
+          <label class="m3-field-label">Target (₹)</label>
+          <input type="number" id="goalTargetInput" class="m3-field-input" min="1" step="500" placeholder="50000" required>
+        </div>
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
+          <label class="m3-field-label">Current Saved (₹)</label>
+          <input type="number" id="goalCurrentInput" class="m3-field-input" min="0" step="500" placeholder="0">
+        </div>
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
+          <label class="m3-field-label">Target Date</label>
+          <input type="date" id="goalDateInput" class="m3-field-input m3-date-input">
+        </div>
+      </div>
+
+      <div class="m3-category-picker-section" style="margin-top: 14px;">
+        <div class="m3-picker-label">GOAL ICON</div>
+        <div class="m3-goal-icon-picker" id="goalIconPicker">
+          <button type="button" class="m3-icon-choice active" data-icon="🛡️">🛡️</button>
+          <button type="button" class="m3-icon-choice" data-icon="🏖️">🏖️</button>
+          <button type="button" class="m3-icon-choice" data-icon="💻">💻</button>
+          <button type="button" class="m3-icon-choice" data-icon="🚗">🚗</button>
+          <button type="button" class="m3-icon-choice" data-icon="🏠">🏠</button>
+          <button type="button" class="m3-icon-choice" data-icon="🎓">🎓</button>
+          <button type="button" class="m3-icon-choice" data-icon="💍">💍</button>
+          <button type="button" class="m3-icon-choice" data-icon="🚀">🚀</button>
+          <button type="button" class="m3-icon-choice" data-icon="💰">💰</button>
+        </div>
+      </div>
+
+      <div class="m3-sheet-actions" style="margin-top: 20px;">
+        <button type="button" class="m3-tonal-btn" id="goalCloseBtn">Cancel</button>
+        <button type="button" class="m3-filled-btn" id="goalSaveBtn">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Contribute Funds to Goal Modal ──────────────────────────────────── -->
+  <div class="m3-scrim-backdrop" id="contributeGoalModalBackdrop" role="dialog" aria-modal="true">
+    <div class="m3-dialog-card">
+      <div class="m3-sheet-header">
+        <h3 class="m3-sheet-title" id="contributeModalTitle">Add Savings</h3>
+        <button type="button" class="m3-close-sheet-btn" id="contributeCancelBtn" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="m3-dialog-desc" id="contributeGoalMeta">Add money to this savings goal.</p>
+
+      <div class="m3-input-affix-wrapper m3-dialog-amount-wrap">
+        <span>₹</span>
+        <input type="number" id="contributeAmountInput" class="m3-text-field-clean" min="1" step="500" placeholder="5000">
+      </div>
+
+      <div class="m3-quick-contribute-chips" id="quickContributeChips">
+        <button type="button" class="m3-chip-btn" data-add="1000">＋ ₹1k</button>
+        <button type="button" class="m3-chip-btn" data-add="2500">＋ ₹2.5k</button>
+        <button type="button" class="m3-chip-btn" data-add="5000">＋ ₹5k</button>
+        <button type="button" class="m3-chip-btn" data-add="10000">＋ ₹10k</button>
+      </div>
+
+      <div class="m3-sheet-actions" style="margin-top: 20px;">
+        <button type="button" class="m3-tonal-btn" id="contributeCloseBtn">Cancel</button>
+        <button type="button" class="m3-filled-btn" id="contributeSaveBtn">Deposit Savings</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Material 3 Notification Toast -->
   <div id="m3Toast" class="m3-toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>
