@@ -96,7 +96,8 @@ public final class ExpenseStore: ObservableObject {
             WidgetDataManager.shared.updateWidgetData(
                 expenses: expenses,
                 monthlyBudget: monthlyBudget,
-                accentColorName: appAccentColorName
+                accentColorName: appAccentColorName,
+                cycleStartDay: cycleStartDay
             )
         } catch {
             print("Error saving data: \(error)")
@@ -177,6 +178,11 @@ public final class ExpenseStore: ObservableObject {
         toggleBillPaid(id: id)
     }
 
+    public func deleteRecurringBill(id: String) {
+        recurringBills.removeAll { $0.id == id }
+        saveData()
+    }
+
     public func setCategoryBudget(category: ExpenseCategory, amount: Double) {
         categoryBudgets[category.rawValue] = amount
         saveData()
@@ -190,7 +196,75 @@ public final class ExpenseStore: ObservableObject {
         categoryBudgets[category.rawValue] ?? 0.0
     }
 
-    // ── Metrics & Calculations ────────────────────────────────────────────
+    // ── Dynamic Cycle Pacing & Metrics ────────────────────────────────────
+
+    public var cycleStartDate: Date {
+        let calendar = Calendar.current
+        let now = Date()
+        let day = calendar.component(.day, from: now)
+        let month = calendar.component(.month, from: now)
+        let year = calendar.component(.year, from: now)
+        
+        var startMonth = month
+        var startYear = year
+        if day < cycleStartDay {
+            startMonth -= 1
+            if startMonth < 1 {
+                startMonth = 12
+                startYear -= 1
+            }
+        }
+        var comps = DateComponents(year: startYear, month: startMonth, day: min(cycleStartDay, 28))
+        comps.hour = 0
+        comps.minute = 0
+        comps.second = 0
+        return calendar.date(from: comps) ?? now
+    }
+
+    public var cycleEndDate: Date {
+        let calendar = Calendar.current
+        let start = cycleStartDate
+        let startMonth = calendar.component(.month, from: start)
+        let startYear = calendar.component(.year, from: start)
+        
+        var endMonth = startMonth + 1
+        var endYear = startYear
+        if endMonth > 12 {
+            endMonth = 1
+            endYear += 1
+        }
+        var comps = DateComponents(year: endYear, month: endMonth, day: min(cycleStartDay, 28))
+        comps.hour = 0
+        comps.minute = 0
+        comps.second = 0
+        return calendar.date(from: comps) ?? Date()
+    }
+
+    public var totalDaysInCycle: Int {
+        let diff = Calendar.current.dateComponents([.day], from: cycleStartDate, to: cycleEndDate)
+        return max(1, diff.day ?? 30)
+    }
+
+    public var daysElapsedInCycle: Int {
+        let diff = Calendar.current.dateComponents([.day], from: cycleStartDate, to: Date())
+        return max(1, min(totalDaysInCycle, (diff.day ?? 0) + 1))
+    }
+
+    public var daysRemainingInCycle: Int {
+        max(0, totalDaysInCycle - daysElapsedInCycle)
+    }
+
+    public var daysRemainingIncludingToday: Int {
+        max(1, totalDaysInCycle - daysElapsedInCycle + 1)
+    }
+
+    public var currentPeriodExpenses: [Expense] {
+        let start = cycleStartDate
+        let end = cycleEndDate
+        return expenses.filter { exp in
+            exp.isExpense && exp.date >= start && exp.date < end
+        }
+    }
 
     public var todaySpend: Double {
         let calendar = Calendar.current
@@ -200,16 +274,7 @@ public final class ExpenseStore: ObservableObject {
     }
 
     public var currentPeriodTotal: Double {
-        let calendar = Calendar.current
-        let now = Date()
-        return expenses
-            .filter { exp in
-                guard exp.isExpense else { return false }
-                let compExp = calendar.dateComponents([.year, .month], from: exp.date)
-                let compNow = calendar.dateComponents([.year, .month], from: now)
-                return compExp.year == compNow.year && compExp.month == compNow.month
-            }
-            .reduce(0.0) { $0 + $1.amount }
+        currentPeriodExpenses.reduce(0.0) { $0 + $1.amount }
     }
 
     public var remainingBudget: Double {
@@ -221,31 +286,36 @@ public final class ExpenseStore: ObservableObject {
         return min(1.0, currentPeriodTotal / monthlyBudget)
     }
 
+    // Dynamic Daily Allowance based strictly on remaining monthly balance
+    public var spentBeforeToday: Double {
+        max(0.0, currentPeriodTotal - todaySpend)
+    }
+
+    public var remainingMonthBalance: Double {
+        max(0.0, monthlyBudget - spentBeforeToday)
+    }
+
+    public var dynamicDailyBudget: Double {
+        guard remainingMonthBalance > 0 else { return 0.0 }
+        return remainingMonthBalance / Double(daysRemainingIncludingToday)
+    }
+
     public var dailyBudget: Double {
-        let calendar = Calendar.current
-        let daysInMonth = calendar.range(of: .day, in: .month, for: Date())?.count ?? 30
-        return monthlyBudget > 0 ? (monthlyBudget / Double(daysInMonth)) : 1500.0
+        dynamicDailyBudget
     }
 
     public var todayRemainingBudget: Double {
-        max(0.0, dailyBudget - todaySpend)
+        max(0.0, dynamicDailyBudget - todaySpend)
     }
 
     public var todayBudgetBurnPercentage: Double {
-        guard dailyBudget > 0 else { return 0.0 }
-        return min(1.0, todaySpend / dailyBudget)
+        guard dynamicDailyBudget > 0 else { return todaySpend > 0 ? 1.0 : 0.0 }
+        return min(1.0, todaySpend / dynamicDailyBudget)
     }
 
     public func spentForCategory(_ category: ExpenseCategory) -> Double {
-        let calendar = Calendar.current
-        let now = Date()
-        return expenses
-            .filter { exp in
-                guard exp.category == category && exp.isExpense else { return false }
-                let compExp = calendar.dateComponents([.year, .month], from: exp.date)
-                let compNow = calendar.dateComponents([.year, .month], from: now)
-                return compExp.year == compNow.year && compExp.month == compNow.month
-            }
+        currentPeriodExpenses
+            .filter { $0.category == category }
             .reduce(0.0) { $0 + $1.amount }
     }
 
@@ -261,15 +331,11 @@ public final class ExpenseStore: ObservableObject {
     }
 
     public var dailySpendAverage: Double {
-        let day = Calendar.current.component(.day, from: Date())
-        let elapsed = max(1, day)
-        return currentPeriodTotal / Double(elapsed)
+        currentPeriodTotal / Double(daysElapsedInCycle)
     }
 
     public var projectedMonthEnd: Double {
-        let range = Calendar.current.range(of: .day, in: .month, for: Date())
-        let totalDays = Double(range?.count ?? 30)
-        return dailySpendAverage * totalDays
+        currentPeriodTotal + (dailySpendAverage * Double(daysRemainingInCycle))
     }
 
     // ── Universal CSV Engine Delegation ───────────────────────────────────

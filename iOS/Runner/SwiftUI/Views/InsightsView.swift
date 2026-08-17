@@ -250,6 +250,17 @@ public struct InsightsView: View {
                                 .foregroundStyle(bill.isPaid ? store.accentColor : Color.secondary)
                         }
                         .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            PlatformFeedback.impact()
+                            store.deleteRecurringBill(id: bill.id)
+                        }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.red.opacity(0.8))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.leading, 4)
                     }
                     .padding(10)
                     .background(

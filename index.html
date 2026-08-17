@@ -454,6 +454,21 @@
 
               <!-- Right Column: Subscriptions & Recurring Commitments -->
               <div class="m3-trends-col">
+
+                <!-- Intelligent Cadence Auto-Detection Card -->
+                <article class="m3-card m3-detection-card" id="autoDetectionCard" style="margin-bottom: 18px;">
+                  <div class="m3-card-header">
+                    <div>
+                      <span class="m3-badge-pill" style="background: rgba(101, 88, 211, 0.12); color: #6558D3;">INTELLIGENT CADENCE ENGINE</span>
+                      <h3 class="m3-card-heading">Auto-Detected Commitments</h3>
+                    </div>
+                    <span class="m3-engine-badge" id="detectedCountBadge">Active</span>
+                  </div>
+                  <div id="detectedSuggestionsContainer">
+                    <!-- Rendered dynamically by app.js -->
+                  </div>
+                </article>
+
                 <article class="m3-card m3-recurring-card">
                   <div class="m3-card-header">
                     <div>
@@ -549,6 +564,23 @@
                 <button type="button" class="m3-filled-btn" id="saveSettingsBtn" style="margin-top: 14px;">
                   Save Parameters
                 </button>
+              </article>
+
+              <!-- Smart Recurring Detection Settings -->
+              <article class="m3-card m3-setting-card">
+                <div class="m3-card-header">
+                  <span class="m3-badge-pill">INTELLIGENCE &amp; DETECTION</span>
+                </div>
+
+                <div class="m3-setting-item">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Recurring Auto-Detection</span>
+                    <span class="m3-setting-desc" id="detectionStatusDesc">Analyzing transaction intervals (weekly, monthly, annual)</span>
+                  </div>
+                  <button type="button" class="m3-tonal-pill-btn" id="restoreIgnoredBtn" style="padding: 6px 14px;">
+                    Restore Ignored
+                  </button>
+                </div>
               </article>
 
               <!-- Universal Data Management & Encrypted Vault -->
@@ -782,6 +814,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=20"></script>
+  <!-- Material 3 Notification Toast -->
+  <div id="m3Toast" class="m3-toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js?v=21"></script>
 </body>
 </html>

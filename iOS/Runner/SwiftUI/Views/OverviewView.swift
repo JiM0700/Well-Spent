@@ -500,16 +500,11 @@ public struct OverviewView: View {
 
     private var filteredExpenses: [Expense] {
         let calendar = Calendar.current
-        let now = Date()
         let baseList: [Expense]
         if isDaywise {
             baseList = store.expenses.filter { calendar.isDateInToday($0.date) }
         } else {
-            baseList = store.expenses.filter { exp in
-                let compExp = calendar.dateComponents([.year, .month], from: exp.date)
-                let compNow = calendar.dateComponents([.year, .month], from: now)
-                return compExp.year == compNow.year && compExp.month == compNow.month
-            }
+            baseList = store.currentPeriodExpenses
         }
 
         return baseList.filter { exp in

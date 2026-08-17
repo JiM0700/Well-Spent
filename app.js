@@ -2,15 +2,16 @@
 // WELL SPENT — Material 3 Expressive (Porcelain White Edition)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const STORAGE_KEY          = 'well_spent_expenses_v1';
-const BUDGET_KEY           = 'well_spent_budget_v1';
-const CYCLE_START_DAY_KEY  = 'well_spent_cycle_start_day_v1';
-const BASE_INCOME_KEY      = 'well_spent_base_income_v1';
-const VIEW_MODE_KEY        = 'well_spent_view_mode_v1';
-const TAB_KEY              = 'well_spent_current_tab_v1';
-const CATEGORY_BUDGETS_KEY = 'well_spent_category_budgets_v1';
-const RECURRING_BILLS_KEY  = 'well_spent_recurring_bills_v1';
-const PALETTE_KEY          = 'well_spent_palette_v1';
+const STORAGE_KEY            = 'well_spent_expenses_v1';
+const BUDGET_KEY             = 'well_spent_budget_v1';
+const CYCLE_START_DAY_KEY    = 'well_spent_cycle_start_day_v1';
+const BASE_INCOME_KEY        = 'well_spent_base_income_v1';
+const VIEW_MODE_KEY          = 'well_spent_view_mode_v1';
+const TAB_KEY                = 'well_spent_current_tab_v1';
+const CATEGORY_BUDGETS_KEY   = 'well_spent_category_budgets_v1';
+const RECURRING_BILLS_KEY    = 'well_spent_recurring_bills_v1';
+const DISMISSED_PATTERNS_KEY = 'well_spent_dismissed_patterns_v1';
+const PALETTE_KEY            = 'well_spent_palette_v1';
 
 const CATEGORIES = {
   food:          { name: 'Food & Dining',      icon: '🍽️', color: '#ff9800' },
@@ -24,20 +25,33 @@ const CATEGORIES = {
 };
 
 // ── State Store ───────────────────────────────────────────────────────────
-let expenses         = loadJSON(STORAGE_KEY, []);
-let monthlyBudget    = Number(localStorage.getItem(BUDGET_KEY))          || 25000;
-let cycleStartDay    = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
-let baseIncome       = Number(localStorage.getItem(BASE_INCOME_KEY))     || 50000;
-let currentViewMode  = localStorage.getItem(VIEW_MODE_KEY)               || 'monthwise';
-let currentTab       = localStorage.getItem(TAB_KEY)                     || 'overview';
-let categoryBudgets  = loadCategoryBudgets();
-let recurringBills   = loadRecurringBills();
-let currentPalette   = localStorage.getItem(PALETTE_KEY)                 || 'blue';
+let expenses          = loadJSON(STORAGE_KEY, []);
+let monthlyBudget     = Number(localStorage.getItem(BUDGET_KEY))          || 25000;
+let cycleStartDay     = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
+let baseIncome        = Number(localStorage.getItem(BASE_INCOME_KEY))     || 50000;
+let currentViewMode   = localStorage.getItem(VIEW_MODE_KEY)               || 'monthwise';
+let currentTab        = localStorage.getItem(TAB_KEY)                     || 'overview';
+let categoryBudgets   = loadCategoryBudgets();
+let recurringBills    = loadRecurringBills();
+let dismissedPatterns = loadJSON(DISMISSED_PATTERNS_KEY, []);
+let currentPalette    = localStorage.getItem(PALETTE_KEY)                 || 'blue';
 
-let activeCategoryFilter = 'all';
-let searchQuery          = '';
+let activeCategoryFilter  = 'all';
+let searchQuery           = '';
 let selectedCategoryModal = 'food';
-let editingCategoryKey   = null;
+let editingCategoryKey    = null;
+
+// Ensure all existing expenses have valid duplicate fingerprints
+if (Array.isArray(expenses) && expenses.length > 0) {
+  let modified = false;
+  expenses.forEach(exp => {
+    if (!exp.fingerprint) {
+      exp.fingerprint = generateFingerprint(exp.date, exp.title, exp.amount, exp.account || '');
+      modified = true;
+    }
+  });
+  if (modified) saveExpenses();
+}
 
 // Seed initial sample data if empty
 if (expenses.length === 0) seedSampleData();
@@ -52,9 +66,22 @@ function loadJSON(key, fallback) {
   }
 }
 
-function saveExpenses()        { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
-function saveCategoryBudgets() { localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(categoryBudgets)); }
-function saveRecurringBills()  { localStorage.setItem(RECURRING_BILLS_KEY, JSON.stringify(recurringBills)); }
+function saveExpenses()          { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
+function saveCategoryBudgets()   { localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(categoryBudgets)); }
+function saveRecurringBills()    { localStorage.setItem(RECURRING_BILLS_KEY, JSON.stringify(recurringBills)); }
+function saveDismissedPatterns() { localStorage.setItem(DISMISSED_PATTERNS_KEY, JSON.stringify(dismissedPatterns)); }
+
+let toastTimeout = null;
+function showToast(msg, duration = 3000) {
+  const toast = document.getElementById('m3Toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
 
 function inr(n) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(n || 0);
@@ -96,15 +123,197 @@ function loadRecurringBills() {
   ];
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CADENCE & RECURRING DETECTION ENGINE (Ledgerly-Inspired Intelligence)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SUBSCRIPTION_HINTS = [
+  'netflix', 'spotify', 'hulu', 'disney', 'youtube', 'icloud', 'dropbox', 'adobe',
+  'microsoft', 'amazon prime', 'prime video', 'patreon', 'membership', 'gym', 'cult.fit',
+  'openai', 'chatgpt', 'canva', 'notion', 'zoom', 'slack', 'github', 'apple', 'swiggy one',
+  'zomato gold', 'times prime', 'hotstar', 'playstation', 'xbox', 'audible', 'medium',
+  'claude', 'anthropic', 'midjourney', 'cursor', 'copilot', 'linkedin', '1password',
+  'expressvpn', 'nordvpn', 'substack', 'duolingo', 'headspace', 'calm'
+];
+
+const BILL_HINTS = [
+  'mortgage', 'rent', 'loan', 'insurance', 'lic', 'utility', 'utilities', 'electric',
+  'electricity', 'water', 'internet', 'phone', 'mobile', 'broadband', 'wifi', 'daycare',
+  'tuition', 'lease', 'car payment', 'auto payment', 'maintenance', 'hoa', 'property tax',
+  'gas', 'cylinder', 'airtel', 'jio', 'vi', 'tatasky', 'bescom', 'tneb', 'cesc', 'act fibernet'
+];
+
+function normalizeMerchant(name) {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/^upi\/\d+\//i, '')
+    .replace(/#\s*\d+/g, '')
+    .replace(/\b\d{6,}\b/g, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function generateFingerprint(date, title, amount, account = '') {
+  const d = (date || '').split('T')[0];
+  const t = (title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const a = Number(amount || 0).toFixed(2);
+  const acc = (account || '').trim().toLowerCase();
+  return `${d}|${t}|${a}|${acc}`;
+}
+
+function detectRecurringPatterns(expensesList, dismissedList, confirmedList) {
+  if (!Array.isArray(expensesList) || expensesList.length < 2) return [];
+
+  const groups = {};
+  for (const exp of expensesList) {
+    const norm = normalizeMerchant(exp.title);
+    if (!norm || norm.length < 2) continue;
+    if (!groups[norm]) {
+      groups[norm] = {
+        normalizedName: norm,
+        displayTitle: exp.title,
+        category: exp.category || 'other',
+        items: []
+      };
+    }
+    groups[norm].items.push(exp);
+  }
+
+  const suggestions = [];
+  const now = new Date();
+
+  for (const [normKey, group] of Object.entries(groups)) {
+    const isAlreadyTracked = confirmedList.some(b => {
+      const bNorm = normalizeMerchant(b.title);
+      return bNorm === normKey || b.title.toLowerCase().includes(normKey) || normKey.includes(bNorm);
+    });
+    if (isAlreadyTracked) continue;
+
+    const sorted = [...group.items].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const uniqueDates = [];
+    const dateMap = new Map();
+    for (const item of sorted) {
+      const dtStr = new Date(item.date).toISOString().split('T')[0];
+      if (!dateMap.has(dtStr)) {
+        dateMap.set(dtStr, item);
+        uniqueDates.push(item);
+      }
+    }
+
+    if (uniqueDates.length < 2) continue;
+
+    const intervals = [];
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const d1 = new Date(uniqueDates[i - 1].date);
+      const d2 = new Date(uniqueDates[i].date);
+      const diffDays = Math.max(1, (d2 - d1) / (1000 * 60 * 60 * 24));
+      intervals.push(diffDays);
+    }
+
+    const avgInterval = intervals.reduce((s, v) => s + v, 0) / intervals.length;
+    const variance = intervals.reduce((s, v) => s + Math.pow(v - avgInterval, 2), 0) / intervals.length;
+    const jitter = Math.sqrt(variance);
+
+    let cadence = null;
+    if (avgInterval >= 5 && avgInterval <= 9) cadence = 'weekly';
+    else if (avgInterval >= 12 && avgInterval <= 17) cadence = 'biweekly';
+    else if (avgInterval >= 24 && avgInterval <= 40) cadence = 'monthly';
+    else if (avgInterval >= 75 && avgInterval <= 110) cadence = 'quarterly';
+    else if (avgInterval >= 330 && avgInterval <= 400) cadence = 'annual';
+
+    if (!cadence) continue;
+
+    const amounts = uniqueDates.map(u => u.amount);
+    const avgAmount = amounts.reduce((s, v) => s + v, 0) / amounts.length;
+    const minAmount = Math.min(...amounts);
+    const maxAmount = Math.max(...amounts);
+    const amountVariation = avgAmount > 0 ? (maxAmount - minAmount) / avgAmount : 0;
+
+    const isSubHint = SUBSCRIPTION_HINTS.some(h => normKey.includes(h));
+    const isBillHint = BILL_HINTS.some(h => normKey.includes(h));
+
+    let isValidCandidate = false;
+    let isSubscription = false;
+
+    if (isSubHint) {
+      isValidCandidate = amountVariation <= 0.20;
+      isSubscription = true;
+    } else if (isBillHint) {
+      isValidCandidate = amountVariation <= 0.35;
+      isSubscription = false;
+    } else {
+      if (uniqueDates.length >= 3 && ['monthly', 'quarterly', 'annual'].includes(cadence) && amountVariation <= 0.08) {
+        isValidCandidate = true;
+        isSubscription = false;
+      }
+    }
+
+    if (!isValidCandidate) continue;
+
+    const patternKey = `pat_${normKey}_${cadence}`;
+    if (dismissedList.includes(patternKey)) continue;
+
+    const isHighConfidence = uniqueDates.length >= 3 && amountVariation <= 0.12 && jitter <= 5;
+    const confidence = isHighConfidence ? 'High' : 'Likely';
+
+    const lastDate = new Date(uniqueDates[uniqueDates.length - 1].date);
+    let nextDate = new Date(lastDate);
+
+    if (cadence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+    else if (cadence === 'biweekly') nextDate.setDate(nextDate.getDate() + 14);
+    else if (cadence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+    else if (cadence === 'quarterly') nextDate.setMonth(nextDate.getMonth() + 3);
+    else if (cadence === 'annual') nextDate.setFullYear(nextDate.getFullYear() + 1);
+
+    while (nextDate < now) {
+      if (cadence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+      else if (cadence === 'biweekly') nextDate.setDate(nextDate.getDate() + 14);
+      else if (cadence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+      else if (cadence === 'quarterly') nextDate.setMonth(nextDate.getMonth() + 3);
+      else if (cadence === 'annual') nextDate.setFullYear(nextDate.getFullYear() + 1);
+    }
+
+    let monthlyEquivalent = avgAmount;
+    if (cadence === 'weekly') monthlyEquivalent = avgAmount * 52 / 12;
+    else if (cadence === 'biweekly') monthlyEquivalent = avgAmount * 26 / 12;
+    else if (cadence === 'quarterly') monthlyEquivalent = avgAmount / 3;
+    else if (cadence === 'annual') monthlyEquivalent = avgAmount / 12;
+
+    suggestions.push({
+      patternKey,
+      title: group.displayTitle,
+      normalizedName: normKey,
+      category: group.category,
+      avgAmount,
+      monthlyEquivalent,
+      cadence,
+      confidence,
+      occurrences: uniqueDates.length,
+      nextDate: nextDate.toISOString(),
+      dueDay: nextDate.getDate(),
+      isSubscription
+    });
+  }
+
+  return suggestions;
+}
+
 function seedSampleData() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
-  expenses = [
-    { id: Date.now() - 4000, title: 'Specialty Cold Brew & Bagel', amount: 380, category: 'food', date: new Date(y, m, d, 9, 30).toISOString(), notes: 'Morning coffee' },
-    { id: Date.now() - 3000, title: 'Organic Supermarket Basket', amount: 1450, category: 'food', date: new Date(y, m, d, 14, 15).toISOString(), notes: 'Groceries' },
-    { id: Date.now() - 2000, title: 'Metro Transit SmartCard', amount: 500, category: 'transport', date: new Date(y, m, d - 1, 18, 0).toISOString(), notes: 'Monthly pass' },
-    { id: Date.now() - 1000, title: 'High-speed Fiber Net', amount: 1199, category: 'bills', date: new Date(y, m, d - 3, 11, 0).toISOString(), notes: 'Broadband' }
+  const sampleList = [
+    { title: 'Specialty Cold Brew & Bagel', amount: 380, category: 'food', date: new Date(y, m, d, 9, 30).toISOString(), notes: 'Morning coffee' },
+    { title: 'Organic Supermarket Basket', amount: 1450, category: 'food', date: new Date(y, m, d, 14, 15).toISOString(), notes: 'Groceries' },
+    { title: 'Metro Transit SmartCard', amount: 500, category: 'transport', date: new Date(y, m, d - 1, 18, 0).toISOString(), notes: 'Monthly pass' },
+    { title: 'High-speed Fiber Net', amount: 1199, category: 'bills', date: new Date(y, m, d - 3, 11, 0).toISOString(), notes: 'Broadband' }
   ];
+  expenses = sampleList.map((exp, idx) => ({
+    id: Date.now() - (idx + 1) * 1000,
+    ...exp,
+    fingerprint: generateFingerprint(exp.date, exp.title, exp.amount)
+  }));
   saveExpenses();
 }
 
@@ -762,6 +971,9 @@ function renderTrends(metrics) {
     }).join('');
   }
 
+  // Render Intelligent Detection Suggestions
+  renderDetectedSuggestions(metrics);
+
   const today = new Date().getDate();
   const upcomingTotal = recurringBills
     .filter(b => !b.isPaid)
@@ -839,6 +1051,97 @@ function renderTrends(metrics) {
   }
 }
 
+function renderDetectedSuggestions(metrics) {
+  const container = document.getElementById('detectedSuggestionsContainer');
+  const badge = document.getElementById('detectedCountBadge');
+  if (!container) return;
+
+  const suggestions = detectRecurringPatterns(expenses, dismissedPatterns, recurringBills);
+
+  if (badge) {
+    badge.textContent = suggestions.length > 0 ? `${suggestions.length} Suggested` : 'Active';
+    badge.style.background = suggestions.length > 0 ? 'rgba(0, 200, 83, 0.15)' : 'rgba(101, 88, 211, 0.12)';
+    badge.style.color = suggestions.length > 0 ? '#00c853' : '#6558D3';
+  }
+
+  if (suggestions.length === 0) {
+    container.innerHTML = `
+      <div class="m3-detection-idle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6558D3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>Active cadence engine is monitoring transaction intervals for recurring patterns and subscriptions.</span>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="m3-detected-list">
+      ${suggestions.map(s => {
+        const cat = CATEGORIES[s.category] || CATEGORIES.bills || { icon: '⚡' };
+        const formattedNext = new Date(s.nextDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        return `
+          <div class="m3-detected-item" data-pat="${s.patternKey}">
+            <div class="m3-detected-info">
+              <div class="m3-detected-title-row">
+                <span style="font-size:1.05rem;">${cat.icon}</span>
+                <span class="m3-detected-title">${escapeHtml(s.title)}</span>
+                <span class="m3-cadence-chip">${s.cadence}</span>
+                <span class="m3-confidence-chip ${s.confidence.toLowerCase()}">${s.confidence}</span>
+              </div>
+              <div class="m3-detected-sub">
+                <strong>${inr(s.avgAmount)}</strong> avg (${inrCompact(s.monthlyEquivalent)}/mo) • Next: ${formattedNext} • ${s.occurrences} charges
+              </div>
+            </div>
+            <div class="m3-detected-actions">
+              <button type="button" class="m3-keep-btn" data-keep-pat="${s.patternKey}" title="Add to recurring commitments">
+                ＋ Keep
+              </button>
+              <button type="button" class="m3-ignore-btn" data-ignore-pat="${s.patternKey}" title="Ignore and dismiss suggestion">
+                ✕ Ignore
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  container.querySelectorAll('[data-keep-pat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      triggerHaptic();
+      const patKey = btn.dataset.keepPat;
+      const sugg = suggestions.find(s => s.patternKey === patKey);
+      if (sugg) {
+        recurringBills.push({
+          id: Date.now(),
+          title: sugg.title,
+          amount: Math.round(sugg.avgAmount),
+          dueDay: sugg.dueDay,
+          isPaid: false
+        });
+        saveRecurringBills();
+        showToast(`✓ Added "${sugg.title}" to recurring commitments.`);
+        render();
+      }
+    });
+  });
+
+  container.querySelectorAll('[data-ignore-pat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      triggerHaptic();
+      const patKey = btn.dataset.ignorePat;
+      if (!dismissedPatterns.includes(patKey)) {
+        dismissedPatterns.push(patKey);
+        saveDismissedPatterns();
+      }
+      showToast(`Suggestion ignored and archived.`);
+      render();
+    });
+  });
+}
+
 // ── Tab 4: Settings Render ────────────────────────────────────────────────
 function renderSettings() {
   const budgetInput = document.getElementById('settingMonthlyBudget');
@@ -849,6 +1152,28 @@ function renderSettings() {
 
   const incomeInput = document.getElementById('settingBaseIncome');
   if (incomeInput) incomeInput.value = baseIncome;
+
+  const detectionDesc = document.getElementById('detectionStatusDesc');
+  if (detectionDesc) {
+    const suggs = detectRecurringPatterns(expenses, dismissedPatterns, recurringBills);
+    detectionDesc.textContent = `Cadence active: ${suggs.length} suggested, ${recurringBills.length} confirmed, ${dismissedPatterns.length} ignored.`;
+  }
+
+  const restoreBtn = document.getElementById('restoreIgnoredBtn');
+  if (restoreBtn) {
+    restoreBtn.onclick = () => {
+      triggerHaptic();
+      if (dismissedPatterns.length === 0) {
+        showToast('No ignored suggestions to restore.');
+        return;
+      }
+      const count = dismissedPatterns.length;
+      dismissedPatterns = [];
+      saveDismissedPatterns();
+      showToast(`✓ Restored ${count} previously ignored pattern${count !== 1 ? 's' : ''}.`);
+      render();
+    };
+  }
 }
 
 // ── Modal Handlers ────────────────────────────────────────────────────────
@@ -916,18 +1241,23 @@ function handleSaveExpense(e) {
 
   triggerHaptic();
 
+  const expDate = dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString();
+  const fp = generateFingerprint(expDate, title, amount);
+
   const newExpense = {
     id: Date.now(),
     title,
     amount,
     category: selectedCategoryModal,
-    date: dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString(),
-    notes
+    date: expDate,
+    notes,
+    fingerprint: fp
   };
 
   expenses.unshift(newExpense);
   saveExpenses();
   closeModal('modalBackdrop');
+  showToast(`✓ Logged ${inr(amount)} for ${title}.`);
   render();
 }
 
@@ -1192,13 +1522,21 @@ function importCSV(e) {
     const iCategory = hdr.findIndex((h, i) => i !== iType && (h.includes('categ') || h === 'cat'));
     const iDate = hdr.findIndex(h => h.includes('date') || h.includes('time'));
     const iNotes = hdr.findIndex(h => h.includes('note') || h.includes('memo') || h.includes('comment') || h.includes('remark'));
+    const iAccount = hdr.findIndex(h => h.includes('account') || h.includes('card') || h.includes('bank') || h.includes('src') || h.includes('source'));
 
     if (iTitle < 0 && iAmount < 0) {
       alert(`Could not detect required columns.\nHeaders found: ${rawHeader.join(', ')}`);
       return;
     }
 
-    let count = 0, skipped = 0;
+    // Build Set of existing fingerprints
+    const existingFingerprints = new Set(
+      expenses.map(exp => exp.fingerprint || generateFingerprint(exp.date, exp.title, exp.amount, exp.account || ''))
+    );
+
+    let insertedCount = 0, duplicateCount = 0, skipped = 0;
+    const newItems = [];
+
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i];
       if (!cols || cols.length < 2) continue;
@@ -1212,7 +1550,7 @@ function importCSV(e) {
       if (iTitle >= 0 && cols[iTitle] && cols[iTitle].trim()) {
         title = cols[iTitle].trim();
       } else {
-        const skipIdx = new Set([amtIdx, iDate, iType].filter(x => x >= 0));
+        const skipIdx = new Set([amtIdx, iDate, iType, iAccount].filter(x => x >= 0));
         const candidate = cols.find((c, ci) =>
           !skipIdx.has(ci) && c.trim() &&
           !/^[\d.,:\/\-T+Z]+$/.test(c.trim()) &&
@@ -1231,23 +1569,39 @@ function importCSV(e) {
       }
 
       const notes = iNotes >= 0 ? (cols[iNotes] || '').trim() : '';
+      const account = iAccount >= 0 ? (cols[iAccount] || '').trim() : '';
 
-      expenses.push({
+      const fp = generateFingerprint(date, title, amount, account);
+
+      if (existingFingerprints.has(fp)) {
+        duplicateCount++;
+        continue;
+      }
+
+      existingFingerprints.add(fp);
+      newItems.push({
         id: Date.now() + Math.random(),
         title,
         amount,
         category,
         date,
-        notes
+        notes,
+        account,
+        fingerprint: fp
       });
-      count++;
+      insertedCount++;
     }
 
-    saveExpenses();
+    if (newItems.length > 0) {
+      expenses = [...newItems, ...expenses];
+      saveExpenses();
+    }
+
     e.target.value = '';
-    alert(skipped > 0
-      ? `Imported ${count} transaction${count !== 1 ? 's' : ''} (${skipped} rows skipped).`
-      : `Imported ${count} transaction${count !== 1 ? 's' : ''} successfully.`);
+
+    const summaryMsg = `✓ CSV Ingestion: ${insertedCount} imported, ${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''} skipped${skipped > 0 ? `, ${skipped} unparseable rows` : ''}.`;
+    showToast(summaryMsg, 4000);
+    alert(summaryMsg);
     render();
   };
   reader.readAsText(file, 'utf-8');
@@ -1310,7 +1664,7 @@ function parseDateFlexible(raw) {
 // ── Encrypted Vault Operations ────────────────────────────────────────────
 function exportVaultBackup() {
   const data = {
-    version: 4,
+    version: 5,
     exportedAt: new Date().toISOString(),
     expenses,
     monthlyBudget,
@@ -1318,6 +1672,7 @@ function exportVaultBackup() {
     baseIncome,
     categoryBudgets,
     recurringBills,
+    dismissedPatterns,
     currentPalette
   };
 
@@ -1329,6 +1684,7 @@ function exportVaultBackup() {
   a.download = `WellSpent_Vault_${new Date().toISOString().split('T')[0]}.wsbackup`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('✓ Vault backup downloaded.');
 }
 
 function handleImportVault(e) {
@@ -1346,16 +1702,26 @@ function handleImportVault(e) {
         baseIncome = data.baseIncome || baseIncome;
         categoryBudgets = data.categoryBudgets || categoryBudgets;
         recurringBills = data.recurringBills || recurringBills;
+        dismissedPatterns = data.dismissedPatterns || dismissedPatterns;
         currentPalette = data.currentPalette || currentPalette;
+
+        // Ensure all restored expenses have fingerprints
+        expenses.forEach(exp => {
+          if (!exp.fingerprint) {
+            exp.fingerprint = generateFingerprint(exp.date, exp.title, exp.amount, exp.account || '');
+          }
+        });
 
         saveExpenses();
         saveCategoryBudgets();
         saveRecurringBills();
+        saveDismissedPatterns();
         localStorage.setItem(BUDGET_KEY, monthlyBudget);
         localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
         localStorage.setItem(BASE_INCOME_KEY, baseIncome);
         localStorage.setItem(PALETTE_KEY, currentPalette);
 
+        showToast('✓ Vault backup restored successfully.');
         alert('Vault backup restored successfully.');
         render();
       }

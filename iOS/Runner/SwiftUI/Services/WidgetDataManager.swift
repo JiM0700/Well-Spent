@@ -75,14 +75,44 @@ public final class WidgetDataManager {
         UserDefaults(suiteName: WidgetDataManager.appGroupSuite) ?? UserDefaults.standard
     }
 
-    public func updateWidgetData(expenses: [Expense], monthlyBudget: Double, accentColorName: String) {
+    public func updateWidgetData(expenses: [Expense], monthlyBudget: Double, accentColorName: String, cycleStartDay: Int = 1) {
         let calendar = Calendar.current
-        let todayExpenses = expenses.filter { calendar.isDateInToday($0.date) }
+        let now = Date()
+        let day = calendar.component(.day, from: now)
+        let month = calendar.component(.month, from: now)
+        let year = calendar.component(.year, from: now)
+
+        var startMonth = month
+        var startYear = year
+        if day < cycleStartDay {
+            startMonth -= 1
+            if startMonth < 1 { startMonth = 12; startYear -= 1 }
+        }
+        var comps = DateComponents(year: startYear, month: startMonth, day: min(cycleStartDay, 28))
+        comps.hour = 0; comps.minute = 0; comps.second = 0
+        let cycleStart = calendar.date(from: comps) ?? now
+
+        var endMonth = startMonth + 1
+        var endYear = startYear
+        if endMonth > 12 { endMonth = 1; endYear += 1 }
+        var endComps = DateComponents(year: endYear, month: endMonth, day: min(cycleStartDay, 28))
+        endComps.hour = 0; endComps.minute = 0; endComps.second = 0
+        let cycleEnd = calendar.date(from: endComps) ?? now
+
+        let totalDays = max(1, calendar.dateComponents([.day], from: cycleStart, to: cycleEnd).day ?? 30)
+        let daysElapsed = max(1, min(totalDays, (calendar.dateComponents([.day], from: cycleStart, to: now).day ?? 0) + 1))
+        let daysRemainingIncludingToday = max(1, totalDays - daysElapsed + 1)
+
+        let cycleExpenses = expenses.filter { $0.isExpense && $0.date >= cycleStart && $0.date < cycleEnd }
+        let monthTotal = cycleExpenses.reduce(0.0) { $0 + $1.amount }
+
+        let todayExpenses = expenses.filter { calendar.isDateInToday($0.date) && $0.isExpense }
         let todayTotal = todayExpenses.reduce(0.0) { $0 + $1.amount }
 
-        let daysInMonth = calendar.range(of: .day, in: .month, for: Date())?.count ?? 30
-        let dailyBudget = monthlyBudget > 0 ? (monthlyBudget / Double(daysInMonth)) : 1500.0
-        let remainingDaily = max(0, dailyBudget - todayTotal)
+        let previousSpend = max(0.0, monthTotal - todayTotal)
+        let remainingMonthBalance = max(0.0, monthlyBudget - previousSpend)
+        let dynamicDailyBudget = remainingMonthBalance > 0 ? (remainingMonthBalance / Double(daysRemainingIncludingToday)) : 0.0
+        let remainingDaily = max(0.0, dynamicDailyBudget - todayTotal)
 
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
@@ -99,7 +129,7 @@ public final class WidgetDataManager {
 
         let widgetData = TodayExpenseWidgetData(
             todayTotal: todayTotal,
-            dailyBudget: dailyBudget,
+            dailyBudget: dynamicDailyBudget,
             remainingDaily: remainingDaily,
             monthlyBudget: monthlyBudget,
             accentColorName: accentColorName,

@@ -2122,3 +2122,189 @@ html, body {
   font-size: 1.15rem;
   text-align: left;
 }
+
+/* ── Intelligent Cadence & Recurring Detection ─────────────────────────── */
+.m3-detection-card {
+  border-left: 3.5px solid #6558D3 !important;
+  background: linear-gradient(180deg, rgba(101, 88, 211, 0.03) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.m3-engine-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(101, 88, 211, 0.12);
+  color: #6558D3;
+  letter-spacing: 0.4px;
+}
+
+.m3-detected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.m3-detected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--md-surface-cont-low);
+  border: 1px solid var(--md-outline-variant);
+  gap: 12px;
+  box-shadow: var(--elevation-1);
+  transition: transform var(--duration-short) ease, box-shadow var(--duration-short) ease;
+}
+
+.m3-detected-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--elevation-2);
+}
+
+.m3-detected-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m3-detected-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.m3-detected-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--md-on-surface);
+}
+
+.m3-cadence-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: rgba(101, 88, 211, 0.1);
+  color: #6558D3;
+  text-transform: capitalize;
+}
+
+.m3-confidence-chip {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.2px;
+}
+
+.m3-confidence-chip.high {
+  background: rgba(0, 200, 83, 0.12);
+  color: #00c853;
+}
+
+.m3-confidence-chip.likely {
+  background: rgba(26, 115, 232, 0.12);
+  color: #1a73e8;
+}
+
+.m3-detected-sub {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--md-on-surface-muted);
+}
+
+.m3-detected-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.m3-keep-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(101, 88, 211, 0.4);
+  background: #6558D3;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+  box-shadow: 0 2px 6px rgba(101, 88, 211, 0.25);
+}
+
+.m3-keep-btn:hover {
+  filter: brightness(1.08);
+  transform: scale(1.03);
+}
+
+.m3-ignore-btn {
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-outline-variant);
+  background: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-on-surface-muted);
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-ignore-btn:hover {
+  background: var(--md-surface-cont-low);
+  color: var(--md-on-surface);
+}
+
+.m3-detection-idle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(101, 88, 211, 0.04);
+  border: 1px dashed rgba(101, 88, 211, 0.25);
+  font-size: 0.78rem;
+  color: var(--md-on-surface-muted);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Material 3 Notification Toast ─────────────────────────────────────── */
+.m3-toast {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  background: #1e1e1e;
+  color: #f5f5f5;
+  padding: 12px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s var(--ease-emphasized-decel);
+  max-width: 90vw;
+  text-align: center;
+}
+
+.m3-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+@media (min-width: 600px) {
+  .m3-toast {
+    bottom: 32px;
+  }
+}
+
