@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// WELL SPENT — Material 3 Expressive PWA Orchestrator
-// Features: Dynamic SVG Radial Gauge, Interactive Trajectory Sparkline, M3 Motion
+// WELL SPENT — Material 3 Expressive (Porcelain White Edition)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STORAGE_KEY          = 'well_spent_expenses_v1';
@@ -11,7 +10,6 @@ const VIEW_MODE_KEY        = 'well_spent_view_mode_v1';
 const TAB_KEY              = 'well_spent_current_tab_v1';
 const CATEGORY_BUDGETS_KEY = 'well_spent_category_budgets_v1';
 const RECURRING_BILLS_KEY  = 'well_spent_recurring_bills_v1';
-const THEME_KEY            = 'well_spent_theme_v1';
 const PALETTE_KEY          = 'well_spent_palette_v1';
 
 const CATEGORIES = {
@@ -34,7 +32,6 @@ let currentViewMode  = localStorage.getItem(VIEW_MODE_KEY)               || 'mon
 let currentTab       = localStorage.getItem(TAB_KEY)                     || 'overview';
 let categoryBudgets  = loadCategoryBudgets();
 let recurringBills   = loadRecurringBills();
-let currentTheme     = localStorage.getItem(THEME_KEY)                   || 'dark';
 let currentPalette   = localStorage.getItem(PALETTE_KEY)                 || 'blue';
 
 let activeCategoryFilter = 'all';
@@ -200,7 +197,7 @@ function calculateMetrics() {
 
 // ── Master Render Pipeline ────────────────────────────────────────────────
 function render() {
-  applyThemeAndPalette();
+  applyPalette();
   syncNav();
 
   const metrics = calculateMetrics();
@@ -213,21 +210,8 @@ function render() {
   renderSettings();
 }
 
-function applyThemeAndPalette() {
-  let theme = currentTheme;
-  if (theme === 'system') {
-    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  document.body.setAttribute('data-theme', theme);
+function applyPalette() {
   document.body.setAttribute('data-palette', currentPalette);
-
-  const metaTheme = document.getElementById('metaThemeColor');
-  if (metaTheme) {
-    metaTheme.setAttribute('content', theme === 'dark' ? '#0d0f14' : '#f8f9fa');
-  }
-
-  const themeSelect = document.getElementById('themeSelect');
-  if (themeSelect) themeSelect.value = currentTheme;
 
   document.querySelectorAll('.m3-palette-circle').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.pal === currentPalette);
@@ -274,20 +258,42 @@ function renderTopBar(metrics) {
 
 function renderRail(metrics) {
   const pct = monthlyBudget > 0 ? Math.min(100, Math.round((metrics.monthTotal / monthlyBudget) * 100)) : 0;
+  const isOver = monthlyBudget > 0 && metrics.monthTotal > monthlyBudget;
+
   const gaugePct = document.getElementById('railGaugePct');
   if (gaugePct) gaugePct.textContent = `${pct}%`;
 
-  const gaugeFill = document.getElementById('railGaugeFill');
-  if (gaugeFill) {
-    gaugeFill.style.width = `${pct}%`;
-    gaugeFill.classList.toggle('warning', pct >= 100);
+  // Mini ring circumference = 2 * PI * 17 = 106.81
+  const miniCircumference = 106.81;
+  const miniOffset = miniCircumference * (1 - pct / 100);
+  const ringFill = document.getElementById('railMiniRingFill');
+  if (ringFill) {
+    ringFill.style.strokeDasharray = `${miniCircumference}`;
+    ringFill.style.strokeDashoffset = `${miniOffset}`;
+    ringFill.classList.toggle('warning', isOver);
+  }
+
+  // Expanded Tooltip Details
+  const tooltipPctVal = document.getElementById('tooltipPctVal');
+  if (tooltipPctVal) {
+    tooltipPctVal.textContent = isOver ? `${pct}% (Over Target)` : `${pct}% Used`;
+    tooltipPctVal.classList.toggle('warning', isOver);
+  }
+
+  const tooltipTrackFill = document.getElementById('tooltipTrackFill');
+  if (tooltipTrackFill) {
+    tooltipTrackFill.style.width = `${pct}%`;
+    tooltipTrackFill.classList.toggle('warning', isOver);
   }
 
   const spentMeta = document.getElementById('railSpentMeta');
-  if (spentMeta) spentMeta.textContent = `${inrCompact(metrics.monthTotal)} spent`;
+  if (spentMeta) spentMeta.textContent = inr(metrics.monthTotal);
 
   const leftMeta = document.getElementById('railLeftMeta');
-  if (leftMeta) leftMeta.textContent = `${inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))} left`;
+  if (leftMeta) leftMeta.textContent = inr(Math.max(0, monthlyBudget - metrics.monthTotal));
+
+  const cycleTimeline = document.getElementById('tooltipCycleTimeline');
+  if (cycleTimeline) cycleTimeline.textContent = `Day ${metrics.daysElapsed} of ${metrics.totalDays}`;
 }
 
 // ── Tab 1: Overview & Radial Gauge & Trajectory Sparkline ──────────────────
@@ -372,7 +378,7 @@ function renderOverview(metrics) {
   }
 
   const feedHeading = document.getElementById('activityFeedHeading');
-  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
+  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Transactions";
 
   const feedSubheading = document.getElementById('activityFeedSubheading');
   if (feedSubheading) {
@@ -910,11 +916,10 @@ function setupEvents() {
     });
   }
 
+  // Single primary New Entry buttons (Rail FAB on Desktop, Bottom Nav FAB on Mobile)
   const addButtons = [
     document.getElementById('railAddBtn'),
-    document.getElementById('topAddBtn'),
-    document.getElementById('mobileAddFab'),
-    document.getElementById('inlineAddBtn')
+    document.getElementById('mobileAddFab')
   ];
 
   addButtons.forEach(btn => {
@@ -993,31 +998,12 @@ function setupEvents() {
     });
   });
 
-  const themeSelect = document.getElementById('themeSelect');
-  if (themeSelect) {
-    themeSelect.addEventListener('change', (e) => {
-      currentTheme = e.target.value;
-      localStorage.setItem(THEME_KEY, currentTheme);
-      applyThemeAndPalette();
-    });
-  }
-
-  const railThemeToggle = document.getElementById('railThemeToggle');
-  if (railThemeToggle) {
-    railThemeToggle.addEventListener('click', () => {
-      triggerHaptic();
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(THEME_KEY, currentTheme);
-      applyThemeAndPalette();
-    });
-  }
-
   document.querySelectorAll('.m3-palette-circle').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic();
       currentPalette = btn.dataset.pal;
       localStorage.setItem(PALETTE_KEY, currentPalette);
-      applyThemeAndPalette();
+      applyPalette();
     });
   });
 
@@ -1256,6 +1242,13 @@ function parseDateFlexible(raw) {
     const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
     return isNaN(dt) ? null : dt.toISOString();
   }
+  const dmyAlt = raw.match(/^(\d{1,2})[\.\-](\d{1,2})[\.\-](\d{2,4})$/);
+  if (dmyAlt) {
+    let [, d, mo, y] = dmyAlt;
+    if (y.length === 2) y = '20' + y;
+    const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
+    return isNaN(dt) ? null : dt.toISOString();
+  }
   const d = new Date(raw);
   return isNaN(d) ? null : d.toISOString();
 }
@@ -1271,8 +1264,7 @@ function exportVaultBackup() {
     baseIncome,
     categoryBudgets,
     recurringBills,
-    currentPalette,
-    currentTheme
+    currentPalette
   };
 
   const jsonStr = JSON.stringify(data, null, 2);
@@ -1301,7 +1293,6 @@ function handleImportVault(e) {
         categoryBudgets = data.categoryBudgets || categoryBudgets;
         recurringBills = data.recurringBills || recurringBills;
         currentPalette = data.currentPalette || currentPalette;
-        currentTheme = data.currentTheme || currentTheme;
 
         saveExpenses();
         saveCategoryBudgets();
@@ -1310,7 +1301,6 @@ function handleImportVault(e) {
         localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
         localStorage.setItem(BASE_INCOME_KEY, baseIncome);
         localStorage.setItem(PALETTE_KEY, currentPalette);
-        localStorage.setItem(THEME_KEY, currentTheme);
 
         alert('Vault backup restored successfully.');
         render();
