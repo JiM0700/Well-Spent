@@ -700,21 +700,22 @@ html, body {
 .m3-mode-icon-btn[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
+  bottom: auto;
   left: 50%;
-  transform: translateX(-50%) scale(0.9);
+  transform: translateX(-50%) scale(0.92);
   background: #202124;
   color: #ffffff;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: var(--radius-xs);
   font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  box-shadow: var(--elevation-3);
+  box-shadow: var(--elevation-4);
   transition: all var(--duration-short) var(--ease-emphasized-decel);
-  z-index: 100;
+  z-index: 1000;
 }
 
 .m3-mode-icon-btn[data-tooltip]:hover::after {
@@ -797,8 +798,8 @@ html, body {
 .m3-radial-gauge-wrapper {
   position: relative;
   width: 100%;
-  max-width: 270px;
-  height: 195px;
+  max-width: 280px;
+  height: 205px;
   margin: 4px auto 14px;
   display: flex;
   align-items: center;
@@ -823,8 +824,8 @@ html, body {
   stroke: url(#gaugeGradient);
   stroke-width: 14;
   stroke-linecap: round;
-  stroke-dasharray: 385.7;
-  stroke-dashoffset: 385.7;
+  stroke-dasharray: 375.2;
+  stroke-dashoffset: 375.2;
   transition: stroke-dashoffset 0.8s var(--ease-emphasized-decel), stroke 0.3s ease;
 }
 
@@ -834,15 +835,15 @@ html, body {
 
 .m3-radial-center-content {
   position: absolute;
-  top: 30px;
+  top: 48px;
   left: 0;
   right: 0;
-  bottom: 6px;
+  bottom: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
+  gap: 3px;
   pointer-events: none;
 }
 

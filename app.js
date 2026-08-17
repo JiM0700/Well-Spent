@@ -313,8 +313,8 @@ function renderOverview(metrics) {
   const isOver = budget > 0 && total > budget;
   const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0;
 
-  // 🌟 1. UPDATE OPEN HORSESHOE ARC GAUGE (260 degrees arc length = 385.72) 🌟
-  const arcLength = 385.72;
+  // 🌟 1. UPDATE OPEN HORSESHOE ARC GAUGE (250 degrees arc length = 375.2) 🌟
+  const arcLength = 375.2;
   const offset = arcLength * (1 - Math.min(1, pct / 100));
   const radialCircle = document.getElementById('radialGaugeCircle');
   if (radialCircle) {

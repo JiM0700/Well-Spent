@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body data-palette="blue">
 
@@ -186,7 +186,7 @@
 
                     <!-- Sleek Compact Icon Toggle inside Card Header with Tooltips -->
                     <div class="m3-mode-icon-toggle" id="viewModeSwitcher" role="radiogroup" aria-label="View Period">
-                      <button type="button" class="m3-mode-icon-btn active" data-mode="monthwise" data-tooltip="Monthwise View" aria-label="Monthwise View" role="radio" aria-checked="true">
+                      <button type="button" class="m3-mode-icon-btn active" data-mode="monthwise" data-tooltip="Monthwise View" title="Monthwise View" aria-label="Monthwise View" role="radio" aria-checked="true">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -194,7 +194,7 @@
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                       </button>
-                      <button type="button" class="m3-mode-icon-btn" data-mode="daywise" data-tooltip="Daywise View" aria-label="Daywise View" role="radio" aria-checked="false">
+                      <button type="button" class="m3-mode-icon-btn" data-mode="daywise" data-tooltip="Daywise View" title="Daywise View" aria-label="Daywise View" role="radio" aria-checked="false">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="12" cy="12" r="5"></circle>
                           <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -212,7 +212,7 @@
 
                   <!-- Central Open Horseshoe Arc Gauge -->
                   <div class="m3-radial-gauge-wrapper">
-                    <svg class="m3-radial-svg" viewBox="0 0 240 180">
+                    <svg class="m3-radial-svg" viewBox="0 0 240 200">
                       <defs>
                         <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                           <stop offset="0%" stop-color="var(--md-primary)" />
@@ -223,10 +223,10 @@
                           <stop offset="100%" stop-color="#ea4335" />
                         </linearGradient>
                       </defs>
-                      <!-- Background Open Arc Track (260 degrees) -->
-                      <path class="m3-radial-track" d="M 54.9 174.6 A 85 85 0 1 1 185.1 174.6" />
+                      <!-- Background Open Arc Track (250 degrees) -->
+                      <path class="m3-radial-track" d="M 49.6 164.3 A 86 86 0 1 1 190.4 164.3" />
                       <!-- Active Animated Stroke -->
-                      <path class="m3-radial-fill" id="radialGaugeCircle" d="M 54.9 174.6 A 85 85 0 1 1 185.1 174.6" />
+                      <path class="m3-radial-fill" id="radialGaugeCircle" d="M 49.6 164.3 A 86 86 0 1 1 190.4 164.3" />
                     </svg>
 
                     <!-- Breathing Center Numerical & Typographic Content -->
@@ -782,6 +782,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>
