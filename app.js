@@ -144,11 +144,19 @@ function calculateMetrics() {
   const totalDays = Math.max(1, Math.round((cycleEnd - cycleStart) / 86400000));
   const daysElapsed = Math.max(1, Math.min(totalDays, Math.ceil((now - cycleStart) / 86400000)));
   const daysRemaining = Math.max(0, totalDays - daysElapsed);
+  const daysRemainingIncludingToday = Math.max(1, totalDays - daysElapsed + 1);
 
+  // Dynamic daily allowance calculated based strictly on the remaining monthly balance
+  const previousSpendBeforeToday = Math.max(0, monthTotal - todayTotal);
+  const remainingMonthBalance = Math.max(0, monthlyBudget - previousSpendBeforeToday);
+  const dynamicDailyBudget = remainingMonthBalance > 0
+    ? (remainingMonthBalance / daysRemainingIncludingToday)
+    : 0;
+
+  const remainingToday = Math.max(0, dynamicDailyBudget - todayTotal);
   const dailyBudget = monthlyBudget / totalDays;
   const dailyBurn = monthTotal / daysElapsed;
   const projectedMonthEnd = monthTotal + (dailyBurn * daysRemaining);
-  const remainingToday = Math.max(0, dailyBudget - todayTotal);
 
   // Cumulative Trajectory Data per Day for the Sparkline
   const trajectoryDays = [];
@@ -182,11 +190,14 @@ function calculateMetrics() {
     monthTotal,
     todayTotal,
     dailyBudget,
+    dynamicDailyBudget,
+    remainingMonthBalance,
     dailyBurn,
     projectedMonthEnd,
     remainingToday,
     daysElapsed,
     daysRemaining,
+    daysRemainingIncludingToday,
     totalDays,
     monthExpenses,
     todayExpenses,
@@ -308,10 +319,10 @@ function renderOverview(metrics) {
   });
 
   const total = isDaywise ? metrics.todayTotal : metrics.monthTotal;
-  const budget = isDaywise ? metrics.dailyBudget : monthlyBudget;
+  const budget = isDaywise ? metrics.dynamicDailyBudget : monthlyBudget;
   const remaining = isDaywise ? metrics.remainingToday : Math.max(0, monthlyBudget - metrics.monthTotal);
-  const isOver = budget > 0 && total > budget;
-  const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0;
+  const isOver = budget > 0 ? total > budget : total > 0;
+  const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : (total > 0 ? 100 : 0);
 
   // 🌟 1. UPDATE OPEN HORSESHOE ARC GAUGE (250 degrees arc length = 375.2) 🌟
   const arcLength = 375.2;
@@ -337,7 +348,9 @@ function renderOverview(metrics) {
 
   const subDisplay = document.getElementById('pulseSubDisplay');
   if (subDisplay) {
-    subDisplay.textContent = `of ${inrCompact(budget)} ${isDaywise ? 'daily allowance' : 'monthly allowance'}`;
+    subDisplay.textContent = isDaywise
+      ? `of ${inrCompact(budget)} daily allowance (${metrics.daysRemainingIncludingToday}d left)`
+      : `of ${inrCompact(budget)} monthly allowance`;
   }
 
   const statusPill = document.getElementById('pulseStatusPill');
@@ -346,14 +359,32 @@ function renderOverview(metrics) {
     statusPill.classList.toggle('warning', isOver);
   }
 
+  // Dynamic Stat Pod Labels & Figures
+  const remainingLabel = document.getElementById('pulseRemainingLabel');
+  if (remainingLabel) remainingLabel.textContent = isDaywise ? 'Today Left' : 'Remaining';
+
+  const burnLabel = document.getElementById('pulseBurnLabel');
+  if (burnLabel) burnLabel.textContent = isDaywise ? 'Daily Target' : 'Daily Burn';
+
+  const monthEndLabel = document.getElementById('pulseMonthEndLabel');
+  if (monthEndLabel) monthEndLabel.textContent = isDaywise ? 'Month Left' : 'Est. Total';
+
   const remainingDisplay = document.getElementById('pulseRemainingDisplay');
   if (remainingDisplay) remainingDisplay.textContent = inrCompact(remaining);
 
   const burnDisplay = document.getElementById('pulseBurnDisplay');
-  if (burnDisplay) burnDisplay.textContent = `${inrCompact(metrics.dailyBurn)}/day`;
+  if (burnDisplay) {
+    burnDisplay.textContent = isDaywise
+      ? `${inrCompact(metrics.dynamicDailyBudget)}/day`
+      : `${inrCompact(metrics.dailyBurn)}/day`;
+  }
 
   const monthEndDisplay = document.getElementById('pulseMonthEndDisplay');
-  if (monthEndDisplay) monthEndDisplay.textContent = inrCompact(metrics.projectedMonthEnd);
+  if (monthEndDisplay) {
+    monthEndDisplay.textContent = isDaywise
+      ? inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))
+      : inrCompact(metrics.projectedMonthEnd);
+  }
 
   // 📈 2. RENDER INTERACTIVE SPENDING TRAJECTORY SPARKLINE 📈
   renderTrajectorySparkline(metrics);
