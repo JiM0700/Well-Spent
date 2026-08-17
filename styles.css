@@ -1,50 +1,52 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   WELL SPENT — Google ChromeOS / Material 3 PWA Design System
-   Architecture: Material You Dynamic Tonal Surfaces & Fluid Responsive Shell
+   WELL SPENT — Material 3 Expressive Design System (Flagship Edition)
+   Aesthetic: Deep Obsidian Tonal Surfaces, Fluid Radial Gauges, Interactive Sparklines
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Material 3 Color Tokens & Tonal Palettes ───────────────────────────── */
+/* ── Material 3 Expressive Design Tokens ────────────────────────────────── */
 :root {
-  /* Dynamic Palette: Default (Google Blue) */
-  --md-primary:           #a8c7fa;
-  --md-on-primary:        #062e6f;
-  --md-primary-container: #0842a0;
-  --md-on-primary-cont:   #d3e3fd;
+  /* Default Palette: Google Blue */
+  --md-primary:             #a8c7fa;
+  --md-on-primary:          #062e6f;
+  --md-primary-container:   #0842a0;
+  --md-on-primary-cont:     #d3e3fd;
 
-  --md-secondary-cont:    #283344;
-  --md-on-secondary-cont: #d3e3fd;
+  --md-secondary:           #bec6dc;
+  --md-secondary-cont:      #283344;
+  --md-on-secondary-cont:   #d3e3fd;
 
-  --md-tertiary:          #7fcfff;
-  --md-tertiary-cont:     #004d6a;
+  --md-tertiary:            #7fcfff;
+  --md-tertiary-cont:       #004d6a;
 
-  --md-error:             #f2b8b5;
-  --md-on-error:          #601410;
-  --md-error-container:   #8c1d18;
-  --md-on-error-cont:     #f9dedc;
+  --md-error:               #ffb4ab;
+  --md-on-error:            #690005;
+  --md-error-container:     #93000a;
+  --md-on-error-cont:       #ffdad6;
 
-  --md-success:           #6dd58c;
-  --md-success-container: #0f5223;
+  --md-success:             #6dd58c;
+  --md-success-container:   #0f5223;
 
-  --md-surface:           #111318;
-  --md-on-surface:        #e2e2e9;
-  --md-on-surface-var:    #c4c7d0;
+  /* Surfaces & Containers */
+  --md-surface:             #0d0f14;
+  --md-on-surface:          #e2e2e9;
+  --md-on-surface-var:      #c4c7d0;
 
-  --md-surface-cont-lowest: #0c0e12;
-  --md-surface-cont-low:    #191b20;
-  --md-surface-cont:        #1d2024;
-  --md-surface-cont-high:   #272a30;
-  --md-surface-cont-highest:#32353b;
+  --md-surface-cont-lowest: #08090d;
+  --md-surface-cont-low:    #13161c;
+  --md-surface-cont:        #181b23;
+  --md-surface-cont-high:   #222631;
+  --md-surface-cont-highest:#2c313f;
 
   --md-outline:             #8e919a;
-  --md-outline-variant:     #44474f;
+  --md-outline-variant:     rgba(255, 255, 255, 0.08);
 
   /* Typography */
   --font-family:            'Google Sans', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono:              'Roboto Mono', 'SF Mono', Consolas, monospace;
 
   /* Shape Tokens */
-  --radius-xs:              4px;
-  --radius-sm:              8px;
+  --radius-xs:              6px;
+  --radius-sm:              10px;
   --radius-md:              16px;
   --radius-lg:              24px;
   --radius-xl:              28px;
@@ -54,32 +56,31 @@
   --ease-emphasized:        cubic-bezier(0.2, 0.0, 0.0, 1.0);
   --ease-emphasized-decel:  cubic-bezier(0.05, 0.7, 0.1, 1.0);
   --ease-emphasized-accel:  cubic-bezier(0.3, 0.0, 0.8, 0.15);
-  --ease-standard:          cubic-bezier(0.2, 0.0, 0.0, 1.0);
-  --duration-short:         150ms;
-  --duration-medium:        300ms;
-  --duration-long:          500ms;
+  --duration-short:         160ms;
+  --duration-medium:        320ms;
+  --duration-long:          540ms;
 
-  /* Elevation Shadows */
-  --elevation-1:            0px 1px 2px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15);
-  --elevation-2:            0px 1px 2px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
-  --elevation-3:            0px 4px 8px 3px rgba(0,0,0,0.15), 0px 1px 3px rgba(0,0,0,0.3);
-  --elevation-4:            0px 6px 10px 4px rgba(0,0,0,0.15), 0px 2px 3px rgba(0,0,0,0.3);
+  /* Elevations */
+  --elevation-1:            0 1px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  --elevation-2:            0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  --elevation-3:            0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1);
+  --elevation-4:            0 16px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
 
-  /* Layout Dimensions */
+  /* Layout */
   --rail-width:             92px;
-  --rail-expanded-width:    240px;
-  --top-bar-height:         68px;
+  --top-bar-height:         70px;
   --bottom-nav-height:      76px;
   --safe-area-bottom:       env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Material You Palette Swatches ──────────────────────────────────────── */
+/* ── Dynamic Material You Palettes ──────────────────────────────────────── */
 [data-palette="emerald"] {
   --md-primary:           #6dd58c;
   --md-on-primary:        #003915;
   --md-primary-container: #0f5223;
   --md-on-primary-cont:   #c4eed0;
-  --md-secondary-cont:    #233a29;
+  --md-secondary-cont:    #1c3824;
+  --md-tertiary:          #81e3a4;
 }
 
 [data-palette="coral"] {
@@ -87,7 +88,8 @@
   --md-on-primary:        #5c140e;
   --md-primary-container: #7e271f;
   --md-on-primary-cont:   #ffdad6;
-  --md-secondary-cont:    #402724;
+  --md-secondary-cont:    #3e2421;
+  --md-tertiary:          #ffb4ab;
 }
 
 [data-palette="amethyst"] {
@@ -95,7 +97,8 @@
   --md-on-primary:        #381e72;
   --md-primary-container: #4f378b;
   --md-on-primary-cont:   #eaddff;
-  --md-secondary-cont:    #362b47;
+  --md-secondary-cont:    #332549;
+  --md-tertiary:          #efb8c8;
 }
 
 [data-palette="amber"] {
@@ -103,7 +106,8 @@
   --md-on-primary:        #452b00;
   --md-primary-container: #633f00;
   --md-on-primary-cont:   #ffddb3;
-  --md-secondary-cont:    #3c3120;
+  --md-secondary-cont:    #3b2f1e;
+  --md-tertiary:          #ffd599;
 }
 
 /* ── Light Mode Tonal Tokens ────────────────────────────────────────────── */
@@ -117,20 +121,23 @@
   --md-on-secondary-cont: #141d28;
 
   --md-surface:           #f8f9fa;
-  --md-on-surface:        #1f1f1f;
-  --md-on-surface-var:    #444746;
+  --md-on-surface:        #1a1c20;
+  --md-on-surface-var:    #44474e;
 
   --md-surface-cont-lowest: #ffffff;
-  --md-surface-cont-low:    #f3f4f6;
-  --md-surface-cont:        #ededed;
-  --md-surface-cont-high:   #e2e3e5;
-  --md-surface-cont-highest:#d8d9dc;
+  --md-surface-cont-low:    #f1f3f6;
+  --md-surface-cont:        #eaedf2;
+  --md-surface-cont-high:   #e0e4ea;
+  --md-surface-cont-highest:#d6dbe2;
 
-  --md-outline:             #747775;
-  --md-outline-variant:     #c4c7c5;
+  --md-outline-variant:     rgba(0, 0, 0, 0.08);
+
+  --elevation-1:            0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+  --elevation-2:            0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+  --elevation-3:            0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
-/* ── Universal Reset & Base Styles ──────────────────────────────────────── */
+/* ── Base & Universal Reset ─────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -149,24 +156,35 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dynamic Ambient Glow */
+/* Ambient Radial Glow Overlays */
 .m3-ambient-glow {
   position: fixed;
-  top: -15vw;
-  right: -10vw;
-  width: 55vw;
-  height: 55vw;
-  max-width: 600px;
-  max-height: 600px;
-  background: radial-gradient(circle, var(--md-primary) 0%, transparent 65%);
-  opacity: 0.05;
-  filter: blur(80px);
+  border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  transition: opacity var(--duration-long) ease, background var(--duration-medium) ease;
+  filter: blur(90px);
+  transition: all var(--duration-long) ease;
 }
 
-/* ── App Shell Layout ───────────────────────────────────────────────────── */
+.m3-glow-primary {
+  top: -120px;
+  right: -80px;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, var(--md-primary) 0%, transparent 68%);
+  opacity: 0.07;
+}
+
+.m3-glow-secondary {
+  bottom: -160px;
+  left: 20%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, var(--md-tertiary) 0%, transparent 68%);
+  opacity: 0.04;
+}
+
+/* ── Shell & Workspace Layout ───────────────────────────────────────────── */
 .m3-app-shell {
   display: flex;
   width: 100vw;
@@ -177,7 +195,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ── ChromeOS / Material 3 Navigation Rail (Desktop & Tablets) ──────────── */
+/* ── Material Navigation Rail (Desktop & Chromebooks) ───────────────────── */
 .m3-nav-rail {
   display: none;
   width: var(--rail-width);
@@ -189,7 +207,7 @@ html, body {
   padding: 20px 10px;
   flex-shrink: 0;
   z-index: 10;
-  transition: width var(--duration-medium) var(--ease-emphasized);
+  box-shadow: var(--elevation-1);
 }
 
 @media (min-width: 860px) {
@@ -215,20 +233,20 @@ html, body {
 }
 
 .m3-brand-icon {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: var(--radius-md);
-  background: var(--md-primary-container);
+  background: linear-gradient(135deg, var(--md-primary-container), var(--md-secondary-cont));
   color: var(--md-on-primary-cont);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-2);
   transition: transform var(--duration-short) var(--ease-emphasized-decel);
 }
 
 .m3-brand-icon:hover {
-  transform: scale(1.06);
+  transform: scale(1.06) rotate(2deg);
 }
 
 .m3-brand-name {
@@ -248,19 +266,19 @@ html, body {
   width: 56px;
   height: 56px;
   border-radius: var(--radius-md);
-  background-color: var(--md-primary-container);
-  color: var(--md-on-primary-cont);
+  background: linear-gradient(135deg, var(--md-primary), var(--md-tertiary));
+  color: var(--md-on-primary);
   border: none;
   cursor: pointer;
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-3);
   transition: all var(--duration-medium) var(--ease-emphasized);
   overflow: hidden;
 }
 
 .m3-fab-extended:hover {
-  box-shadow: var(--elevation-3);
-  transform: translateY(-2px);
-  filter: brightness(1.08);
+  box-shadow: var(--elevation-4);
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.06);
 }
 
 .m3-fab-extended:active {
@@ -270,15 +288,15 @@ html, body {
 .m3-fab-text {
   display: none;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* Navigation Rail Buttons with Animated Pill Indicator */
+/* Navigation Rail Buttons with Animated Pill */
 .m3-rail-menu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   align-items: center;
 }
@@ -308,12 +326,13 @@ html, body {
 }
 
 .m3-rail-btn:hover .m3-pill-target {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .m3-rail-btn.active .m3-pill-target {
-  background-color: var(--md-secondary-cont);
+  background: var(--md-secondary-cont);
   color: var(--md-primary);
+  box-shadow: inset 0 0 0 1px rgba(168, 199, 250, 0.2);
 }
 
 .m3-rail-btn.active {
@@ -338,6 +357,7 @@ html, body {
 .m3-rail-gauge-card {
   width: 100%;
   background: var(--md-surface-cont);
+  border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-sm);
   padding: 10px 8px;
   display: flex;
@@ -349,21 +369,21 @@ html, body {
   display: flex;
   justify-content: space-between;
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface-var);
 }
 
 .m3-gauge-meta {
   display: flex;
   flex-direction: column;
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   color: var(--md-on-surface-var);
   line-height: 1.3;
 }
 
 .m3-icon-action-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-full);
   border: 1px solid var(--md-outline-variant);
   background: var(--md-surface-cont);
@@ -378,7 +398,7 @@ html, body {
 .m3-icon-action-btn:hover {
   background: var(--md-surface-cont-high);
   color: var(--md-on-surface);
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 /* ── Main Container & Top App Bar ───────────────────────────────────────── */
@@ -397,25 +417,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 28px;
   background: var(--md-surface);
   border-bottom: 1px solid var(--md-outline-variant);
-  gap: 16px;
+  gap: 20px;
   z-index: 5;
-}
-
-.m3-app-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.m3-menu-icon-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--md-on-surface);
-  cursor: pointer;
 }
 
 @media (max-width: 859px) {
@@ -424,14 +430,20 @@ html, body {
   }
 }
 
+.m3-app-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .m3-app-bar-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--md-on-surface);
 }
 
-/* Google-Style Search Pill */
+/* Google-Style Global Search Pill */
 .m3-search-pill-wrapper {
   flex: 1;
   max-width: 520px;
@@ -442,20 +454,21 @@ html, body {
 .m3-search-pill {
   width: 100%;
   height: 44px;
-  background: var(--md-surface-cont-high);
+  background: var(--md-surface-cont-low);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   padding: 0 16px;
   gap: 10px;
-  border: 1px solid transparent;
+  border: 1px solid var(--md-outline-variant);
+  box-shadow: var(--elevation-1);
   transition: all var(--duration-short) ease;
 }
 
 .m3-search-pill:focus-within {
   background: var(--md-surface-cont-lowest);
   border-color: var(--md-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.18);
+  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.2);
 }
 
 .m3-search-pill-icon {
@@ -497,54 +510,55 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--md-surface-cont-high);
+  background: var(--md-surface-cont);
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-full);
   padding: 6px 14px;
   font-size: 0.76rem;
   font-weight: 600;
   color: var(--md-on-surface);
+  box-shadow: var(--elevation-1);
 }
 
 .m3-pulse-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--md-primary);
-  box-shadow: 0 0 8px var(--md-primary);
+  box-shadow: 0 0 10px var(--md-primary);
   animation: m3-pulse 2s infinite;
 }
 
 @keyframes m3-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 0.5; }
 }
 
 .m3-tonal-circle-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-full);
-  background: var(--md-primary);
+  background: linear-gradient(135deg, var(--md-primary), var(--md-tertiary));
   color: var(--md-on-primary);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-2);
   transition: all var(--duration-short) var(--ease-emphasized-decel);
 }
 
 .m3-tonal-circle-btn:hover {
   transform: scale(1.08);
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-3);
 }
 
 /* ── Scrollable Workspace Content ───────────────────────────────────────── */
 .m3-content-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 24px 28px;
   scroll-behavior: smooth;
 }
 
@@ -555,11 +569,11 @@ html, body {
 }
 
 .m3-content-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
 }
 
 .m3-content-scroll::-webkit-scrollbar-thumb {
-  background: var(--md-outline-variant);
+  background: var(--md-surface-cont-high);
   border-radius: var(--radius-full);
 }
 
@@ -576,7 +590,7 @@ html, body {
 @keyframes m3-fade-scale {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.995);
+    transform: translateY(10px) scale(0.99);
   }
   to {
     opacity: 1;
@@ -585,26 +599,26 @@ html, body {
 }
 
 .m3-pane-inner {
-  max-width: 1140px;
+  max-width: 1180px;
   margin: 0 auto;
   width: 100%;
 }
 
-/* ── Sliding Segmented Period Control ───────────────────────────────────── */
+/* ── Sliding Segmented Period Switcher ──────────────────────────────────── */
 .m3-segmented-control-wrap {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .m3-segmented-control {
   position: relative;
   display: flex;
-  background: var(--md-surface-cont);
+  background: var(--md-surface-cont-low);
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-full);
   padding: 4px;
-  gap: 2px;
+  box-shadow: var(--elevation-1);
 }
 
 .m3-segment-btn {
@@ -613,7 +627,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 22px;
+  padding: 8px 24px;
   border-radius: var(--radius-full);
   border: none;
   background: none;
@@ -640,12 +654,11 @@ html, body {
   transition: transform var(--duration-medium) var(--ease-emphasized);
 }
 
-.m3-segment-btn[data-mode="daywise"].active ~ .m3-segment-slider,
 .m3-segmented-control.daywise-active .m3-segment-slider {
   transform: translateX(100%);
 }
 
-/* ── Material 3 Cards & Dashboard Grid ──────────────────────────────────── */
+/* ── Material 3 Dashboard Grid ──────────────────────────────────────────── */
 .m3-dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -654,7 +667,7 @@ html, body {
 
 @media (min-width: 960px) {
   .m3-dashboard-grid {
-    grid-template-columns: 420px 1fr;
+    grid-template-columns: 460px 1fr;
     align-items: start;
   }
 }
@@ -663,7 +676,7 @@ html, body {
   background: var(--md-surface-cont-low);
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-xl);
-  padding: 20px;
+  padding: 22px;
   box-shadow: var(--elevation-1);
   transition: all var(--duration-short) ease;
 }
@@ -693,22 +706,86 @@ html, body {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  background: rgba(109, 213, 140, 0.15);
+  background: rgba(109, 213, 140, 0.16);
   color: var(--md-success);
 }
 
 .m3-status-indicator-pill.warning {
-  background: rgba(242, 184, 181, 0.18);
+  background: rgba(255, 180, 171, 0.18);
   color: var(--md-error);
 }
 
-.m3-hero-figure-wrap {
-  margin: 10px 0 16px;
+/* ── 🌟 HERO RADIAL GAUGE STYLING 🌟 ────────────────────────────────────── */
+.m3-hero-radial-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.m3-hero-radial-card .m3-card-header {
+  width: 100%;
+}
+
+.m3-radial-gauge-wrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 8px auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.m3-radial-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.m3-radial-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 13;
+}
+
+.m3-radial-fill {
+  fill: none;
+  stroke: url(#gaugeGradient);
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-dasharray: 515.2;
+  stroke-dashoffset: 515.2;
+  transition: stroke-dashoffset 0.8s var(--ease-emphasized-decel), stroke 0.3s ease;
+}
+
+.m3-radial-fill.warning {
+  stroke: url(#gaugeGradientWarn);
+}
+
+.m3-radial-center-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  gap: 2px;
+}
+
+.m3-radial-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--md-on-surface-var);
 }
 
 .m3-hero-amount {
   font-family: var(--font-family);
-  font-size: 2.25rem;
+  font-size: 1.85rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--md-on-surface);
@@ -716,43 +793,31 @@ html, body {
 }
 
 .m3-hero-sub {
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   color: var(--md-on-surface-var);
+}
+
+.m3-radial-pct-pill {
   margin-top: 4px;
-}
-
-/* Material 3 Multi-Layer Progress Indicator */
-.m3-progress-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
-  overflow: hidden;
+  background: var(--md-secondary-cont);
+  color: var(--md-primary);
 }
 
-.m3-hero-track {
-  height: 8px;
-  margin-bottom: 20px;
-}
-
-.m3-progress-indicator {
-  height: 100%;
-  background: var(--md-primary);
-  border-radius: var(--radius-full);
-  width: 0%;
-  transition: width 0.6s var(--ease-emphasized-decel), background var(--duration-short) ease;
-}
-
-.m3-progress-indicator.warning {
-  background: var(--md-error);
-}
-
-/* Stat Pods */
+/* 3 Stat Pods Row */
 .m3-stat-pods-row {
   display: flex;
   align-items: center;
+  width: 100%;
   background: var(--md-surface-cont);
+  border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-md);
   padding: 12px 14px;
+  box-shadow: var(--elevation-1);
 }
 
 .m3-stat-pod {
@@ -761,14 +826,15 @@ html, body {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  text-align: left;
 }
 
 .m3-pod-label {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--md-on-surface-var);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .m3-pod-value {
@@ -789,7 +855,102 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Chips Carousel */
+/* ── 📈 INTERACTIVE SPENDING TRAJECTORY SPARKLINE 📈 ─────────────────────── */
+.m3-trajectory-card {
+  margin-top: 18px;
+}
+
+.m3-card-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-on-surface);
+}
+
+.m3-trajectory-delta {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--md-secondary-cont);
+  color: var(--md-primary);
+}
+
+.m3-trajectory-delta.warning {
+  background: rgba(255, 180, 171, 0.18);
+  color: var(--md-error);
+}
+
+.m3-sparkline-container {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  margin: 12px 0 6px;
+  background: var(--md-surface-cont);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.m3-sparkline-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.m3-sparkline-target-line {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.m3-sparkline-area {
+  fill: url(#sparklineGradient);
+  transition: d 0.6s var(--ease-emphasized-decel);
+}
+
+.m3-sparkline-line {
+  fill: none;
+  stroke: var(--md-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: d 0.6s var(--ease-emphasized-decel);
+}
+
+.m3-sparkline-dot {
+  fill: #ffffff;
+  stroke: var(--md-primary);
+  stroke-width: 2.5;
+  transition: cx 0.6s var(--ease-emphasized-decel), cy 0.6s var(--ease-emphasized-decel);
+}
+
+.m3-sparkline-tooltip {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  background: rgba(17, 19, 24, 0.92);
+  border: 1px solid var(--md-outline-variant);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-xs);
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--md-on-surface);
+  pointer-events: none;
+  box-shadow: var(--elevation-2);
+}
+
+.m3-trajectory-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--md-on-surface-var);
+  padding: 0 4px;
+}
+
+/* ── Filter Chips Carousel ──────────────────────────────────────────────── */
 .m3-chips-carousel-wrap {
   margin-top: 14px;
   overflow: hidden;
@@ -813,25 +974,28 @@ html, body {
   gap: 6px;
   padding: 7px 14px;
   border-radius: var(--radius-full);
-  background: var(--md-surface-cont);
+  background: var(--md-surface-cont-low);
   border: 1px solid var(--md-outline-variant);
   color: var(--md-on-surface-var);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--elevation-1);
   transition: all var(--duration-short) ease;
 }
 
 .m3-filter-chip:hover {
-  background: var(--md-surface-cont-high);
+  background: var(--md-surface-cont);
   color: var(--md-on-surface);
+  transform: translateY(-1px);
 }
 
 .m3-filter-chip.active {
   background: var(--md-secondary-cont);
   border-color: var(--md-primary);
   color: var(--md-on-secondary-cont);
+  box-shadow: 0 0 10px rgba(168, 199, 250, 0.15);
 }
 
 /* ── Activity Feed & Slide-to-Delete Transaction Items ──────────────────── */
@@ -848,8 +1012,9 @@ html, body {
 }
 
 .m3-section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--md-on-surface);
 }
 
@@ -862,25 +1027,25 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: var(--md-primary);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: var(--radius-xs);
   transition: background var(--duration-short) ease;
 }
 
 .m3-text-btn:hover {
-  background: rgba(168, 199, 250, 0.1);
+  background: rgba(168, 199, 250, 0.12);
 }
 
 .m3-tx-feed {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 /* Swipeable Row Container */
@@ -895,7 +1060,7 @@ html, body {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 80px;
+  width: 84px;
   background: var(--md-error-container);
   color: var(--md-on-error-cont);
   display: flex;
@@ -938,11 +1103,12 @@ html, body {
 
 .m3-tx-card:hover {
   background: var(--md-surface-cont);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .m3-tx-icon-badge {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-full);
   background: var(--md-surface-cont-high);
   display: flex;
@@ -950,6 +1116,7 @@ html, body {
   justify-content: center;
   font-size: 1.25rem;
   flex-shrink: 0;
+  box-shadow: var(--elevation-1);
 }
 
 .m3-tx-info {
@@ -962,7 +1129,7 @@ html, body {
 
 .m3-tx-title {
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface);
   white-space: nowrap;
   overflow: hidden;
@@ -980,7 +1147,7 @@ html, body {
 .m3-tx-amount {
   font-family: var(--font-mono);
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--md-on-surface);
   flex-shrink: 0;
 }
@@ -1019,7 +1186,7 @@ html, body {
 .m3-envelopes-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 @media (min-width: 600px) {
@@ -1038,8 +1205,9 @@ html, body {
   background: var(--md-surface-cont-low);
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px;
   cursor: pointer;
+  box-shadow: var(--elevation-1);
   transition: all var(--duration-short) var(--ease-emphasized);
 }
 
@@ -1058,13 +1226,13 @@ html, body {
 }
 
 .m3-envelope-icon {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
 }
 
 .m3-envelope-name {
   flex: 1;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface);
 }
 
@@ -1079,12 +1247,45 @@ html, body {
   color: var(--md-error);
 }
 
+.m3-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.m3-hero-track {
+  height: 8px;
+  margin: 12px 0 16px;
+}
+
+.m3-progress-indicator {
+  height: 100%;
+  background: var(--md-primary);
+  border-radius: var(--radius-full);
+  width: 0%;
+  transition: width 0.6s var(--ease-emphasized-decel);
+}
+
+.m3-progress-indicator.warning {
+  background: var(--md-error);
+}
+
 .m3-envelope-meta {
   display: flex;
   justify-content: space-between;
   font-size: 0.74rem;
   color: var(--md-on-surface-var);
-  margin-top: 8px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+}
+
+/* Allocation Meta Row */
+.m3-allocation-meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--md-on-surface-var);
   font-family: var(--font-mono);
 }
 
@@ -1125,7 +1326,7 @@ html, body {
   font-size: 0.7rem;
   color: var(--md-on-surface-var);
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .m3-vel-divider {
@@ -1164,20 +1365,14 @@ html, body {
   font-weight: 600;
 }
 
-/* Recurring Bills List */
-.m3-card-heading {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--md-on-surface);
-}
-
+/* Recurring Bills */
 .m3-tonal-pill-btn {
-  padding: 5px 12px;
+  padding: 5px 14px;
   border-radius: var(--radius-full);
   background: var(--md-secondary-cont);
   color: var(--md-on-secondary-cont);
   border: none;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
   transition: all var(--duration-short) ease;
@@ -1220,6 +1415,7 @@ html, body {
   background: var(--md-surface-cont);
   border: 1px solid var(--md-outline-variant);
   gap: 12px;
+  box-shadow: var(--elevation-1);
   transition: opacity var(--duration-short) ease;
 }
 
@@ -1244,7 +1440,7 @@ html, body {
 
 .m3-rec-title {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface);
 }
 
@@ -1273,7 +1469,7 @@ html, body {
 .m3-rec-amount {
   font-family: var(--font-mono);
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .m3-rec-toggle-btn {
@@ -1323,7 +1519,7 @@ html, body {
 
 .m3-setting-title {
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface);
 }
 
@@ -1397,19 +1593,20 @@ html, body {
 .m3-filled-btn {
   padding: 10px 20px;
   border-radius: var(--radius-full);
-  background: var(--md-primary);
+  background: linear-gradient(135deg, var(--md-primary), var(--md-tertiary));
   color: var(--md-on-primary);
   border: none;
   font-size: 0.86rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-2);
   transition: all var(--duration-short) var(--ease-emphasized-decel);
 }
 
 .m3-filled-btn:hover {
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-3);
   filter: brightness(1.08);
+  transform: translateY(-1px);
 }
 
 .m3-vault-actions-grid {
@@ -1437,14 +1634,16 @@ html, body {
   border-radius: var(--radius-md);
   color: var(--md-on-surface);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: var(--elevation-1);
   transition: all var(--duration-short) ease;
 }
 
 .m3-tonal-action-btn:hover {
   background: var(--md-surface-cont-high);
   border-color: var(--md-primary);
+  transform: translateY(-1px);
 }
 
 .m3-danger-btn {
@@ -1461,10 +1660,10 @@ html, body {
 }
 
 .m3-danger-btn:hover {
-  background: rgba(242, 184, 181, 0.12);
+  background: rgba(255, 180, 171, 0.12);
 }
 
-/* ── Mobile Bottom Navigation Bar (Material 3) ──────────────────────────── */
+/* ── Mobile Bottom Navigation Bar ───────────────────────────────────────── */
 .m3-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1478,6 +1677,7 @@ html, body {
   justify-content: space-around;
   padding-bottom: var(--safe-area-bottom);
   z-index: 50;
+  box-shadow: var(--elevation-2);
 }
 
 @media (min-width: 860px) {
@@ -1501,7 +1701,7 @@ html, body {
 }
 
 .m3-bnav-pill {
-  width: 52px;
+  width: 54px;
   height: 28px;
   border-radius: var(--radius-full);
   display: flex;
@@ -1513,6 +1713,7 @@ html, body {
 .m3-bnav-item.active .m3-bnav-pill {
   background: var(--md-secondary-cont);
   color: var(--md-primary);
+  box-shadow: inset 0 0 0 1px rgba(168, 199, 250, 0.2);
 }
 
 .m3-bnav-item.active {
@@ -1523,13 +1724,13 @@ html, body {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-cont);
+  background: linear-gradient(135deg, var(--md-primary), var(--md-tertiary));
+  color: var(--md-on-primary);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-3);
   cursor: pointer;
   margin: 0 4px;
   flex-shrink: 0;
@@ -1539,8 +1740,8 @@ html, body {
 .m3-scrim-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
   z-index: 100;
   display: none;
   align-items: flex-end;
@@ -1608,7 +1809,7 @@ html, body {
 .m3-drag-handle {
   width: 36px;
   height: 4px;
-  background: var(--md-outline-variant);
+  background: var(--md-outline);
   border-radius: var(--radius-full);
   margin: 10px auto 4px;
 }
@@ -1628,7 +1829,7 @@ html, body {
 
 .m3-sheet-title {
   font-size: 1.15rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--md-on-surface);
 }
 
@@ -1699,7 +1900,7 @@ html, body {
 .m3-field-label {
   width: 90px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--md-on-surface-var);
   flex-shrink: 0;
 }
@@ -1735,7 +1936,7 @@ html, body {
 
 .m3-picker-label {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.05em;
   color: var(--md-on-surface-var);
 }
@@ -1758,7 +1959,7 @@ html, body {
   border: 1px solid var(--md-outline-variant);
   color: var(--md-on-surface-var);
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--duration-short) ease;
 }
@@ -1787,7 +1988,7 @@ html, body {
   border: 1px solid var(--md-outline-variant);
   color: var(--md-on-surface);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Well Spent – Sleek, privacy-first personal expense tracker with ChromeOS Material 3 interface, budget forecasting, and encrypted backup.">
-  <title>Well Spent — Expense &amp; Budget Manager</title>
+  <meta name="description" content="Well Spent – Flagship Material 3 Expressive personal finance app with real-time radial budget ring, interactive trajectory charts, and offline encrypted vault.">
+  <title>Well Spent — Expressive Personal Finance</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#131318" id="metaThemeColor">
+  <meta name="theme-color" content="#0d0f14" id="metaThemeColor">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,34 +15,35 @@
   <link rel="apple-touch-icon" href="icon.jpg">
   <link rel="icon" type="image/jpeg" href="icon.jpg">
 
-  <!-- Google Material Fonts: Google Sans & Plus Jakarta Sans & Roboto Flex -->
+  <!-- Google Sans / Plus Jakarta Sans / Roboto Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-theme="dark" data-palette="blue">
 
-  <!-- Ambient Dynamic Tonal Glow -->
-  <div class="m3-ambient-glow" aria-hidden="true"></div>
+  <!-- Ambient Dynamic Tonal Radial Glows -->
+  <div class="m3-ambient-glow m3-glow-primary" aria-hidden="true"></div>
+  <div class="m3-ambient-glow m3-glow-secondary" aria-hidden="true"></div>
 
   <div class="m3-app-shell">
 
-    <!-- ── Desktop / Chromebook Navigation Rail (Material 3) ─────────────── -->
+    <!-- ── Desktop / Chromebook Expressive Navigation Rail ───────────────── -->
     <aside class="m3-nav-rail" id="m3NavRail" aria-label="Main Navigation">
       <div class="m3-rail-top">
-        <!-- Logo & Brand -->
-        <div class="m3-rail-brand" title="Well Spent v4.0">
+        <!-- Logo & Brand Header -->
+        <div class="m3-rail-brand" title="Well Spent v4.5">
           <div class="m3-brand-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
           </div>
           <span class="m3-brand-name">Well Spent</span>
         </div>
 
-        <!-- Extended Floating Action Button (FAB) -->
+        <!-- Extended Material Floating Action Button (FAB) -->
         <button type="button" class="m3-fab-extended" id="railAddBtn" aria-label="New Transaction" title="New Transaction (Ctrl/⌘ + N)">
           <svg class="m3-fab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -51,7 +52,7 @@
           <span class="m3-fab-text">New Entry</span>
         </button>
 
-        <!-- Navigation Rail Links with Animated Tonal Pill -->
+        <!-- Navigation Rail Links with Fluid Tonal Indicator Pill -->
         <nav class="m3-rail-menu" aria-label="Navigation Links">
           <button type="button" class="m3-rail-btn active" data-tab="overview" title="Overview (⌘1 / Alt+1)">
             <div class="m3-pill-target">
@@ -93,11 +94,11 @@
         </nav>
       </div>
 
-      <!-- Rail Footer Gauge & Quick Controls -->
+      <!-- Rail Footer Mini-Card & Theme Switcher -->
       <div class="m3-rail-bottom">
         <div class="m3-rail-gauge-card">
           <div class="m3-gauge-header">
-            <span class="m3-gauge-title">Cycle Budget</span>
+            <span class="m3-gauge-title">Cycle Target</span>
             <span class="m3-gauge-pct" id="railGaugePct">0%</span>
           </div>
           <div class="m3-progress-track">
@@ -109,7 +110,7 @@
           </div>
         </div>
 
-        <button type="button" class="m3-icon-action-btn" id="railThemeToggle" title="Toggle Theme" aria-label="Toggle Theme">
+        <button type="button" class="m3-icon-action-btn" id="railThemeToggle" title="Toggle Theme (Dark / Light)" aria-label="Toggle Theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
@@ -117,19 +118,12 @@
       </div>
     </aside>
 
-    <!-- ── Main Workspace Body ────────────────────────────────────────────── -->
+    <!-- ── Main Workspace ────────────────────────────────────────────────── -->
     <div class="m3-main-container">
 
       <!-- ChromeOS Modern Top App Bar -->
       <header class="m3-top-app-bar">
         <div class="m3-app-bar-left">
-          <button type="button" class="m3-menu-icon-btn" id="mobileMenuBtn" aria-label="Navigation Menu">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
           <span class="m3-app-bar-title" id="pageHeadingTitle">Overview</span>
         </div>
 
@@ -140,7 +134,7 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="globalSearchInput" class="m3-search-input" placeholder="Search transactions, tags, merchants…" autocomplete="off">
+            <input type="text" id="globalSearchInput" class="m3-search-input" placeholder="Search transactions, merchants, tags…" autocomplete="off">
             <span class="m3-search-shortcut" title="Keyboard Shortcut">/</span>
           </div>
         </div>
@@ -161,11 +155,11 @@
         </div>
       </header>
 
-      <!-- Scrollable Main Content -->
+      <!-- Scrollable Main Content Pane -->
       <main class="m3-content-scroll" id="m3ContentScroll">
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB 1: OVERVIEW                                                 -->
+        <!-- TAB 1: OVERVIEW (FLAGSHIP DASHBOARD)                            -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <section id="tabOverview" class="m3-tab-pane active" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner">
@@ -193,30 +187,48 @@
               </div>
             </div>
 
-            <!-- Responsive Dashboard Grid -->
+            <!-- Material 3 Expressive 2-Column Responsive Dashboard -->
             <div class="m3-dashboard-grid">
 
-              <!-- Left Column: Hero Pulse Card & Quick Velocity -->
+              <!-- Left Column: Hero Radial Ring Gauge & Trajectory Sparkline -->
               <div class="m3-grid-col-left">
 
-                <!-- Hero Pulse Card -->
-                <article class="m3-card m3-hero-card" aria-label="Spending Pulse">
+                <!-- 🌟 HERO RADIAL GAUGE CARD 🌟 -->
+                <article class="m3-card m3-hero-radial-card" aria-label="Budget Progress Ring">
                   <div class="m3-card-header">
-                    <div class="m3-badge-pill" id="pulseEyebrowBadge">Monthly Envelope</div>
+                    <span class="m3-badge-pill" id="pulseEyebrowBadge">MONTHLY ENVELOPE</span>
                     <span class="m3-status-indicator-pill" id="pulseStatusPill">On Track</span>
                   </div>
 
-                  <div class="m3-hero-figure-wrap">
-                    <div class="m3-hero-amount" id="pulseAmountDisplay">₹0.00</div>
-                    <div class="m3-hero-sub" id="pulseSubDisplay">of ₹25,000 monthly allowance</div>
+                  <!-- Central SVG Radial Ring Gauge -->
+                  <div class="m3-radial-gauge-wrapper">
+                    <svg class="m3-radial-svg" viewBox="0 0 200 200">
+                      <defs>
+                        <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="var(--md-primary)" />
+                          <stop offset="100%" stop-color="var(--md-tertiary)" />
+                        </linearGradient>
+                        <linearGradient id="gaugeGradientWarn" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="var(--md-error)" />
+                          <stop offset="100%" stop-color="#ffb4ab" />
+                        </linearGradient>
+                      </defs>
+                      <!-- Background Track -->
+                      <circle class="m3-radial-track" cx="100" cy="100" r="82" />
+                      <!-- Active Animated Stroke -->
+                      <circle class="m3-radial-fill" id="radialGaugeCircle" cx="100" cy="100" r="82" />
+                    </svg>
+
+                    <!-- Core Ring Numerical Data Overlay -->
+                    <div class="m3-radial-center-content">
+                      <span class="m3-radial-label">TOTAL SPENT</span>
+                      <div class="m3-hero-amount" id="pulseAmountDisplay">₹0.00</div>
+                      <span class="m3-hero-sub" id="pulseSubDisplay">of ₹25,000 allowance</span>
+                      <div class="m3-radial-pct-pill" id="pulsePctPill">0%</div>
+                    </div>
                   </div>
 
-                  <!-- Multi-layer Material Progress Bar -->
-                  <div class="m3-progress-track m3-hero-track">
-                    <div class="m3-progress-indicator" id="pulseProgressFill"></div>
-                  </div>
-
-                  <!-- 3 Tonal Stat Pods -->
+                  <!-- 3 Expressive Tonal Stat Pods -->
                   <div class="m3-stat-pods-row">
                     <div class="m3-stat-pod">
                       <span class="m3-pod-label">Remaining</span>
@@ -229,38 +241,78 @@
                     </div>
                     <div class="m3-stat-pod-divider"></div>
                     <div class="m3-stat-pod">
-                      <span class="m3-pod-label">Month-End Est.</span>
+                      <span class="m3-pod-label">Est. Total</span>
                       <span class="m3-pod-value" id="pulseMonthEndDisplay">₹0</span>
                     </div>
                   </div>
                 </article>
 
-                <!-- Quick Category Filter Chips Carousel -->
+                <!-- 📈 INTERACTIVE SPENDING TRAJECTORY SPARKLINE CARD 📈 -->
+                <article class="m3-card m3-trajectory-card" aria-label="Spend Trajectory &amp; Velocity Sparkline">
+                  <div class="m3-card-header">
+                    <div>
+                      <span class="m3-badge-pill">VELOCITY TRAJECTORY</span>
+                      <h3 class="m3-card-heading">Cumulative Spend vs. Pace</h3>
+                    </div>
+                    <span class="m3-trajectory-delta" id="trajectoryDeltaPill">Sustainable</span>
+                  </div>
+
+                  <!-- SVG Dynamic Sparkline Area Graph -->
+                  <div class="m3-sparkline-container" id="sparklineContainer">
+                    <svg class="m3-sparkline-svg" id="trajectorySparklineSvg" viewBox="0 0 380 120" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="var(--md-primary)" stop-opacity="0.35" />
+                          <stop offset="100%" stop-color="var(--md-primary)" stop-opacity="0.0" />
+                        </linearGradient>
+                      </defs>
+                      <!-- Reference Ideal Budget Pace Line -->
+                      <line class="m3-sparkline-target-line" id="sparklineTargetLine" x1="0" y1="110" x2="380" y2="10" />
+                      <!-- Shaded Fill Area -->
+                      <path class="m3-sparkline-area" id="sparklineAreaPath" d="" />
+                      <!-- Actual Cumulative Spend Spline -->
+                      <path class="m3-sparkline-line" id="sparklineLinePath" d="" />
+                      <!-- Active Day Dot -->
+                      <circle class="m3-sparkline-dot" id="sparklineCurrentDot" cx="0" cy="0" r="4.5" />
+                    </svg>
+
+                    <!-- Interactive Tooltip Overlay -->
+                    <div class="m3-sparkline-tooltip" id="sparklineTooltip"></div>
+                  </div>
+
+                  <div class="m3-trajectory-footer">
+                    <span id="trajectoryStartLbl">Day 1</span>
+                    <span id="trajectoryMidLbl">Mid Cycle</span>
+                    <span id="trajectoryEndLbl">Day 30</span>
+                  </div>
+                </article>
+
+                <!-- Category Filter Chips Carousel -->
                 <div class="m3-chips-carousel-wrap">
                   <div class="m3-chips-carousel" id="categoryFilterChips" role="tablist">
                     <button type="button" class="m3-filter-chip active" data-cat="all">
                       <span>✨ All Activity</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="food">
-                      <span>🍽️ Food &amp; Dining</span>
+                      <span>🍽️ Food</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="transport">
                       <span>🚗 Transport</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="bills">
-                      <span>⚡ Bills &amp; Utilities</span>
+                      <span>⚡ Bills</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="shopping">
                       <span>🛍️ Shopping</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="healthcare">
-                      <span>🏥 Healthcare</span>
+                      <span>🏥 Health</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="entertainment">
                       <span>🎬 Entertainment</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="invest">
-                      <span>💰 Investments</span>
+                      <span>💰 Invest</span>
                     </button>
                     <button type="button" class="m3-filter-chip" data-cat="other">
                       <span>🌐 Other</span>
@@ -287,7 +339,7 @@
                   </button>
                 </div>
 
-                <!-- Transaction List Container -->
+                <!-- Transaction List Container with Slide-to-Delete Handlers -->
                 <div class="m3-tx-feed" id="transactionList">
                   <!-- Rendered dynamically by app.js with slide-to-delete support -->
                 </div>
@@ -300,7 +352,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB 2: BUDGETS & CATEGORY ENVELOPES                             -->
+        <!-- TAB 2: BUDGETS (CATEGORY ENVELOPES)                             -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <section id="tabCategories" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner">
@@ -333,7 +385,7 @@
               </div>
             </div>
 
-            <!-- Envelope Cards Grid (Filled Material 3 Cards) -->
+            <!-- Envelope Cards Grid -->
             <div class="m3-envelopes-grid" id="envelopesGrid">
               <!-- Rendered dynamically by app.js -->
             </div>
@@ -342,14 +394,14 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB 3: TRENDS & VELOCITY                                        -->
+        <!-- TAB 3: TRENDS (INSIGHTS & RECURRING BILLS)                      -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <section id="tabInsights" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner">
 
             <div class="m3-trends-grid">
 
-              <!-- Left Column: Spending Velocity & Forecast -->
+              <!-- Left Column: Spending Velocity & Distribution -->
               <div class="m3-trends-col">
                 <article class="m3-card m3-velocity-card">
                   <div class="m3-card-header">
@@ -427,7 +479,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB 4: SETTINGS & DATA MANAGEMENT                              -->
+        <!-- TAB 4: SETTINGS & UNIVERSAL DATA ENGINE                         -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <section id="tabSettings" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner" style="max-width: 860px;">
@@ -565,7 +617,7 @@
 
       </main>
 
-      <!-- ── Mobile / Tablet Bottom Navigation Bar (Material 3) ──────────── -->
+      <!-- ── Mobile / Tablet Bottom Navigation Bar ──────────────────────── -->
       <nav class="m3-bottom-nav" id="m3BottomNav" aria-label="Mobile Navigation">
         <button type="button" class="m3-bnav-item active" data-tab="overview">
           <div class="m3-bnav-pill">
@@ -619,7 +671,7 @@
   </div><!-- /m3-app-shell -->
 
 
-  <!-- ── Material 3 Dynamic Modal Dialog / Bottom Sheet ──────────────────── -->
+  <!-- ── Expressive Modal Bottom Sheet ──────────────────────────────────── -->
   <div class="m3-scrim-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="m3-bottom-sheet">
       <div class="m3-drag-handle"></div>
@@ -645,15 +697,15 @@
         <div class="m3-fields-card">
           <div class="m3-field-row">
             <label class="m3-field-label">Description</label>
-            <input type="text" id="expenseTitleInput" class="m3-field-input" placeholder="e.g. Filter Coffee, Metro Pass" required autocomplete="off">
+            <input type="text" id="expenseTitleInput" class="m3-field-input" placeholder="e.g. Specialty Espresso, Groceries" required autocomplete="off">
           </div>
 
-          <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+          <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
             <label class="m3-field-label">Notes</label>
-            <input type="text" id="expenseNotesInput" class="m3-field-input" placeholder="Optional context or merchant" autocomplete="off">
+            <input type="text" id="expenseNotesInput" class="m3-field-input" placeholder="Optional context or tags" autocomplete="off">
           </div>
 
-          <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+          <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
             <label class="m3-field-label">Date</label>
             <input type="date" id="expenseDateInput" class="m3-field-input m3-date-input" required>
           </div>
@@ -677,7 +729,7 @@
   </div>
 
 
-  <!-- ── Material 3 Category Budget Edit Modal ────────────────────────────── -->
+  <!-- ── Category Budget Edit Modal ─────────────────────────────────────── -->
   <div class="m3-scrim-backdrop" id="budgetModalBackdrop" role="dialog" aria-modal="true">
     <div class="m3-dialog-card">
       <div class="m3-sheet-header">
@@ -704,7 +756,7 @@
   </div>
 
 
-  <!-- ── Material 3 Add Recurring Commitment Modal ────────────────────────── -->
+  <!-- ── Add Recurring Commitment Modal ─────────────────────────────────── -->
   <div class="m3-scrim-backdrop" id="billModalBackdrop" role="dialog" aria-modal="true">
     <div class="m3-dialog-card">
       <div class="m3-sheet-header">
@@ -722,11 +774,11 @@
           <label class="m3-field-label">Bill Name</label>
           <input type="text" id="billTitleInput" class="m3-field-input" placeholder="e.g. YouTube Premium, Fiber Net" required>
         </div>
-        <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
           <label class="m3-field-label">Amount (₹)</label>
           <input type="number" id="billAmountInput" class="m3-field-input" min="0" placeholder="299" required>
         </div>
-        <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-outline-variant);">
           <label class="m3-field-label">Due Day</label>
           <input type="number" id="billDayInput" class="m3-field-input" min="1" max="31" value="1" required>
         </div>

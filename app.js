@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// WELL SPENT — ChromeOS / Material 3 PWA Application Logic
+// WELL SPENT — Material 3 Expressive PWA Orchestrator
+// Features: Dynamic SVG Radial Gauge, Interactive Trajectory Sparkline, M3 Motion
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STORAGE_KEY          = 'well_spent_expenses_v1';
@@ -24,7 +25,7 @@ const CATEGORIES = {
   other:         { name: 'Other',              icon: '🌐', color: '#78909c' },
 };
 
-// ── State Variables ───────────────────────────────────────────────────────
+// ── State Store ───────────────────────────────────────────────────────────
 let expenses         = loadJSON(STORAGE_KEY, []);
 let monthlyBudget    = Number(localStorage.getItem(BUDGET_KEY))          || 25000;
 let cycleStartDay    = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
@@ -41,10 +42,10 @@ let searchQuery          = '';
 let selectedCategoryModal = 'food';
 let editingCategoryKey   = null;
 
-// Seed initial sample data if completely empty
+// Seed initial sample data if empty
 if (expenses.length === 0) seedSampleData();
 
-// ── Helper Utilities ──────────────────────────────────────────────────────
+// ── Core Helpers ──────────────────────────────────────────────────────────
 function loadJSON(key, fallback) {
   try {
     const val = JSON.parse(localStorage.getItem(key));
@@ -102,7 +103,7 @@ function seedSampleData() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
   expenses = [
-    { id: Date.now() - 4000, title: 'Specialty Cold Brew & Bagel', amount: 380, category: 'food', date: new Date(y, m, d, 9, 30).toISOString(), notes: 'Morning brew' },
+    { id: Date.now() - 4000, title: 'Specialty Cold Brew & Bagel', amount: 380, category: 'food', date: new Date(y, m, d, 9, 30).toISOString(), notes: 'Morning coffee' },
     { id: Date.now() - 3000, title: 'Organic Supermarket Basket', amount: 1450, category: 'food', date: new Date(y, m, d, 14, 15).toISOString(), notes: 'Groceries' },
     { id: Date.now() - 2000, title: 'Metro Transit SmartCard', amount: 500, category: 'transport', date: new Date(y, m, d - 1, 18, 0).toISOString(), notes: 'Monthly pass' },
     { id: Date.now() - 1000, title: 'High-speed Fiber Net', amount: 1199, category: 'bills', date: new Date(y, m, d - 3, 11, 0).toISOString(), notes: 'Broadband' }
@@ -110,7 +111,7 @@ function seedSampleData() {
   saveExpenses();
 }
 
-// ── Financial Metrics Calculation Engine ──────────────────────────────────
+// ── Metrics Calculation & Trajectory Generation ───────────────────────────
 function calculateMetrics() {
   const now = new Date();
   const y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
@@ -142,7 +143,7 @@ function calculateMetrics() {
   });
   const todayTotal = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // Days & Forecasting
+  // Cycle pacing & forecasting
   const totalDays = Math.max(1, Math.round((cycleEnd - cycleStart) / 86400000));
   const daysElapsed = Math.max(1, Math.min(totalDays, Math.ceil((now - cycleStart) / 86400000)));
   const daysRemaining = Math.max(0, totalDays - daysElapsed);
@@ -151,6 +152,34 @@ function calculateMetrics() {
   const dailyBurn = monthTotal / daysElapsed;
   const projectedMonthEnd = monthTotal + (dailyBurn * daysRemaining);
   const remainingToday = Math.max(0, dailyBudget - todayTotal);
+
+  // Cumulative Trajectory Data per Day for the Sparkline
+  const trajectoryDays = [];
+  let runningCumulative = 0;
+
+  for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
+    const dayDate = new Date(startYear, startMonth, cycleStartDay + (dayIndex - 1), 0, 0, 0, 0);
+    const dayEndDate = new Date(startYear, startMonth, cycleStartDay + (dayIndex - 1), 23, 59, 59, 999);
+
+    const isPastOrToday = dayIndex <= daysElapsed;
+    if (isPastOrToday) {
+      const daySpend = expenses
+        .filter(e => {
+          const ed = new Date(e.date);
+          return ed >= dayDate && ed <= dayEndDate;
+        })
+        .reduce((sum, e) => sum + e.amount, 0);
+
+      runningCumulative += daySpend;
+    }
+
+    trajectoryDays.push({
+      dayIndex,
+      dateStr: dayDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      cumulativeSpend: isPastOrToday ? runningCumulative : null,
+      idealPace: dailyBudget * dayIndex
+    });
+  }
 
   return {
     monthTotal,
@@ -164,11 +193,12 @@ function calculateMetrics() {
     totalDays,
     monthExpenses,
     todayExpenses,
-    cycleStartDay
+    cycleStartDay,
+    trajectoryDays
   };
 }
 
-// ── Main UI Render Pipeline ───────────────────────────────────────────────
+// ── Master Render Pipeline ────────────────────────────────────────────────
 function render() {
   applyThemeAndPalette();
   syncNav();
@@ -193,7 +223,7 @@ function applyThemeAndPalette() {
 
   const metaTheme = document.getElementById('metaThemeColor');
   if (metaTheme) {
-    metaTheme.setAttribute('content', theme === 'dark' ? '#111318' : '#f8f9fa');
+    metaTheme.setAttribute('content', theme === 'dark' ? '#0d0f14' : '#f8f9fa');
   }
 
   const themeSelect = document.getElementById('themeSelect');
@@ -205,17 +235,14 @@ function applyThemeAndPalette() {
 }
 
 function syncNav() {
-  // Navigation Rail Links
   document.querySelectorAll('.m3-rail-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === currentTab);
   });
 
-  // Mobile Bottom Nav Items
   document.querySelectorAll('.m3-bnav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === currentTab);
   });
 
-  // Tab Panes
   document.querySelectorAll('.m3-tab-pane').forEach(pane => {
     pane.classList.remove('active');
   });
@@ -230,7 +257,6 @@ function syncNav() {
   const activePane = document.getElementById(tabMap[currentTab] || 'tabOverview');
   if (activePane) activePane.classList.add('active');
 
-  // Update Page Title
   const titles = {
     overview: 'Overview',
     categories: 'Budgets',
@@ -241,7 +267,6 @@ function syncNav() {
   if (titleEl) titleEl.textContent = titles[currentTab] || 'Overview';
 }
 
-// ── Render Top App Bar & Rail ─────────────────────────────────────────────
 function renderTopBar(metrics) {
   const cycleText = document.getElementById('topBarCycleText');
   if (cycleText) cycleText.textContent = `Cycle Day ${metrics.daysElapsed} of ${metrics.totalDays}`;
@@ -265,7 +290,7 @@ function renderRail(metrics) {
   if (leftMeta) leftMeta.textContent = `${inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))} left`;
 }
 
-// ── Tab 1: Overview Render ────────────────────────────────────────────────
+// ── Tab 1: Overview & Radial Gauge & Trajectory Sparkline ──────────────────
 function renderOverview(metrics) {
   const isDaywise = currentViewMode === 'daywise';
 
@@ -285,7 +310,22 @@ function renderOverview(metrics) {
   const isOver = budget > 0 && total > budget;
   const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0;
 
-  // Hero Card Elements
+  // 🌟 1. UPDATE RADIAL GAUGE RING 🌟
+  const circumference = 515.22; // 2 * PI * 82
+  const offset = circumference * (1 - pct / 100);
+  const radialCircle = document.getElementById('radialGaugeCircle');
+  if (radialCircle) {
+    radialCircle.style.strokeDasharray = `${circumference}`;
+    radialCircle.style.strokeDashoffset = `${offset}`;
+    radialCircle.classList.toggle('warning', isOver);
+  }
+
+  const pctPill = document.getElementById('pulsePctPill');
+  if (pctPill) {
+    pctPill.textContent = `${pct}% Used`;
+    pctPill.classList.toggle('warning', isOver);
+  }
+
   const eyebrowBadge = document.getElementById('pulseEyebrowBadge');
   if (eyebrowBadge) eyebrowBadge.textContent = isDaywise ? "TODAY'S SPENDING" : "MONTHLY ENVELOPE";
 
@@ -303,12 +343,6 @@ function renderOverview(metrics) {
     statusPill.classList.toggle('warning', isOver);
   }
 
-  const progressFill = document.getElementById('pulseProgressFill');
-  if (progressFill) {
-    progressFill.style.width = `${pct}%`;
-    progressFill.classList.toggle('warning', isOver);
-  }
-
   const remainingDisplay = document.getElementById('pulseRemainingDisplay');
   if (remainingDisplay) remainingDisplay.textContent = inrCompact(remaining);
 
@@ -318,11 +352,10 @@ function renderOverview(metrics) {
   const monthEndDisplay = document.getElementById('pulseMonthEndDisplay');
   if (monthEndDisplay) monthEndDisplay.textContent = inrCompact(metrics.projectedMonthEnd);
 
-  // Section Heading
-  const feedHeading = document.getElementById('activityFeedHeading');
-  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
+  // 📈 2. RENDER INTERACTIVE SPENDING TRAJECTORY SPARKLINE 📈
+  renderTrajectorySparkline(metrics);
 
-  // Filtered Activity List
+  // Activity Feed
   let list = isDaywise ? metrics.todayExpenses : metrics.monthExpenses;
 
   if (activeCategoryFilter !== 'all') {
@@ -338,6 +371,9 @@ function renderOverview(metrics) {
     );
   }
 
+  const feedHeading = document.getElementById('activityFeedHeading');
+  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
+
   const feedSubheading = document.getElementById('activityFeedSubheading');
   if (feedSubheading) {
     feedSubheading.textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
@@ -346,7 +382,112 @@ function renderOverview(metrics) {
   renderTransactionList(list);
 }
 
-// ── Transaction Feed with Material 3 Slide-to-Delete ─────────────────────
+// ── Interactive SVG Sparkline Engine ──────────────────────────────────────
+function renderTrajectorySparkline(metrics) {
+  const width = 380;
+  const height = 120;
+  const paddingX = 14;
+  const paddingTop = 14;
+  const paddingBottom = 16;
+  const plotWidth = width - (paddingX * 2);
+  const plotHeight = height - paddingTop - paddingBottom;
+
+  const totalDays = metrics.totalDays || 30;
+  const maxVal = Math.max(monthlyBudget * 1.15, metrics.monthTotal * 1.1, 1000);
+
+  // Target Budget Line (Ideal linear pace)
+  const targetLine = document.getElementById('sparklineTargetLine');
+  if (targetLine) {
+    const startY = height - paddingBottom;
+    const endY = paddingTop + (1 - (monthlyBudget / maxVal)) * plotHeight;
+    targetLine.setAttribute('x1', `${paddingX}`);
+    targetLine.setAttribute('y1', `${startY}`);
+    targetLine.setAttribute('x2', `${width - paddingX}`);
+    targetLine.setAttribute('y2', `${endY}`);
+  }
+
+  // Actual Spend Spline Path
+  const validPoints = metrics.trajectoryDays.filter(d => d.cumulativeSpend !== null);
+  if (validPoints.length === 0) return;
+
+  const getCoordinates = (pt) => {
+    const x = paddingX + ((pt.dayIndex - 1) / (totalDays - 1)) * plotWidth;
+    const y = paddingTop + (1 - (pt.cumulativeSpend / maxVal)) * plotHeight;
+    return { x, y };
+  };
+
+  const coords = validPoints.map(getCoordinates);
+
+  // Build SVG Path Spline
+  let pathD = `M ${coords[0].x} ${coords[0].y}`;
+  for (let i = 1; i < coords.length; i++) {
+    const prev = coords[i - 1];
+    const curr = coords[i];
+    const cpX1 = prev.x + (curr.x - prev.x) / 2;
+    const cpY1 = prev.y;
+    const cpX2 = prev.x + (curr.x - prev.x) / 2;
+    const cpY2 = curr.y;
+    pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
+  }
+
+  const linePath = document.getElementById('sparklineLinePath');
+  if (linePath) linePath.setAttribute('d', pathD);
+
+  // Shaded Area Path
+  const lastCoord = coords[coords.length - 1];
+  const areaD = `${pathD} L ${lastCoord.x} ${height - paddingBottom} L ${coords[0].x} ${height - paddingBottom} Z`;
+  const areaPath = document.getElementById('sparklineAreaPath');
+  if (areaPath) areaPath.setAttribute('d', areaD);
+
+  // Active Dot on Latest Day
+  const dot = document.getElementById('sparklineCurrentDot');
+  if (dot) {
+    dot.setAttribute('cx', `${lastCoord.x}`);
+    dot.setAttribute('cy', `${lastCoord.y}`);
+  }
+
+  // Trajectory Status Pill
+  const deltaPill = document.getElementById('trajectoryDeltaPill');
+  if (deltaPill) {
+    const isPaceOver = metrics.projectedMonthEnd > monthlyBudget && monthlyBudget > 0;
+    deltaPill.textContent = isPaceOver ? `+${inrCompact(metrics.projectedMonthEnd - monthlyBudget)} over pace` : 'Sustainable pace';
+    deltaPill.classList.toggle('warning', isPaceOver);
+  }
+
+  // Interactive Hover Tooltip on Container
+  const container = document.getElementById('sparklineContainer');
+  const tooltip = document.getElementById('sparklineTooltip');
+
+  if (container && tooltip) {
+    container.onmousemove = (e) => {
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const pctX = Math.max(0, Math.min(1, (mouseX - paddingX) / plotWidth));
+      const targetIndex = Math.min(validPoints.length - 1, Math.floor(pctX * validPoints.length));
+      const pt = validPoints[targetIndex];
+
+      if (pt) {
+        const ptCoord = getCoordinates(pt);
+        if (dot) {
+          dot.setAttribute('cx', `${ptCoord.x}`);
+          dot.setAttribute('cy', `${ptCoord.y}`);
+        }
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `<strong>Day ${pt.dayIndex} (${pt.dateStr}):</strong> ${inr(pt.cumulativeSpend)}`;
+      }
+    };
+
+    container.onmouseleave = () => {
+      if (dot) {
+        dot.setAttribute('cx', `${lastCoord.x}`);
+        dot.setAttribute('cy', `${lastCoord.y}`);
+      }
+      tooltip.style.display = 'none';
+    };
+  }
+}
+
+// ── Transaction Feed & Material Slide-to-Delete ───────────────────────────
 function renderTransactionList(list) {
   const container = document.getElementById('transactionList');
   if (!container) return;
@@ -393,7 +534,7 @@ function renderTransactionList(list) {
 function attachSwipeListeners() {
   document.querySelectorAll('.m3-tx-card').forEach(card => {
     let startX = 0, currentX = 0, isSwiping = false, isSwipedOpen = false;
-    const buttonWidth = 80;
+    const buttonWidth = 84;
     const fullSwipeThreshold = -150;
 
     card.addEventListener('touchstart', (e) => {
@@ -445,7 +586,6 @@ function attachSwipeListeners() {
     });
   });
 
-  // Action button tap handler
   document.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -461,7 +601,7 @@ function deleteTransaction(id) {
   render();
 }
 
-// ── Tab 2: Budgets & Category Envelopes ────────────────────────────────────
+// ── Tab 2: Budgets (Category Envelopes) ────────────────────────────────────
 function renderBudgets(metrics) {
   const allocationTotal = document.getElementById('allocationTotalDisplay');
   if (allocationTotal) allocationTotal.textContent = inr(monthlyBudget);
@@ -485,7 +625,6 @@ function renderBudgets(metrics) {
   const remainingText = document.getElementById('allocationRemainingText');
   if (remainingText) remainingText.textContent = `${inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))} remaining`;
 
-  // Envelope Grid
   const grid = document.getElementById('envelopesGrid');
   if (!grid) return;
 
@@ -538,7 +677,7 @@ function openBudgetEditModal(catKey) {
   openModal('budgetModalBackdrop');
 }
 
-// ── Tab 3: Trends & Velocity Render ───────────────────────────────────────
+// ── Tab 3: Trends & Recurring Bills ───────────────────────────────────────
 function renderTrends(metrics) {
   const burnVal = document.getElementById('velBurnVal');
   if (burnVal) burnVal.textContent = inrCompact(metrics.dailyBurn);
@@ -565,7 +704,6 @@ function renderTrends(metrics) {
     }
   }
 
-  // Distribution List
   const distList = document.getElementById('categoryDistributionList');
   if (distList) {
     const totalSpent = metrics.monthTotal || 1;
@@ -590,7 +728,6 @@ function renderTrends(metrics) {
     }).join('');
   }
 
-  // Recurring Bills
   const today = new Date().getDate();
   const upcomingTotal = recurringBills
     .filter(b => !b.isPaid)
@@ -736,7 +873,6 @@ function handleSaveExpense(e) {
 
 // ── Event Handlers Setup ──────────────────────────────────────────────────
 function setupEvents() {
-  // Navigation (Rail & Bottom Nav)
   document.querySelectorAll('.m3-rail-btn, .m3-bnav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic();
@@ -746,7 +882,6 @@ function setupEvents() {
     });
   });
 
-  // Period Switcher
   document.querySelectorAll('#viewModeSwitcher .m3-segment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic();
@@ -756,7 +891,6 @@ function setupEvents() {
     });
   });
 
-  // Filter Chips Carousel
   document.querySelectorAll('.m3-filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       triggerHaptic();
@@ -767,7 +901,6 @@ function setupEvents() {
     });
   });
 
-  // Global Search Input
   const searchInput = document.getElementById('globalSearchInput');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -777,7 +910,6 @@ function setupEvents() {
     });
   }
 
-  // Add Transaction Triggers (Rail FAB, Top Bar, Center FAB, Inline)
   const addButtons = [
     document.getElementById('railAddBtn'),
     document.getElementById('topAddBtn'),
@@ -794,7 +926,6 @@ function setupEvents() {
     }
   });
 
-  // Modal Cancel & Submit
   const modalCancelBtn = document.getElementById('modalCancelBtn');
   const modalDismissBtn = document.getElementById('modalDismissBtn');
   [modalCancelBtn, modalDismissBtn].forEach(b => {
@@ -804,7 +935,6 @@ function setupEvents() {
   const addForm = document.getElementById('addExpenseForm');
   if (addForm) addForm.addEventListener('submit', handleSaveExpense);
 
-  // Budget Modal Save & Close
   const budgetCancelBtn = document.getElementById('budgetCancelBtn');
   const budgetCloseBtn = document.getElementById('budgetCloseBtn');
   [budgetCancelBtn, budgetCloseBtn].forEach(b => {
@@ -826,7 +956,6 @@ function setupEvents() {
     });
   }
 
-  // Recurring Bill Modal Save & Close
   const openAddBillModalBtn = document.getElementById('openAddBillModalBtn');
   if (openAddBillModalBtn) {
     openAddBillModalBtn.addEventListener('click', () => {
@@ -858,14 +987,12 @@ function setupEvents() {
     });
   }
 
-  // Scrim Dismiss Handlers
   document.querySelectorAll('.m3-scrim-backdrop').forEach(scrim => {
     scrim.addEventListener('click', (e) => {
       if (e.target === scrim) closeModal(scrim.id);
     });
   });
 
-  // Theme & Palette Selectors
   const themeSelect = document.getElementById('themeSelect');
   if (themeSelect) {
     themeSelect.addEventListener('change', (e) => {
@@ -894,7 +1021,6 @@ function setupEvents() {
     });
   });
 
-  // Settings Save
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   if (saveSettingsBtn) {
     saveSettingsBtn.addEventListener('click', () => {
@@ -912,7 +1038,6 @@ function setupEvents() {
     });
   }
 
-  // Data Actions (CSV & Vault)
   document.getElementById('exportCsvBtn')?.addEventListener('click', exportCSV);
   const csvInput = document.getElementById('importCsvInput');
   document.getElementById('importCsvBtn')?.addEventListener('click', () => csvInput?.click());
@@ -931,7 +1056,6 @@ function setupEvents() {
     }
   });
 
-  // Universal Keyboard Shortcuts (Mac / Windows / ChromeOS / Linux)
   document.addEventListener('keydown', (e) => {
     if (e.key === '/' && document.activeElement !== searchInput) {
       e.preventDefault();
@@ -957,10 +1081,8 @@ function resolveCategoryKey(raw) {
   if (!raw) return 'other';
   const s = raw.toLowerCase().trim();
 
-  // Direct Key Match
   if (CATEGORIES[s]) return s;
 
-  // macOS / Windows / Flutter RawValue Mapping
   const exactMap = {
     utilities: 'bills',
     health: 'healthcare',
@@ -969,7 +1091,6 @@ function resolveCategoryKey(raw) {
   };
   if (exactMap[s]) return exactMap[s];
 
-  // Regex Keyword Matching
   if (/food|dining|restaurant|cafe|grocery|groceries|coffee|lunch|dinner|snack/.test(s)) return 'food';
   if (/transport|transit|travel|fuel|pertol|petrol|diesel|cab|uber|metro|commute/.test(s)) return 'transport';
   if (/utilit|bill|electric|power|wifi|water|gas|internet|broadband/.test(s)) return 'bills';
@@ -1042,13 +1163,11 @@ function importCSV(e) {
       const cols = lines[i];
       if (!cols || cols.length < 2) continue;
 
-      // Amount
       const amtIdx = iAmount >= 0 ? iAmount : cols.findIndex(c => /^[\d.,]+$/.test(c.replace(/[₹$€£,\s]/g, '')));
       if (amtIdx < 0) { skipped++; continue; }
       const amount = parseFloat((cols[amtIdx] || '').replace(/[₹$€£,\s]/g, ''));
       if (isNaN(amount) || amount <= 0) { skipped++; continue; }
 
-      // Title
       let title = 'Imported Transaction';
       if (iTitle >= 0 && cols[iTitle] && cols[iTitle].trim()) {
         title = cols[iTitle].trim();
@@ -1062,11 +1181,9 @@ function importCSV(e) {
       }
       if (!title) { skipped++; continue; }
 
-      // Category
       const catRaw = iCategory >= 0 ? (cols[iCategory] || '') : '';
       const category = resolveCategoryKey(catRaw);
 
-      // Date
       let date = new Date().toISOString();
       if (iDate >= 0 && cols[iDate] && cols[iDate].trim()) {
         const parsed = parseDateFlexible(cols[iDate].trim());
@@ -1146,7 +1263,7 @@ function parseDateFlexible(raw) {
 // ── Encrypted Vault Operations ────────────────────────────────────────────
 function exportVaultBackup() {
   const data = {
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     expenses,
     monthlyBudget,
@@ -1212,7 +1329,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── App Initialization ────────────────────────────────────────────────────
+// ── Initialize App ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   render();
