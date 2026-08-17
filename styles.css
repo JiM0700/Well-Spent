@@ -598,13 +598,16 @@ html, body {
 .m3-content-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px 28px;
   scroll-behavior: smooth;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 859px) {
   .m3-content-scroll {
-    padding: 16px 14px calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 16px);
+    padding: 16px 16px calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 16px);
   }
 }
 
@@ -620,6 +623,8 @@ html, body {
 /* ── Tab Panes ──────────────────────────────────────────────────────────── */
 .m3-tab-pane {
   display: none;
+  width: 100%;
+  box-sizing: border-box;
   animation: m3-fade-scale 0.28s var(--ease-emphasized-decel);
 }
 
@@ -639,9 +644,10 @@ html, body {
 }
 
 .m3-pane-inner {
-  max-width: 1180px;
+  max-width: 1140px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Modern In-Card Period Icon Toggle ─────────────────────────────────── */
@@ -728,13 +734,22 @@ html, body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 960px) {
   .m3-dashboard-grid {
-    grid-template-columns: 470px 1fr;
+    grid-template-columns: 430px minmax(0, 1fr);
     align-items: start;
   }
+}
+
+.m3-grid-col-left,
+.m3-grid-col-right {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .m3-card {
@@ -1037,7 +1052,10 @@ html, body {
 /* ── Filter Chips Carousel ──────────────────────────────────────────────── */
 .m3-chips-carousel-wrap {
   margin: 2px 0 14px;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .m3-chips-carousel {
@@ -1045,6 +1063,9 @@ html, body {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   scrollbar-width: none;
 }
 
@@ -1088,6 +1109,8 @@ html, body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .m3-section-headings {
@@ -1112,6 +1135,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Swipeable Row Container */
@@ -1119,6 +1144,8 @@ html, body {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-md);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .m3-tx-delete-reveal {
@@ -1163,6 +1190,8 @@ html, body {
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-md);
   box-shadow: var(--elevation-1);
+  width: 100%;
+  box-sizing: border-box;
   will-change: transform;
   transition: transform var(--duration-medium) var(--ease-emphasized-decel), background var(--duration-short) ease;
 }
