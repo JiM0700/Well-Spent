@@ -1531,6 +1531,27 @@ html, body {
   color: var(--md-on-primary-cont);
 }
 
+.m3-rec-delete-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-outline-variant);
+  background: #ffffff;
+  color: var(--md-on-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-rec-delete-btn:hover {
+  background: var(--md-error-container);
+  border-color: var(--md-error);
+  color: var(--md-error);
+  transform: scale(1.08);
+}
+
 /* ── Settings Tab ───────────────────────────────────────────────────────── */
 .m3-settings-stack {
   display: flex;

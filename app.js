@@ -744,44 +744,70 @@ function renderTrends(metrics) {
 
   const billsList = document.getElementById('recurringBillsList');
   if (billsList) {
-    billsList.innerHTML = recurringBills.map(bill => {
-      let daysLeft = bill.dueDay - today;
-      if (daysLeft < 0) {
-        const lastDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-        daysLeft = (lastDay - today) + bill.dueDay;
-      }
-      const dueLabel = daysLeft === 0 ? 'Due Today' : `Due in ${daysLeft}d`;
-
-      return `
-        <div class="m3-recurring-item ${bill.isPaid ? 'paid' : ''}">
-          <div class="m3-rec-info">
-            <div class="m3-rec-title-row">
-              <span class="m3-rec-title">${escapeHtml(bill.title)}</span>
-              <span class="m3-due-chip">${dueLabel}</span>
-            </div>
-            <span class="m3-rec-sub">Day ${bill.dueDay} of month</span>
-          </div>
-          <div class="m3-rec-right">
-            <span class="m3-rec-amount">${inr(bill.amount)}</span>
-            <button type="button" class="m3-rec-toggle-btn ${bill.isPaid ? 'paid' : ''}" data-bill="${bill.id}">
-              ${bill.isPaid ? '✓ Paid' : 'Mark Paid'}
-            </button>
-          </div>
+    if (recurringBills.length === 0) {
+      billsList.innerHTML = `
+        <div class="m3-empty-state" style="padding: 24px 16px;">
+          <div class="m3-empty-icon" style="font-size: 1.8rem;">📅</div>
+          <div class="m3-empty-title" style="font-size: 0.9rem;">No Recurring Bills</div>
+          <p class="m3-empty-desc" style="font-size: 0.76rem;">Add recurring subscriptions or bills to track upcoming cycle commitments.</p>
         </div>
       `;
-    }).join('');
+    } else {
+      billsList.innerHTML = recurringBills.map(bill => {
+        let daysLeft = bill.dueDay - today;
+        if (daysLeft < 0) {
+          const lastDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+          daysLeft = (lastDay - today) + bill.dueDay;
+        }
+        const dueLabel = daysLeft === 0 ? 'Due Today' : `Due in ${daysLeft}d`;
 
-    billsList.querySelectorAll('[data-bill]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        triggerHaptic();
-        const bill = recurringBills.find(b => String(b.id) === btn.dataset.bill);
-        if (bill) {
-          bill.isPaid = !bill.isPaid;
+        return `
+          <div class="m3-recurring-item ${bill.isPaid ? 'paid' : ''}">
+            <div class="m3-rec-info">
+              <div class="m3-rec-title-row">
+                <span class="m3-rec-title">${escapeHtml(bill.title)}</span>
+                <span class="m3-due-chip">${dueLabel}</span>
+              </div>
+              <span class="m3-rec-sub">Day ${bill.dueDay} of month</span>
+            </div>
+            <div class="m3-rec-right">
+              <span class="m3-rec-amount">${inr(bill.amount)}</span>
+              <button type="button" class="m3-rec-toggle-btn ${bill.isPaid ? 'paid' : ''}" data-bill="${bill.id}">
+                ${bill.isPaid ? '✓ Paid' : 'Mark Paid'}
+              </button>
+              <button type="button" class="m3-rec-delete-btn" data-del-bill="${bill.id}" aria-label="Delete bill" title="Delete bill">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      billsList.querySelectorAll('[data-bill]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          triggerHaptic();
+          const bill = recurringBills.find(b => String(b.id) === btn.dataset.bill);
+          if (bill) {
+            bill.isPaid = !bill.isPaid;
+            saveRecurringBills();
+            render();
+          }
+        });
+      });
+
+      billsList.querySelectorAll('[data-del-bill]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          triggerHaptic();
+          const id = btn.dataset.delBill;
+          recurringBills = recurringBills.filter(b => String(b.id) !== String(id));
           saveRecurringBills();
           render();
-        }
+        });
       });
-    });
+    }
   }
 }
 
