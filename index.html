@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body data-palette="blue">
 
@@ -57,10 +57,10 @@
 
         <!-- Navigation Rail Links (Icons Only with Floating Tooltips) -->
         <nav class="m3-rail-menu" aria-label="Navigation Links">
-          <button type="button" class="m3-rail-btn active" data-tab="overview" data-tooltip="Overview (⌘1)">
+          <button type="button" class="m3-rail-btn active" data-tab="overview" data-tooltip="Home (⌘1)">
             <div class="m3-pill-target">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
               </svg>
             </div>
           </button>
@@ -137,7 +137,7 @@
       <!-- Top App Bar with Global Search -->
       <header class="m3-top-app-bar">
         <div class="m3-app-bar-left">
-          <span class="m3-app-bar-title" id="pageHeadingTitle">Overview</span>
+          <span class="m3-app-bar-title" id="pageHeadingTitle">Home</span>
         </div>
 
         <!-- Google-Style Global Search Pill -->
@@ -165,7 +165,7 @@
       <main class="m3-content-scroll" id="m3ContentScroll">
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB 1: OVERVIEW (FLAGSHIP DASHBOARD)                            -->
+        <!-- TAB 1: HOME (FLAGSHIP OVERVIEW DASHBOARD)                       -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <section id="tabOverview" class="m3-tab-pane active" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner">
@@ -328,12 +328,12 @@
 
               </div><!-- /col-left -->
 
-              <!-- Right Column: Recent Activity Feed with Slide-to-Delete -->
+              <!-- Right Column: Activity Feed with Slide-to-Delete -->
               <div class="m3-grid-col-right">
 
                 <div class="m3-section-title-bar">
                   <div class="m3-section-headings">
-                    <h2 class="m3-section-title" id="activityFeedHeading">Transactions</h2>
+                    <h2 class="m3-section-title" id="activityFeedHeading">Monthly Transactions</h2>
                     <span class="m3-section-subtitle" id="activityFeedSubheading">0 entries</span>
                   </div>
                 </div>
@@ -380,7 +380,7 @@
             <div class="m3-section-title-bar" style="margin-top: 24px;">
               <div class="m3-section-headings">
                 <h2 class="m3-section-title">Category Envelopes</h2>
-                <span class="m3-section-subtitle">Click any category card to customize spending limit</span>
+                <span class="m3-section-subtitle">Tap any category envelope to adjust monthly targets</span>
               </div>
             </div>
 
@@ -404,7 +404,7 @@
               <div class="m3-trends-col">
                 <article class="m3-card m3-velocity-card">
                   <div class="m3-card-header">
-                    <span class="m3-badge-pill">SPENDING TRAJECTORY</span>
+                    <span class="m3-badge-pill">SPENDING VELOCITY &amp; PROJECTIONS</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                       <polyline points="17 6 23 6 23 12"></polyline>
@@ -453,7 +453,7 @@
                 <article class="m3-card m3-recurring-card">
                   <div class="m3-card-header">
                     <div>
-                      <span class="m3-badge-pill">FIXED COMMITMENTS</span>
+                      <span class="m3-badge-pill">FIXED COMMITMENTS &amp; SUBSCRIPTIONS</span>
                       <h3 class="m3-card-heading">Recurring Bills &amp; Subs</h3>
                     </div>
                     <button type="button" class="m3-tonal-pill-btn" id="openAddBillModalBtn">
@@ -488,7 +488,7 @@
               <!-- Material You Dynamic Accent Palette -->
               <article class="m3-card m3-setting-card">
                 <div class="m3-card-header">
-                  <span class="m3-badge-pill">ACCENT PALETTE</span>
+                  <span class="m3-badge-pill">ACCENT PALETTE &amp; THEME</span>
                 </div>
 
                 <div class="m3-setting-item">
@@ -609,10 +609,10 @@
         <button type="button" class="m3-bnav-item active" data-tab="overview">
           <div class="m3-bnav-pill">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
           </div>
-          <span>Overview</span>
+          <span>Home</span>
         </button>
 
         <button type="button" class="m3-bnav-item" data-tab="categories">
@@ -778,6 +778,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

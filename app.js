@@ -242,13 +242,13 @@ function syncNav() {
   if (activePane) activePane.classList.add('active');
 
   const titles = {
-    overview: 'Overview',
+    overview: 'Home',
     categories: 'Budgets',
     insights: 'Trends',
     settings: 'Settings'
   };
   const titleEl = document.getElementById('pageHeadingTitle');
-  if (titleEl) titleEl.textContent = titles[currentTab] || 'Overview';
+  if (titleEl) titleEl.textContent = titles[currentTab] || 'Home';
 }
 
 function renderTopBar(metrics) {
@@ -378,11 +378,11 @@ function renderOverview(metrics) {
   }
 
   const feedHeading = document.getElementById('activityFeedHeading');
-  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Transactions";
+  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
 
   const feedSubheading = document.getElementById('activityFeedSubheading');
   if (feedSubheading) {
-    feedSubheading.textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+    feedSubheading.textContent = `${list.length} ${isDaywise ? (list.length === 1 ? 'entry today' : 'entries today') : (list.length === 1 ? 'entry this cycle' : 'entries this cycle')}`;
   }
 
   renderTransactionList(list);
