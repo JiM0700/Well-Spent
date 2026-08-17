@@ -2588,4 +2588,147 @@ html, body {
   color: var(--md-on-primary-cont);
 }
 
+/* ── Multi-Period Dropdown Selector ───────────────────────────────────── */
+.m3-period-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.m3-period-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--md-surface-cont-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--radius-full);
+  padding: 5px 28px 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--md-on-surface);
+  cursor: pointer;
+  outline: none;
+  transition: all var(--duration-short) ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2344474f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.m3-period-select:hover,
+.m3-period-select:focus {
+  border-color: var(--md-primary);
+  background-color: var(--md-surface);
+  box-shadow: 0 0 0 2px var(--md-primary-container);
+}
+
+/* ── Transaction Tags & Inline Editing Styles ─────────────────────────── */
+.m3-tx-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.m3-tx-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(101, 88, 211, 0.09);
+  color: var(--md-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  line-height: 1.4;
+  border: 1px solid rgba(101, 88, 211, 0.18);
+  transition: background var(--duration-short) ease;
+}
+
+.m3-tx-tag-pill:hover {
+  background: rgba(101, 88, 211, 0.18);
+}
+
+.m3-tx-tag-del {
+  cursor: pointer;
+  font-size: 0.65rem;
+  color: var(--md-on-surface-muted);
+  margin-left: 2px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.m3-tx-tag-del:hover {
+  color: var(--md-error);
+}
+
+.m3-tx-add-tag-btn {
+  background: transparent;
+  border: 1px dashed var(--md-outline-variant);
+  color: var(--md-on-surface-muted);
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+}
+
+.m3-tx-add-tag-btn:hover {
+  border-color: var(--md-primary);
+  color: var(--md-primary);
+  background: var(--md-primary-container);
+}
+
+.m3-tx-icon-badge.clickable {
+  cursor: pointer;
+  transition: transform var(--duration-short) ease, filter var(--duration-short) ease;
+}
+
+.m3-tx-icon-badge.clickable:hover {
+  transform: scale(1.15);
+  filter: brightness(1.1);
+}
+
+.m3-tags-list-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m3-tag-toggle-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-cont-low);
+  color: var(--md-on-surface);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-short) ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.m3-tag-toggle-chip.active {
+  background: var(--md-primary-container);
+  border-color: var(--md-primary);
+  color: var(--md-on-primary-cont);
+  font-weight: 700;
+}
+
+.m3-add-tag-row {
+  display: flex;
+  gap: 8px;
+}
+
+.m3-add-tag-row input {
+  flex: 1;
+}
+
+
 

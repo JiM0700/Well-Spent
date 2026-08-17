@@ -7,12 +7,15 @@ const BUDGET_KEY             = 'well_spent_budget_v1';
 const CYCLE_START_DAY_KEY    = 'well_spent_cycle_start_day_v1';
 const BASE_INCOME_KEY        = 'well_spent_base_income_v1';
 const VIEW_MODE_KEY          = 'well_spent_view_mode_v1';
+const PERIOD_KEY             = 'well_spent_selected_period_v1';
 const TAB_KEY                = 'well_spent_current_tab_v1';
 const CATEGORY_BUDGETS_KEY   = 'well_spent_category_budgets_v1';
 const RECURRING_BILLS_KEY    = 'well_spent_recurring_bills_v1';
 const DISMISSED_PATTERNS_KEY = 'well_spent_dismissed_patterns_v1';
 const NET_WORTH_KEY          = 'well_spent_net_worth_v1';
 const GOALS_KEY              = 'well_spent_goals_v1';
+const TAGS_KEY               = 'well_spent_tags_v1';
+const FIRST_RUN_KEY          = 'well_spent_first_run_v1';
 const PALETTE_KEY            = 'well_spent_palette_v1';
 
 const CATEGORIES = {
@@ -32,15 +35,18 @@ let monthlyBudget     = Number(localStorage.getItem(BUDGET_KEY))          || 250
 let cycleStartDay     = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
 let baseIncome        = Number(localStorage.getItem(BASE_INCOME_KEY))     || 50000;
 let currentViewMode   = localStorage.getItem(VIEW_MODE_KEY)               || 'monthwise';
+let selectedPeriod    = localStorage.getItem(PERIOD_KEY)                  || 'this-month';
 let currentTab        = localStorage.getItem(TAB_KEY)                     || 'overview';
 let categoryBudgets   = loadCategoryBudgets();
 let recurringBills    = loadRecurringBills();
 let dismissedPatterns = loadJSON(DISMISSED_PATTERNS_KEY, []);
 let netWorth          = loadJSON(NET_WORTH_KEY, { assets: 0, liabilities: 0, configured: false });
 let goals             = loadJSON(GOALS_KEY, []);
+let globalTags        = loadJSON(TAGS_KEY, ['personal', 'work', 'subscription', 'essential', 'discretionary', 'travel']);
 let currentPalette    = localStorage.getItem(PALETTE_KEY)                 || 'blue';
 
 let activeCategoryFilter  = 'all';
+let activeTagFilter       = null;
 let searchQuery           = '';
 let selectedCategoryModal = 'food';
 let editingCategoryKey    = null;
@@ -48,8 +54,10 @@ let editingCategoryKey    = null;
 let selectedGoalIcon      = '🛡️';
 let editingGoalId         = null;
 let contributingGoalId    = null;
+let managingTagsTxId      = null;
+let changingCategoryTxId  = null;
 
-// Ensure all existing expenses have valid duplicate fingerprints
+// Ensure all existing expenses have valid duplicate fingerprints & tag arrays
 if (Array.isArray(expenses) && expenses.length > 0) {
   let modified = false;
   expenses.forEach(exp => {
@@ -57,12 +65,13 @@ if (Array.isArray(expenses) && expenses.length > 0) {
       exp.fingerprint = generateFingerprint(exp.date, exp.title, exp.amount, exp.account || '');
       modified = true;
     }
+    if (!Array.isArray(exp.tags)) {
+      exp.tags = [];
+      modified = true;
+    }
   });
   if (modified) saveExpenses();
 }
-
-// Seed initial sample data if empty
-if (expenses.length === 0) seedSampleData();
 
 // ── Core Helpers ──────────────────────────────────────────────────────────
 function loadJSON(key, fallback) {
@@ -80,6 +89,7 @@ function saveRecurringBills()    { localStorage.setItem(RECURRING_BILLS_KEY, JSO
 function saveDismissedPatterns() { localStorage.setItem(DISMISSED_PATTERNS_KEY, JSON.stringify(dismissedPatterns)); }
 function saveNetWorth()          { localStorage.setItem(NET_WORTH_KEY, JSON.stringify(netWorth)); }
 function saveGoals()             { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); }
+function saveTags()              { localStorage.setItem(TAGS_KEY, JSON.stringify(globalTags)); }
 
 let toastTimeout = null;
 function showToast(msg, duration = 3000) {
@@ -405,9 +415,60 @@ function calculateMetrics() {
     });
   }
 
+  // ── Multi-Period Analytics Engine ─────────────────────────────────────────
+  let periodExpenses = [];
+  let periodBudget = monthlyBudget;
+  let periodLabel = 'This Month';
+
+  if (selectedPeriod === 'today') {
+    periodExpenses = todayExpenses;
+    periodBudget = dynamicDailyBudget;
+    periodLabel = 'Today';
+  } else if (selectedPeriod === 'last-month') {
+    let prevStartYear = startYear, prevStartMonth = startMonth - 1;
+    if (prevStartMonth < 0) { prevStartMonth = 11; prevStartYear--; }
+    const prevCycleStart = new Date(prevStartYear, prevStartMonth, cycleStartDay, 0, 0, 0, 0);
+    const prevCycleEnd = cycleStart;
+    periodExpenses = expenses.filter(e => {
+      const ed = new Date(e.date);
+      return ed >= prevCycleStart && ed < prevCycleEnd;
+    });
+    periodBudget = monthlyBudget;
+    periodLabel = 'Last Month';
+  } else if (selectedPeriod === 'last-3-months') {
+    const cutoff = new Date(now.getTime() - 90 * 86400000);
+    periodExpenses = expenses.filter(e => new Date(e.date) >= cutoff);
+    periodBudget = monthlyBudget * 3;
+    periodLabel = 'Last 3 Months';
+  } else if (selectedPeriod === 'last-6-months') {
+    const cutoff = new Date(now.getTime() - 180 * 86400000);
+    periodExpenses = expenses.filter(e => new Date(e.date) >= cutoff);
+    periodBudget = monthlyBudget * 6;
+    periodLabel = 'Last 6 Months';
+  } else if (selectedPeriod === 'this-year') {
+    const yearStart = new Date(y, 0, 1, 0, 0, 0, 0);
+    periodExpenses = expenses.filter(e => new Date(e.date) >= yearStart);
+    periodBudget = monthlyBudget * (mo + 1);
+    periodLabel = 'This Year';
+  } else if (selectedPeriod === 'all-time') {
+    periodExpenses = [...expenses];
+    periodBudget = monthlyBudget > 0 ? monthlyBudget * Math.max(1, Math.ceil(expenses.length / 8)) : 0;
+    periodLabel = 'All Time';
+  } else {
+    periodExpenses = monthExpenses;
+    periodBudget = monthlyBudget;
+    periodLabel = 'This Month';
+  }
+
+  const periodTotal = periodExpenses.reduce((sum, e) => sum + e.amount, 0);
+
   return {
     monthTotal,
     todayTotal,
+    periodTotal,
+    periodBudget,
+    periodLabel,
+    periodExpenses,
     dailyBudget,
     dynamicDailyBudget,
     remainingMonthBalance,
@@ -528,18 +589,21 @@ function renderRail(metrics) {
 
 // ── Tab 1: Overview & Radial Gauge & Trajectory Sparkline ──────────────────
 function renderOverview(metrics) {
-  const isDaywise = currentViewMode === 'daywise';
+  // Sync Multi-Period Dropdown Selector
+  const periodSelect = document.getElementById('globalPeriodSelect');
+  if (periodSelect) {
+    periodSelect.value = selectedPeriod;
+    periodSelect.onchange = (e) => {
+      triggerHaptic();
+      selectedPeriod = e.target.value;
+      localStorage.setItem(PERIOD_KEY, selectedPeriod);
+      render();
+    };
+  }
 
-  // In-Card Icon Toggle Active State
-  document.querySelectorAll('#viewModeSwitcher .m3-mode-icon-btn').forEach(btn => {
-    const active = btn.dataset.mode === currentViewMode;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-checked', String(active));
-  });
-
-  const total = isDaywise ? metrics.todayTotal : metrics.monthTotal;
-  const budget = isDaywise ? metrics.dynamicDailyBudget : monthlyBudget;
-  const remaining = isDaywise ? metrics.remainingToday : Math.max(0, monthlyBudget - metrics.monthTotal);
+  const total = metrics.periodTotal;
+  const budget = metrics.periodBudget;
+  const remaining = Math.max(0, budget - total);
   const isOver = budget > 0 ? total > budget : total > 0;
   const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : (total > 0 ? 100 : 0);
 
@@ -560,16 +624,16 @@ function renderOverview(metrics) {
   }
 
   const eyebrowBadge = document.getElementById('pulseEyebrowBadge');
-  if (eyebrowBadge) eyebrowBadge.textContent = isDaywise ? "TODAY'S ALLOWANCE" : "MONTHLY ENVELOPE";
+  if (eyebrowBadge) eyebrowBadge.textContent = metrics.periodLabel.toUpperCase();
 
   const amountDisplay = document.getElementById('pulseAmountDisplay');
   if (amountDisplay) amountDisplay.textContent = inr(total);
 
   const subDisplay = document.getElementById('pulseSubDisplay');
   if (subDisplay) {
-    subDisplay.textContent = isDaywise
-      ? `of ${inrCompact(budget)} daily allowance (${metrics.daysRemainingIncludingToday}d left)`
-      : `of ${inrCompact(budget)} monthly allowance`;
+    subDisplay.textContent = budget > 0
+      ? `of ${inrCompact(budget)} allowance (${metrics.daysRemainingIncludingToday}d left in cycle)`
+      : `total recorded spending`;
   }
 
   const statusPill = document.getElementById('pulseStatusPill');
@@ -580,39 +644,39 @@ function renderOverview(metrics) {
 
   // Dynamic Stat Pod Labels & Figures
   const remainingLabel = document.getElementById('pulseRemainingLabel');
-  if (remainingLabel) remainingLabel.textContent = isDaywise ? 'Today Left' : 'Remaining';
+  if (remainingLabel) remainingLabel.textContent = selectedPeriod === 'today' ? 'Today Left' : 'Remaining';
 
   const burnLabel = document.getElementById('pulseBurnLabel');
-  if (burnLabel) burnLabel.textContent = isDaywise ? 'Daily Target' : 'Daily Burn';
+  if (burnLabel) burnLabel.textContent = 'Daily Burn';
 
   const monthEndLabel = document.getElementById('pulseMonthEndLabel');
-  if (monthEndLabel) monthEndLabel.textContent = isDaywise ? 'Month Left' : 'Est. Total';
+  if (monthEndLabel) monthEndLabel.textContent = selectedPeriod === 'this-month' ? 'Est. Total' : 'Total Count';
 
   const remainingDisplay = document.getElementById('pulseRemainingDisplay');
   if (remainingDisplay) remainingDisplay.textContent = inrCompact(remaining);
 
   const burnDisplay = document.getElementById('pulseBurnDisplay');
-  if (burnDisplay) {
-    burnDisplay.textContent = isDaywise
-      ? `${inrCompact(metrics.dynamicDailyBudget)}/day`
-      : `${inrCompact(metrics.dailyBurn)}/day`;
-  }
+  if (burnDisplay) burnDisplay.textContent = `${inrCompact(metrics.dailyBurn)}/day`;
 
   const monthEndDisplay = document.getElementById('pulseMonthEndDisplay');
   if (monthEndDisplay) {
-    monthEndDisplay.textContent = isDaywise
-      ? inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))
-      : inrCompact(metrics.projectedMonthEnd);
+    monthEndDisplay.textContent = selectedPeriod === 'this-month'
+      ? inrCompact(metrics.projectedMonthEnd)
+      : `${metrics.periodExpenses.length} txns`;
   }
 
   // 📈 2. RENDER INTERACTIVE SPENDING TRAJECTORY SPARKLINE 📈
   renderTrajectorySparkline(metrics);
 
   // Activity Feed
-  let list = isDaywise ? metrics.todayExpenses : metrics.monthExpenses;
+  let list = metrics.periodExpenses;
 
   if (activeCategoryFilter !== 'all') {
     list = list.filter(e => e.category === activeCategoryFilter);
+  }
+
+  if (activeTagFilter) {
+    list = list.filter(e => Array.isArray(e.tags) && e.tags.includes(activeTagFilter));
   }
 
   if (searchQuery.trim()) {
@@ -620,16 +684,17 @@ function renderOverview(metrics) {
     list = list.filter(e =>
       e.title.toLowerCase().includes(q) ||
       (e.notes && e.notes.toLowerCase().includes(q)) ||
+      (Array.isArray(e.tags) && e.tags.some(t => t.toLowerCase().includes(q))) ||
       (CATEGORIES[e.category] && CATEGORIES[e.category].name.toLowerCase().includes(q))
     );
   }
 
   const feedHeading = document.getElementById('activityFeedHeading');
-  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
+  if (feedHeading) feedHeading.textContent = `${metrics.periodLabel} Transactions`;
 
   const feedSubheading = document.getElementById('activityFeedSubheading');
   if (feedSubheading) {
-    feedSubheading.textContent = `${list.length} ${isDaywise ? (list.length === 1 ? 'entry today' : 'entries today') : (list.length === 1 ? 'entry this cycle' : 'entries this cycle')}`;
+    feedSubheading.textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}${activeTagFilter ? ` • filtered by #${activeTagFilter}` : ''}`;
   }
 
   renderTransactionList(list);
@@ -806,11 +871,32 @@ function renderTransactionList(list) {
   if (!container) return;
 
   if (list.length === 0) {
+    if (expenses.length === 0) {
+      container.innerHTML = `
+        <div class="m3-empty-state" style="padding: 32px 16px;">
+          <div class="m3-empty-icon" style="font-size: 2.2rem;">✨</div>
+          <div class="m3-empty-title" style="font-size: 1rem;">Clean Vault Ready</div>
+          <p class="m3-empty-desc" style="font-size: 0.8rem;">Your ledger is currently clean with zero data. Tap below to log your first transaction or load realistic demo data.</p>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+            <button type="button" class="m3-filled-btn" id="emptyAddTxBtn" style="padding: 8px 16px; font-size: 0.8rem;">
+              ＋ Log Transaction
+            </button>
+            <button type="button" class="m3-tonal-btn" id="emptyLoadDemoBtn" style="padding: 8px 16px; font-size: 0.8rem;">
+              Load Demo Dataset
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('emptyAddTxBtn')?.addEventListener('click', openAddExpenseModal);
+      document.getElementById('emptyLoadDemoBtn')?.addEventListener('click', loadDemoData);
+      return;
+    }
+
     container.innerHTML = `
       <div class="m3-empty-state">
         <div class="m3-empty-icon">📭</div>
         <div class="m3-empty-title">No Transactions Recorded</div>
-        <p class="m3-empty-desc">No activities found matching your current filter criteria.</p>
+        <p class="m3-empty-desc">No activities found matching your current period or filter criteria.</p>
       </div>
     `;
     return;
@@ -818,6 +904,8 @@ function renderTransactionList(list) {
 
   container.innerHTML = list.map(item => {
     const cat = CATEGORIES[item.category] || CATEGORIES.other;
+    const itemTags = Array.isArray(item.tags) ? item.tags : [];
+
     return `
       <div class="m3-tx-row" data-id="${item.id}">
         <div class="m3-tx-delete-reveal">
@@ -830,16 +918,54 @@ function renderTransactionList(list) {
         </div>
 
         <div class="m3-tx-card" data-id="${item.id}">
-          <div class="m3-tx-icon-badge">${cat.icon}</div>
+          <div class="m3-tx-icon-badge clickable" data-change-cat="${item.id}" title="Click to change category">${cat.icon}</div>
           <div class="m3-tx-info">
             <span class="m3-tx-title">${escapeHtml(item.title)}</span>
             <span class="m3-tx-meta">${cat.name} • ${formatDate(item.date)}${item.notes ? ' • ' + escapeHtml(item.notes) : ''}</span>
+            <div class="m3-tx-tags-wrap">
+              ${itemTags.map(tag => `
+                <span class="m3-tx-tag-pill">
+                  #${escapeHtml(tag)}
+                  <button type="button" class="m3-tx-tag-del" data-remove-tag="${item.id}" data-tag="${escapeHtml(tag)}" title="Remove tag">&times;</button>
+                </span>
+              `).join('')}
+              <button type="button" class="m3-tx-add-tag-btn" data-manage-tags="${item.id}">＋ Tag</button>
+            </div>
           </div>
           <div class="m3-tx-amount">${inr(item.amount)}</div>
         </div>
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('[data-change-cat]').forEach(badge => {
+    badge.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openInlineCategoryModal(badge.dataset.changeCat);
+    });
+  });
+
+  container.querySelectorAll('[data-manage-tags]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openTagModal(btn.dataset.manageTags);
+    });
+  });
+
+  container.querySelectorAll('[data-remove-tag]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerHaptic();
+      const txId = btn.dataset.removeTag;
+      const tagToRemove = btn.dataset.tag;
+      const tx = expenses.find(x => String(x.id) === String(txId));
+      if (tx && Array.isArray(tx.tags)) {
+        tx.tags = tx.tags.filter(t => t !== tagToRemove);
+        saveExpenses();
+        render();
+      }
+    });
+  });
 
   attachSwipeListeners();
 }
@@ -1516,6 +1642,154 @@ function renderSettings() {
   }
 }
 
+// ── Inline Category Changer ───────────────────────────────────────────────
+function openInlineCategoryModal(txId) {
+  changingCategoryTxId = txId;
+  const tx = expenses.find(e => String(e.id) === String(txId));
+  if (!tx) return;
+
+  const titleEl = document.getElementById('inlineCatItemTitle');
+  if (titleEl) titleEl.textContent = `Change category for "${tx.title}"`;
+
+  const grid = document.getElementById('inlineCatGrid');
+  if (grid) {
+    grid.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
+      <button type="button" class="m3-modal-cat-pill ${key === tx.category ? 'active' : ''}" data-cat="${key}">
+        <span class="m3-modal-cat-icon">${cat.icon}</span>
+        <span>${cat.name.split(' ')[0]}</span>
+      </button>
+    `).join('');
+
+    grid.querySelectorAll('.m3-modal-cat-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        triggerHaptic();
+        const newCat = pill.dataset.cat;
+        tx.category = newCat;
+        tx.fingerprint = generateFingerprint(tx.date, tx.title, tx.amount, tx.account || '');
+        saveExpenses();
+        closeModal('inlineCategoryModalBackdrop');
+        showToast(`✓ Category updated to ${CATEGORIES[newCat]?.name || newCat}.`);
+        render();
+      });
+    });
+  }
+
+  openModal('inlineCategoryModalBackdrop');
+}
+
+// ── Transaction Tag Manager ───────────────────────────────────────────────
+function openTagModal(txId) {
+  managingTagsTxId = txId;
+  const tx = expenses.find(e => String(e.id) === String(txId));
+  if (!tx) return;
+
+  const titleEl = document.getElementById('tagModalItemTitle');
+  if (titleEl) titleEl.textContent = `Manage tags for "${tx.title}"`;
+
+  renderTagModalList();
+  openModal('tagModalBackdrop');
+
+  const input = document.getElementById('newTagInput');
+  if (input) input.value = '';
+}
+
+function renderTagModalList() {
+  const container = document.getElementById('tagModalTagsList');
+  const tx = expenses.find(e => String(e.id) === String(managingTagsTxId));
+  if (!container || !tx) return;
+
+  const currentTxTags = Array.isArray(tx.tags) ? tx.tags : [];
+
+  container.innerHTML = globalTags.map(tag => {
+    const hasTag = currentTxTags.includes(tag);
+    return `
+      <button type="button" class="m3-tag-toggle-chip ${hasTag ? 'active' : ''}" data-tag="${tag}">
+        <span>${hasTag ? '✓' : '＋'}</span>
+        <span>#${escapeHtml(tag)}</span>
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.m3-tag-toggle-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      triggerHaptic();
+      const tag = btn.dataset.tag;
+      if (!Array.isArray(tx.tags)) tx.tags = [];
+      if (tx.tags.includes(tag)) {
+        tx.tags = tx.tags.filter(t => t !== tag);
+      } else {
+        tx.tags.push(tag);
+      }
+      saveExpenses();
+      renderTagModalList();
+      render();
+    });
+  });
+}
+
+function handleAddNewTag() {
+  const input = document.getElementById('newTagInput');
+  const raw = input?.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!raw) return;
+
+  if (!globalTags.includes(raw)) {
+    globalTags.push(raw);
+    saveTags();
+  }
+
+  const tx = expenses.find(e => String(e.id) === String(managingTagsTxId));
+  if (tx) {
+    if (!Array.isArray(tx.tags)) tx.tags = [];
+    if (!tx.tags.includes(raw)) tx.tags.push(raw);
+    saveExpenses();
+  }
+
+  if (input) input.value = '';
+  triggerHaptic();
+  renderTagModalList();
+  render();
+}
+
+// ── Zero-Data Clean State & Demo Seeder ────────────────────────────────────
+function setCleanVault() {
+  if (confirm('Reset to a pristine zero-data state? This will clear all transaction records, recurring bills, and financial goals.')) {
+    expenses = [];
+    recurringBills = [];
+    dismissedPatterns = [];
+    netWorth = { assets: 0, liabilities: 0, configured: false };
+    goals = [];
+    localStorage.setItem(FIRST_RUN_KEY, 'true');
+    saveExpenses();
+    saveRecurringBills();
+    saveDismissedPatterns();
+    saveNetWorth();
+    saveGoals();
+    showToast('✓ Vault reset to clean zero-data state.');
+    render();
+  }
+}
+
+function loadDemoData() {
+  seedSampleData();
+  recurringBills = [
+    { id: 1, title: 'High-speed Fiber Net', amount: 1199, dueDay: 5, isPaid: false },
+    { id: 2, title: 'Cloud Storage & Workspace', amount: 650, dueDay: 12, isPaid: true },
+    { id: 3, title: 'Health & Gym Membership', amount: 2500, dueDay: 20, isPaid: false }
+  ];
+  netWorth = { assets: 450000, liabilities: 85000, configured: true };
+  goals = [
+    { id: 1, name: 'Emergency Reserve', targetAmount: 150000, currentAmount: 85000, targetDate: '2026-12-31', icon: '🛡️' },
+    { id: 2, name: 'Japan Travel Fund', targetAmount: 200000, currentAmount: 60000, targetDate: '2027-04-15', icon: '🏖️' }
+  ];
+  localStorage.setItem(FIRST_RUN_KEY, 'true');
+  saveExpenses();
+  saveRecurringBills();
+  saveNetWorth();
+  saveGoals();
+  showToast('✓ Sample demo dataset loaded.');
+  render();
+}
+
 // ── Modal Handlers ────────────────────────────────────────────────────────
 function openModal(id) {
   const modal = document.getElementById(id);
@@ -1746,6 +2020,56 @@ function setupEvents() {
   if (contributeSaveBtn) {
     contributeSaveBtn.addEventListener('click', handleSaveContribution);
   }
+
+  // 🏷️ Tag Manager & Inline Category Modal Listeners
+  const inlineCatCancelBtn = document.getElementById('inlineCatCancelBtn');
+  if (inlineCatCancelBtn) {
+    inlineCatCancelBtn.addEventListener('click', () => closeModal('inlineCategoryModalBackdrop'));
+  }
+
+  const tagCancelBtn = document.getElementById('tagCancelBtn');
+  const tagCloseBtn = document.getElementById('tagCloseBtn');
+  [tagCancelBtn, tagCloseBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('tagModalBackdrop'));
+  });
+
+  const addNewTagBtn = document.getElementById('addNewTagBtn');
+  if (addNewTagBtn) {
+    addNewTagBtn.addEventListener('click', handleAddNewTag);
+  }
+
+  const newTagInput = document.getElementById('newTagInput');
+  if (newTagInput) {
+    newTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddNewTag();
+      }
+    });
+  }
+
+  // 🧼 Clean State & Demo Data Listeners
+  document.getElementById('cleanStartBtn')?.addEventListener('click', () => {
+    triggerHaptic();
+    setCleanVault();
+  });
+
+  document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => {
+    triggerHaptic();
+    loadDemoData();
+  });
+
+  document.getElementById('firstRunCleanBtn')?.addEventListener('click', () => {
+    triggerHaptic();
+    closeModal('firstRunModalBackdrop');
+    setCleanVault();
+  });
+
+  document.getElementById('firstRunDemoBtn')?.addEventListener('click', () => {
+    triggerHaptic();
+    closeModal('firstRunModalBackdrop');
+    loadDemoData();
+  });
 
   document.querySelectorAll('.m3-scrim-backdrop').forEach(scrim => {
     scrim.addEventListener('click', (e) => {
@@ -2035,7 +2359,7 @@ function parseDateFlexible(raw) {
 // ── Encrypted Vault Operations ────────────────────────────────────────────
 function exportVaultBackup() {
   const data = {
-    version: 6,
+    version: 7,
     exportedAt: new Date().toISOString(),
     expenses,
     monthlyBudget,
@@ -2046,6 +2370,7 @@ function exportVaultBackup() {
     dismissedPatterns,
     netWorth,
     goals,
+    globalTags,
     currentPalette
   };
 
@@ -2078,12 +2403,16 @@ function handleImportVault(e) {
         dismissedPatterns = data.dismissedPatterns || dismissedPatterns;
         netWorth = data.netWorth || netWorth;
         goals = data.goals || goals;
+        globalTags = data.globalTags || globalTags;
         currentPalette = data.currentPalette || currentPalette;
 
-        // Ensure all restored expenses have fingerprints
+        // Ensure all restored expenses have fingerprints and tag arrays
         expenses.forEach(exp => {
           if (!exp.fingerprint) {
             exp.fingerprint = generateFingerprint(exp.date, exp.title, exp.amount, exp.account || '');
+          }
+          if (!Array.isArray(exp.tags)) {
+            exp.tags = [];
           }
         });
 
@@ -2093,10 +2422,12 @@ function handleImportVault(e) {
         saveDismissedPatterns();
         saveNetWorth();
         saveGoals();
+        saveTags();
         localStorage.setItem(BUDGET_KEY, monthlyBudget);
         localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
         localStorage.setItem(BASE_INCOME_KEY, baseIncome);
         localStorage.setItem(PALETTE_KEY, currentPalette);
+        localStorage.setItem(FIRST_RUN_KEY, 'true');
 
         showToast('✓ Vault backup restored successfully.');
         alert('Vault backup restored successfully.');
@@ -2120,4 +2451,10 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   render();
+
+  // First Run Onboarding Check
+  const hasRun = localStorage.getItem(FIRST_RUN_KEY);
+  if (!hasRun && expenses.length === 0) {
+    openModal('firstRunModalBackdrop');
+  }
 });
