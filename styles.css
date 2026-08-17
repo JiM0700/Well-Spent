@@ -644,59 +644,82 @@ html, body {
   width: 100%;
 }
 
-/* ── Sliding Segmented Period Switcher ──────────────────────────────────── */
-.m3-segmented-control-wrap {
+/* ── Modern In-Card Period Icon Toggle ─────────────────────────────────── */
+.m3-envelope-card-header {
   display: flex;
-  justify-content: center;
-  margin-bottom: 22px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
-.m3-segmented-control {
-  position: relative;
+.m3-envelope-header-left {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m3-mode-icon-toggle {
+  display: flex;
+  align-items: center;
   background: var(--md-surface-cont-low);
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--radius-full);
-  padding: 4px;
+  padding: 3px;
+  gap: 3px;
   box-shadow: var(--elevation-1);
 }
 
-.m3-segment-btn {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 24px;
+.m3-mode-icon-btn {
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-full);
   border: none;
   background: none;
-  color: var(--md-on-surface-var);
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: var(--md-on-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: color var(--duration-short) ease;
+  position: relative;
+  transition: all var(--duration-short) ease;
 }
 
-.m3-segment-btn.active {
-  color: var(--md-on-primary-cont);
+.m3-mode-icon-btn:hover {
+  color: var(--md-on-surface);
+  background: rgba(0, 0, 0, 0.04);
 }
 
-.m3-segment-slider {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  bottom: 4px;
-  width: calc(50% - 4px);
+.m3-mode-icon-btn.active {
   background: var(--md-primary-container);
-  border-radius: var(--radius-full);
-  z-index: 1;
-  box-shadow: 0 1px 4px rgba(26, 115, 232, 0.18);
-  transition: transform var(--duration-medium) var(--ease-emphasized);
+  color: var(--md-on-primary-cont);
+  box-shadow: 0 1px 4px rgba(26, 115, 232, 0.2);
 }
 
-.m3-segmented-control.daywise-active .m3-segment-slider {
-  transform: translateX(100%);
+/* Tooltip for mode icon button */
+.m3-mode-icon-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: #202124;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: var(--elevation-3);
+  transition: all var(--duration-short) var(--ease-emphasized-decel);
+  z-index: 100;
+}
+
+.m3-mode-icon-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 /* ── Material 3 Dashboard Grid ──────────────────────────────────────────── */
@@ -708,7 +731,7 @@ html, body {
 
 @media (min-width: 960px) {
   .m3-dashboard-grid {
-    grid-template-columns: 460px 1fr;
+    grid-template-columns: 470px 1fr;
     align-items: start;
   }
 }
@@ -756,14 +779,15 @@ html, body {
   color: var(--md-error);
 }
 
-/* ── 🌟 HERO RADIAL GAUGE STYLING 🌟 ────────────────────────────────────── */
+/* ── 🌟 HERO OPEN HORSESHOE ARC GAUGE STYLING 🌟 ────────────────────────── */
 .m3-hero-radial-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  padding: 20px 22px 22px;
 }
 
 .m3-hero-radial-card .m3-card-header {
@@ -772,9 +796,10 @@ html, body {
 
 .m3-radial-gauge-wrapper {
   position: relative;
-  width: 220px;
-  height: 220px;
-  margin: 8px auto 18px;
+  width: 100%;
+  max-width: 270px;
+  height: 195px;
+  margin: 4px auto 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -783,22 +808,23 @@ html, body {
 .m3-radial-svg {
   width: 100%;
   height: 100%;
-  transform: rotate(-90deg);
+  display: block;
 }
 
 .m3-radial-track {
   fill: none;
   stroke: var(--md-surface-cont);
-  stroke-width: 13;
+  stroke-width: 14;
+  stroke-linecap: round;
 }
 
 .m3-radial-fill {
   fill: none;
   stroke: url(#gaugeGradient);
-  stroke-width: 13;
+  stroke-width: 14;
   stroke-linecap: round;
-  stroke-dasharray: 515.2;
-  stroke-dashoffset: 515.2;
+  stroke-dasharray: 385.7;
+  stroke-dashoffset: 385.7;
   transition: stroke-dashoffset 0.8s var(--ease-emphasized-decel), stroke 0.3s ease;
 }
 
@@ -808,52 +834,60 @@ html, body {
 
 .m3-radial-center-content {
   position: absolute;
-  inset: 0;
+  top: 30px;
+  left: 0;
+  right: 0;
+  bottom: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 10px;
+  justify-content: flex-start;
   gap: 2px;
+  pointer-events: none;
 }
 
 .m3-radial-label {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--md-on-surface-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 .m3-hero-amount {
   font-family: var(--font-family);
-  font-size: 1.9rem;
+  font-size: 2.1rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   color: var(--md-on-surface);
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
 .m3-hero-sub {
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--md-on-surface-muted);
+  margin-top: 2px;
 }
 
 .m3-radial-pct-pill {
-  margin-top: 4px;
+  margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 3px 12px;
   border-radius: var(--radius-full);
   background: var(--md-primary-container);
   color: var(--md-on-primary-cont);
+  box-shadow: 0 1px 4px rgba(26, 115, 232, 0.18);
 }
 
 .m3-radial-pct-pill.warning {
   background: var(--md-error-container);
   color: var(--md-error);
+  box-shadow: 0 1px 4px rgba(217, 48, 37, 0.18);
 }
 
 /* 3 Stat Pods Row */

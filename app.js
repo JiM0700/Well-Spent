@@ -300,11 +300,8 @@ function renderRail(metrics) {
 function renderOverview(metrics) {
   const isDaywise = currentViewMode === 'daywise';
 
-  // Segmented Switcher Active State
-  const switcher = document.getElementById('viewModeSwitcher');
-  if (switcher) switcher.classList.toggle('daywise-active', isDaywise);
-
-  document.querySelectorAll('#viewModeSwitcher .m3-segment-btn').forEach(btn => {
+  // In-Card Icon Toggle Active State
+  document.querySelectorAll('#viewModeSwitcher .m3-mode-icon-btn').forEach(btn => {
     const active = btn.dataset.mode === currentViewMode;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-checked', String(active));
@@ -316,12 +313,12 @@ function renderOverview(metrics) {
   const isOver = budget > 0 && total > budget;
   const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0;
 
-  // 🌟 1. UPDATE RADIAL GAUGE RING 🌟
-  const circumference = 515.22; // 2 * PI * 82
-  const offset = circumference * (1 - pct / 100);
+  // 🌟 1. UPDATE OPEN HORSESHOE ARC GAUGE (260 degrees arc length = 385.72) 🌟
+  const arcLength = 385.72;
+  const offset = arcLength * (1 - Math.min(1, pct / 100));
   const radialCircle = document.getElementById('radialGaugeCircle');
   if (radialCircle) {
-    radialCircle.style.strokeDasharray = `${circumference}`;
+    radialCircle.style.strokeDasharray = `${arcLength}`;
     radialCircle.style.strokeDashoffset = `${offset}`;
     radialCircle.classList.toggle('warning', isOver);
   }
@@ -333,7 +330,7 @@ function renderOverview(metrics) {
   }
 
   const eyebrowBadge = document.getElementById('pulseEyebrowBadge');
-  if (eyebrowBadge) eyebrowBadge.textContent = isDaywise ? "TODAY'S SPENDING" : "MONTHLY ENVELOPE";
+  if (eyebrowBadge) eyebrowBadge.textContent = isDaywise ? "TODAY'S ALLOWANCE" : "MONTHLY ENVELOPE";
 
   const amountDisplay = document.getElementById('pulseAmountDisplay');
   if (amountDisplay) amountDisplay.textContent = inr(total);
@@ -914,7 +911,7 @@ function setupEvents() {
     });
   });
 
-  document.querySelectorAll('#viewModeSwitcher .m3-segment-btn').forEach(btn => {
+  document.querySelectorAll('#viewModeSwitcher .m3-mode-icon-btn, #viewModeSwitcher .m3-segment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic();
       currentViewMode = btn.dataset.mode;

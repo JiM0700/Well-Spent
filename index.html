@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="styles.css?v=14">
+  <link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body data-palette="blue">
 
@@ -170,45 +170,49 @@
         <section id="tabOverview" class="m3-tab-pane active" aria-labelledby="pageHeadingTitle">
           <div class="m3-pane-inner">
 
-            <!-- Dynamic Segmented Period Controller with Sliding Pill -->
-            <div class="m3-segmented-control-wrap">
-              <div class="m3-segmented-control" id="viewModeSwitcher" role="radiogroup" aria-label="View Period">
-                <button type="button" class="m3-segment-btn active" data-mode="monthwise" role="radio" aria-checked="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                  <span>Monthwise</span>
-                </button>
-                <button type="button" class="m3-segment-btn" data-mode="daywise" role="radio" aria-checked="false">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  <span>Daywise</span>
-                </button>
-                <div class="m3-segment-slider" id="segmentSlider"></div>
-              </div>
-            </div>
-
             <!-- Material 3 Expressive 2-Column Responsive Dashboard -->
             <div class="m3-dashboard-grid">
 
               <!-- Left Column: Hero Radial Ring Gauge & Trajectory Sparkline -->
               <div class="m3-grid-col-left">
 
-                <!-- 🌟 HERO RADIAL GAUGE CARD 🌟 -->
-                <article class="m3-card m3-hero-radial-card" aria-label="Budget Progress Ring">
-                  <div class="m3-card-header">
-                    <span class="m3-badge-pill" id="pulseEyebrowBadge">MONTHLY ENVELOPE</span>
-                    <span class="m3-status-indicator-pill" id="pulseStatusPill">On Track</span>
+                <!-- 🌟 HERO MONTHLY ENVELOPE CARD 🌟 -->
+                <article class="m3-card m3-hero-radial-card" aria-label="Budget Envelope Progress">
+                  <div class="m3-card-header m3-envelope-card-header">
+                    <div class="m3-envelope-header-left">
+                      <span class="m3-badge-pill" id="pulseEyebrowBadge">MONTHLY ENVELOPE</span>
+                      <span class="m3-status-indicator-pill" id="pulseStatusPill">On Track</span>
+                    </div>
+
+                    <!-- Sleek Compact Icon Toggle inside Card Header with Tooltips -->
+                    <div class="m3-mode-icon-toggle" id="viewModeSwitcher" role="radiogroup" aria-label="View Period">
+                      <button type="button" class="m3-mode-icon-btn active" data-mode="monthwise" data-tooltip="Monthwise View" aria-label="Monthwise View" role="radio" aria-checked="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </button>
+                      <button type="button" class="m3-mode-icon-btn" data-mode="daywise" data-tooltip="Daywise View" aria-label="Daywise View" role="radio" aria-checked="false">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="5"></circle>
+                          <line x1="12" y1="1" x2="12" y2="3"></line>
+                          <line x1="12" y1="21" x2="12" y2="23"></line>
+                          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                          <line x1="1" y1="12" x2="3" y2="12"></line>
+                          <line x1="21" y1="12" x2="23" y2="12"></line>
+                          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
-                  <!-- Central SVG Radial Ring Gauge -->
+                  <!-- Central Open Horseshoe Arc Gauge -->
                   <div class="m3-radial-gauge-wrapper">
-                    <svg class="m3-radial-svg" viewBox="0 0 200 200">
+                    <svg class="m3-radial-svg" viewBox="0 0 240 180">
                       <defs>
                         <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                           <stop offset="0%" stop-color="var(--md-primary)" />
@@ -219,18 +223,18 @@
                           <stop offset="100%" stop-color="#ea4335" />
                         </linearGradient>
                       </defs>
-                      <!-- Background Track -->
-                      <circle class="m3-radial-track" cx="100" cy="100" r="82" />
+                      <!-- Background Open Arc Track (260 degrees) -->
+                      <path class="m3-radial-track" d="M 54.9 174.6 A 85 85 0 1 1 185.1 174.6" />
                       <!-- Active Animated Stroke -->
-                      <circle class="m3-radial-fill" id="radialGaugeCircle" cx="100" cy="100" r="82" />
+                      <path class="m3-radial-fill" id="radialGaugeCircle" d="M 54.9 174.6 A 85 85 0 1 1 185.1 174.6" />
                     </svg>
 
-                    <!-- Core Ring Numerical Data Overlay -->
+                    <!-- Breathing Center Numerical & Typographic Content -->
                     <div class="m3-radial-center-content">
                       <span class="m3-radial-label">TOTAL SPENT</span>
                       <div class="m3-hero-amount" id="pulseAmountDisplay">₹0.00</div>
                       <span class="m3-hero-sub" id="pulseSubDisplay">of ₹25,000 allowance</span>
-                      <div class="m3-radial-pct-pill" id="pulsePctPill">0%</div>
+                      <div class="m3-radial-pct-pill" id="pulsePctPill">0% Used</div>
                     </div>
                   </div>
 
@@ -778,6 +782,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
