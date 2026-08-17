@@ -1035,7 +1035,7 @@ html, body {
 
 /* ── Filter Chips Carousel ──────────────────────────────────────────────── */
 .m3-chips-carousel-wrap {
-  margin-top: 14px;
+  margin: 2px 0 14px;
   overflow: hidden;
 }
 

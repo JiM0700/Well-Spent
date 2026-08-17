@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body data-palette="blue">
 
@@ -297,7 +297,19 @@
                   </div>
                 </article>
 
-                <!-- Category Filter Chips Carousel -->
+              </div><!-- /col-left -->
+
+              <!-- Right Column: Monthly Transactions Feed with Filter Chips & Slide-to-Delete -->
+              <div class="m3-grid-col-right">
+
+                <div class="m3-section-title-bar">
+                  <div class="m3-section-headings">
+                    <h2 class="m3-section-title" id="activityFeedHeading">Monthly Transactions</h2>
+                    <span class="m3-section-subtitle" id="activityFeedSubheading">0 entries</span>
+                  </div>
+                </div>
+
+                <!-- Category Filter Chips Carousel (Inside Transactions Section) -->
                 <div class="m3-chips-carousel-wrap">
                   <div class="m3-chips-carousel" id="categoryFilterChips" role="tablist">
                     <button type="button" class="m3-filter-chip active" data-cat="all">
@@ -327,18 +339,6 @@
                     <button type="button" class="m3-filter-chip" data-cat="other">
                       <span>🌐 Other</span>
                     </button>
-                  </div>
-                </div>
-
-              </div><!-- /col-left -->
-
-              <!-- Right Column: Activity Feed with Slide-to-Delete -->
-              <div class="m3-grid-col-right">
-
-                <div class="m3-section-title-bar">
-                  <div class="m3-section-headings">
-                    <h2 class="m3-section-title" id="activityFeedHeading">Monthly Transactions</h2>
-                    <span class="m3-section-subtitle" id="activityFeedSubheading">0 entries</span>
                   </div>
                 </div>
 
@@ -782,6 +782,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
