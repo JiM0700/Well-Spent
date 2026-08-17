@@ -1,6 +1,6 @@
-// Service Worker for Well Spent PWA (Offline-First)
+// Service Worker for Well Spent PWA (Offline-First, Material 3)
 
-const CACHE_NAME = 'well-spent-v5';
+const CACHE_NAME = 'well-spent-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// WELL SPENT — PWA Application Logic
+// WELL SPENT — ChromeOS / Material 3 PWA Application Logic
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STORAGE_KEY          = 'well_spent_expenses_v1';
@@ -11,51 +11,78 @@ const TAB_KEY              = 'well_spent_current_tab_v1';
 const CATEGORY_BUDGETS_KEY = 'well_spent_category_budgets_v1';
 const RECURRING_BILLS_KEY  = 'well_spent_recurring_bills_v1';
 const THEME_KEY            = 'well_spent_theme_v1';
+const PALETTE_KEY          = 'well_spent_palette_v1';
 
 const CATEGORIES = {
-  food:          { name: 'Food & Dining',     icon: '🍽️' },
-  transport:     { name: 'Transport',         icon: '🚗' },
-  bills:         { name: 'Bills',             icon: '⚡' },
-  shopping:      { name: 'Shopping',          icon: '🛍️' },
-  healthcare:    { name: 'Healthcare',        icon: '🏥' },
-  entertainment: { name: 'Entertainment',     icon: '🎬' },
-  invest:        { name: 'Investments',       icon: '💰' },
-  other:         { name: 'Other',             icon: '🌐' },
+  food:          { name: 'Food & Dining',      icon: '🍽️', color: '#ff9800' },
+  transport:     { name: 'Transport',          icon: '🚗', color: '#29b6f6' },
+  bills:         { name: 'Bills & Utilities',  icon: '⚡', color: '#ab47bc' },
+  shopping:      { name: 'Shopping',           icon: '🛍️', color: '#ec407a' },
+  healthcare:    { name: 'Healthcare',         icon: '🏥', color: '#66bb6a' },
+  entertainment: { name: 'Entertainment',      icon: '🎬', color: '#ef5350' },
+  invest:        { name: 'Investments',        icon: '💰', color: '#ffa726' },
+  other:         { name: 'Other',              icon: '🌐', color: '#78909c' },
 };
 
-// ── State ─────────────────────────────────────────────────────────────────
+// ── State Variables ───────────────────────────────────────────────────────
 let expenses         = loadJSON(STORAGE_KEY, []);
-let monthlyBudget    = Number(localStorage.getItem(BUDGET_KEY))           || 25000;
-let cycleStartDay    = Number(localStorage.getItem(CYCLE_START_DAY_KEY))  || 1;
-let baseIncome       = Number(localStorage.getItem(BASE_INCOME_KEY))      || 50000;
-let currentViewMode  = localStorage.getItem(VIEW_MODE_KEY)                || 'monthwise';
-let currentTab       = localStorage.getItem(TAB_KEY)                      || 'overview';
+let monthlyBudget    = Number(localStorage.getItem(BUDGET_KEY))          || 25000;
+let cycleStartDay    = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
+let baseIncome       = Number(localStorage.getItem(BASE_INCOME_KEY))     || 50000;
+let currentViewMode  = localStorage.getItem(VIEW_MODE_KEY)               || 'monthwise';
+let currentTab       = localStorage.getItem(TAB_KEY)                     || 'overview';
 let categoryBudgets  = loadCategoryBudgets();
 let recurringBills   = loadRecurringBills();
-let currentTheme     = localStorage.getItem(THEME_KEY)                    || 'system';
+let currentTheme     = localStorage.getItem(THEME_KEY)                   || 'dark';
+let currentPalette   = localStorage.getItem(PALETTE_KEY)                 || 'blue';
 
-let activeCatFilter  = 'all';
-let searchQuery      = '';
-let selectedCatModal = 'food';
-let editingCatKey    = null;
+let activeCategoryFilter = 'all';
+let searchQuery          = '';
+let selectedCategoryModal = 'food';
+let editingCategoryKey   = null;
 
-// Seed sample data for first run
+// Seed initial sample data if completely empty
 if (expenses.length === 0) seedSampleData();
 
-// ── Storage Helpers ───────────────────────────────────────────────────────
+// ── Helper Utilities ──────────────────────────────────────────────────────
 function loadJSON(key, fallback) {
   try {
-    const v = JSON.parse(localStorage.getItem(key));
-    return v !== null && v !== undefined ? v : fallback;
-  } catch { return fallback; }
+    const val = JSON.parse(localStorage.getItem(key));
+    return val !== null && val !== undefined ? val : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function saveExpenses()        { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
 function saveCategoryBudgets() { localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(categoryBudgets)); }
 function saveRecurringBills()  { localStorage.setItem(RECURRING_BILLS_KEY, JSON.stringify(recurringBills)); }
 
+function inr(n) {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(n || 0);
+}
+function inrCompact(n) {
+  return '₹' + Math.round(n || 0).toLocaleString('en-IN');
+}
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+function escapeHtml(v) {
+  return String(v || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(14); } catch {}
+  }
+}
+
 function loadCategoryBudgets() {
-  const defaults = { food:8000, transport:4000, bills:6000, shopping:4000, healthcare:2000, entertainment:2000, invest:5000, other:2000 };
+  const defaults = {
+    food: 8000, transport: 4000, bills: 6000, shopping: 4000,
+    healthcare: 2000, entertainment: 2000, invest: 5000, other: 2000
+  };
   const stored = loadJSON(CATEGORY_BUDGETS_KEY, {});
   return Object.assign(defaults, stored);
 }
@@ -64,10 +91,10 @@ function loadRecurringBills() {
   const stored = loadJSON(RECURRING_BILLS_KEY, null);
   if (Array.isArray(stored) && stored.length > 0) return stored;
   return [
-    { id: 1, title: 'iCloud Storage',   amount: 299,  dueDay: 5,  isPaid: true },
-    { id: 2, title: 'Apple Music',      amount: 199,  dueDay: 12, isPaid: false },
-    { id: 3, title: 'Fiber Broadband',  amount: 999,  dueDay: 20, isPaid: false },
-    { id: 4, title: 'Gym Membership',   amount: 2500, dueDay: 1,  isPaid: true },
+    { id: 1, title: 'iCloud Storage', amount: 299, dueDay: 5, isPaid: true },
+    { id: 2, title: 'YouTube Premium', amount: 199, dueDay: 12, isPaid: false },
+    { id: 3, title: 'Fiber Broadband', amount: 999, dueDay: 20, isPaid: false },
+    { id: 4, title: 'Gym Membership', amount: 2500, dueDay: 1, isPaid: true }
   ];
 }
 
@@ -75,606 +102,938 @@ function seedSampleData() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
   expenses = [
-    { id: Date.now()-4, title: 'Specialty Espresso',    amount: 380,  category: 'food',      date: new Date(y,m,d,9,30).toISOString(),  notes: 'Morning coffee' },
-    { id: Date.now()-3, title: 'Organic Grocery Basket',amount: 1450, category: 'food',      date: new Date(y,m,d,14,0).toISOString(),  notes: '' },
-    { id: Date.now()-2, title: 'Metro SmartCard Topup', amount: 500,  category: 'transport', date: new Date(y,m,d-1,18,0).toISOString(),notes: '' },
-    { id: Date.now()-1, title: 'Electricity Bill',      amount: 2350, category: 'bills',     date: new Date(y,m,d-3,11,0).toISOString(),notes: '' },
+    { id: Date.now() - 4000, title: 'Specialty Cold Brew & Bagel', amount: 380, category: 'food', date: new Date(y, m, d, 9, 30).toISOString(), notes: 'Morning brew' },
+    { id: Date.now() - 3000, title: 'Organic Supermarket Basket', amount: 1450, category: 'food', date: new Date(y, m, d, 14, 15).toISOString(), notes: 'Groceries' },
+    { id: Date.now() - 2000, title: 'Metro Transit SmartCard', amount: 500, category: 'transport', date: new Date(y, m, d - 1, 18, 0).toISOString(), notes: 'Monthly pass' },
+    { id: Date.now() - 1000, title: 'High-speed Fiber Net', amount: 1199, category: 'bills', date: new Date(y, m, d - 3, 11, 0).toISOString(), notes: 'Broadband' }
   ];
   saveExpenses();
 }
 
-// ── Formatters ────────────────────────────────────────────────────────────
-function inr(n) {
-  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', minimumFractionDigits:2 }).format(n||0);
-}
-function inrS(n) { return '₹' + Math.round(n||0).toLocaleString('en-IN'); }
-function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN',{ day:'numeric', month:'short' }); }
-function esc(v) {
-  return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function haptic() { try { navigator.vibrate && navigator.vibrate(12); } catch {} }
-
-// ── Metrics ───────────────────────────────────────────────────────────────
-function calcMetrics() {
+// ── Financial Metrics Calculation Engine ──────────────────────────────────
+function calculateMetrics() {
   const now = new Date();
   const y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
-  let sy = y, sm = mo;
-  if (d < cycleStartDay) { sm--; if (sm < 0) { sm = 11; sy--; } }
-  const cycleStart = new Date(sy, sm, cycleStartDay, 0,0,0,0);
-  let ey = sy, em = sm+1; if (em > 11) { em = 0; ey++; }
-  const cycleEnd = new Date(ey, em, cycleStartDay, 0,0,0,0);
 
-  const monthExp = expenses.filter(e => { const ed = new Date(e.date); return ed >= cycleStart && ed < cycleEnd; });
-  const monthTotal = monthExp.reduce((s,e) => s+e.amount, 0);
+  let startYear = y, startMonth = mo;
+  if (d < cycleStartDay) {
+    startMonth--;
+    if (startMonth < 0) { startMonth = 11; startYear--; }
+  }
+  const cycleStart = new Date(startYear, startMonth, cycleStartDay, 0, 0, 0, 0);
 
-  const todayStart = new Date(y, mo, d, 0,0,0,0);
-  const todayEnd   = new Date(y, mo, d, 23,59,59,999);
-  const todayExp = expenses.filter(e => { const ed = new Date(e.date); return ed >= todayStart && ed <= todayEnd; });
-  const todayTotal = todayExp.reduce((s,e) => s+e.amount, 0);
+  let endYear = startYear, endMonth = startMonth + 1;
+  if (endMonth > 11) { endMonth = 0; endYear++; }
+  const cycleEnd = new Date(endYear, endMonth, cycleStartDay, 0, 0, 0, 0);
 
-  const totalDays    = Math.max(1, Math.round((cycleEnd - cycleStart) / 86400000));
-  const daysElapsed  = Math.max(1, Math.min(totalDays, Math.ceil((now - cycleStart) / 86400000)));
+  // Monthwise cycle expenses
+  const monthExpenses = expenses.filter(e => {
+    const ed = new Date(e.date);
+    return ed >= cycleStart && ed < cycleEnd;
+  });
+  const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // Daywise expenses (Today)
+  const todayStart = new Date(y, mo, d, 0, 0, 0, 0);
+  const todayEnd   = new Date(y, mo, d, 23, 59, 59, 999);
+  const todayExpenses = expenses.filter(e => {
+    const ed = new Date(e.date);
+    return ed >= todayStart && ed <= todayEnd;
+  });
+  const todayTotal = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // Days & Forecasting
+  const totalDays = Math.max(1, Math.round((cycleEnd - cycleStart) / 86400000));
+  const daysElapsed = Math.max(1, Math.min(totalDays, Math.ceil((now - cycleStart) / 86400000)));
   const daysRemaining = Math.max(0, totalDays - daysElapsed);
-  const dailyBudget  = monthlyBudget / totalDays;
-  const dailyBurn    = monthTotal / daysElapsed;
-  const projMonthEnd = monthTotal + dailyBurn * daysRemaining;
+
+  const dailyBudget = monthlyBudget / totalDays;
+  const dailyBurn = monthTotal / daysElapsed;
+  const projectedMonthEnd = monthTotal + (dailyBurn * daysRemaining);
   const remainingToday = Math.max(0, dailyBudget - todayTotal);
 
-  return { monthTotal, todayTotal, dailyBudget, dailyBurn, projMonthEnd, remainingToday,
-           daysElapsed, daysRemaining, totalDays, monthExp, todayExp };
+  return {
+    monthTotal,
+    todayTotal,
+    dailyBudget,
+    dailyBurn,
+    projectedMonthEnd,
+    remainingToday,
+    daysElapsed,
+    daysRemaining,
+    totalDays,
+    monthExpenses,
+    todayExpenses,
+    cycleStartDay
+  };
 }
 
-// ── Render ────────────────────────────────────────────────────────────────
+// ── Main UI Render Pipeline ───────────────────────────────────────────────
 function render() {
-  applyTheme();
+  applyThemeAndPalette();
   syncNav();
-  const m = calcMetrics();
-  renderSidebar(m);
-  renderOverview(m);
-  renderBudgets(m);
-  renderTrends(m);
+
+  const metrics = calculateMetrics();
+
+  renderRail(metrics);
+  renderTopBar(metrics);
+  renderOverview(metrics);
+  renderBudgets(metrics);
+  renderTrends(metrics);
   renderSettings();
 }
 
-function applyTheme() {
+function applyThemeAndPalette() {
   let theme = currentTheme;
   if (theme === 'system') {
     theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   document.body.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-palette', currentPalette);
 
-  const sel = document.getElementById('themeSelect');
-  if (sel) sel.value = currentTheme;
+  const metaTheme = document.getElementById('metaThemeColor');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', theme === 'dark' ? '#111318' : '#f8f9fa');
+  }
+
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) themeSelect.value = currentTheme;
+
+  document.querySelectorAll('.m3-palette-circle').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.pal === currentPalette);
+  });
 }
 
 function syncNav() {
-  // Sidebar links
-  document.querySelectorAll('.slink').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
-  // Bottom nav
-  document.querySelectorAll('.bnav-btn:not(.bnav-center)').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
-  // Tab views
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const tabMap = { overview:'tabOverview', categories:'tabCategories', insights:'tabInsights', settings:'tabSettings' };
-  const v = document.getElementById(tabMap[currentTab] || 'tabOverview');
-  if (v) v.classList.add('active');
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────
-function renderSidebar(m) {
-  const pct = monthlyBudget > 0 ? Math.min(100, Math.round((m.monthTotal / monthlyBudget) * 100)) : 0;
-  setText('sidebarGaugePct', `${pct}%`);
-  setText('sidebarSpentMeta', `${inrS(m.monthTotal)} spent`);
-  setText('sidebarLeftMeta', `${inrS(Math.max(0, monthlyBudget - m.monthTotal))} remaining`);
-  const fill = document.getElementById('sidebarGaugeFill');
-  if (fill) { fill.style.width = `${pct}%`; fill.classList.toggle('over', pct >= 100); }
-}
-
-// ── Overview Tab ──────────────────────────────────────────────────────────
-function renderOverview(m) {
-  const isDaywise = currentViewMode === 'daywise';
-
-  document.querySelectorAll('.period-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === currentViewMode);
+  // Navigation Rail Links
+  document.querySelectorAll('.m3-rail-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === currentTab);
   });
 
-  const total = isDaywise ? m.todayTotal : m.monthTotal;
-  const budget = isDaywise ? m.dailyBudget : monthlyBudget;
-  const remaining = isDaywise ? m.remainingToday : Math.max(0, monthlyBudget - m.monthTotal);
+  // Mobile Bottom Nav Items
+  document.querySelectorAll('.m3-bnav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === currentTab);
+  });
+
+  // Tab Panes
+  document.querySelectorAll('.m3-tab-pane').forEach(pane => {
+    pane.classList.remove('active');
+  });
+
+  const tabMap = {
+    overview: 'tabOverview',
+    categories: 'tabCategories',
+    insights: 'tabInsights',
+    settings: 'tabSettings'
+  };
+
+  const activePane = document.getElementById(tabMap[currentTab] || 'tabOverview');
+  if (activePane) activePane.classList.add('active');
+
+  // Update Page Title
+  const titles = {
+    overview: 'Overview',
+    categories: 'Budgets',
+    insights: 'Trends',
+    settings: 'Settings'
+  };
+  const titleEl = document.getElementById('pageHeadingTitle');
+  if (titleEl) titleEl.textContent = titles[currentTab] || 'Overview';
+}
+
+// ── Render Top App Bar & Rail ─────────────────────────────────────────────
+function renderTopBar(metrics) {
+  const cycleText = document.getElementById('topBarCycleText');
+  if (cycleText) cycleText.textContent = `Cycle Day ${metrics.daysElapsed} of ${metrics.totalDays}`;
+}
+
+function renderRail(metrics) {
+  const pct = monthlyBudget > 0 ? Math.min(100, Math.round((metrics.monthTotal / monthlyBudget) * 100)) : 0;
+  const gaugePct = document.getElementById('railGaugePct');
+  if (gaugePct) gaugePct.textContent = `${pct}%`;
+
+  const gaugeFill = document.getElementById('railGaugeFill');
+  if (gaugeFill) {
+    gaugeFill.style.width = `${pct}%`;
+    gaugeFill.classList.toggle('warning', pct >= 100);
+  }
+
+  const spentMeta = document.getElementById('railSpentMeta');
+  if (spentMeta) spentMeta.textContent = `${inrCompact(metrics.monthTotal)} spent`;
+
+  const leftMeta = document.getElementById('railLeftMeta');
+  if (leftMeta) leftMeta.textContent = `${inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))} left`;
+}
+
+// ── Tab 1: Overview Render ────────────────────────────────────────────────
+function renderOverview(metrics) {
+  const isDaywise = currentViewMode === 'daywise';
+
+  // Segmented Switcher Active State
+  const switcher = document.getElementById('viewModeSwitcher');
+  if (switcher) switcher.classList.toggle('daywise-active', isDaywise);
+
+  document.querySelectorAll('#viewModeSwitcher .m3-segment-btn').forEach(btn => {
+    const active = btn.dataset.mode === currentViewMode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', String(active));
+  });
+
+  const total = isDaywise ? metrics.todayTotal : metrics.monthTotal;
+  const budget = isDaywise ? metrics.dailyBudget : monthlyBudget;
+  const remaining = isDaywise ? metrics.remainingToday : Math.max(0, monthlyBudget - metrics.monthTotal);
   const isOver = budget > 0 && total > budget;
   const pct = budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0;
 
-  setText('pulseEyebrow', isDaywise ? "Today's Spending" : 'Monthly Spending');
-  setText('pulseAmountDisplay', inr(total));
-  setText('pulseSubDisplay', `of ${inrS(budget)} ${isDaywise ? 'daily budget' : 'monthly budget'}`);
-  setText('pulseStatusBadge', isOver ? 'Over Budget' : 'On Track');
-  setText('pulseRemainingDisplay', inrS(remaining));
-  setText('pulseBurnDisplay', `${inrS(m.dailyBurn)}/day`);
-  setText('pulseMonthEndDisplay', inrS(m.projMonthEnd));
+  // Hero Card Elements
+  const eyebrowBadge = document.getElementById('pulseEyebrowBadge');
+  if (eyebrowBadge) eyebrowBadge.textContent = isDaywise ? "TODAY'S SPENDING" : "MONTHLY ENVELOPE";
 
-  const fill = document.getElementById('pulseProgressFill');
-  if (fill) { fill.style.width = `${pct}%`; fill.classList.toggle('over', isOver); }
+  const amountDisplay = document.getElementById('pulseAmountDisplay');
+  if (amountDisplay) amountDisplay.textContent = inr(total);
 
-  const badge = document.getElementById('pulseStatusBadge');
-  if (badge) badge.classList.toggle('over', isOver);
+  const subDisplay = document.getElementById('pulseSubDisplay');
+  if (subDisplay) {
+    subDisplay.textContent = `of ${inrCompact(budget)} ${isDaywise ? 'daily allowance' : 'monthly allowance'}`;
+  }
 
-  setText('activityHeading', isDaywise ? "Today" : "This Cycle");
+  const statusPill = document.getElementById('pulseStatusPill');
+  if (statusPill) {
+    statusPill.textContent = isOver ? 'Over Budget' : 'On Track';
+    statusPill.classList.toggle('warning', isOver);
+  }
 
-  // Transaction list
-  let list = isDaywise ? m.todayExp : m.monthExp;
-  if (activeCatFilter !== 'all') list = list.filter(e => e.category === activeCatFilter);
+  const progressFill = document.getElementById('pulseProgressFill');
+  if (progressFill) {
+    progressFill.style.width = `${pct}%`;
+    progressFill.classList.toggle('warning', isOver);
+  }
+
+  const remainingDisplay = document.getElementById('pulseRemainingDisplay');
+  if (remainingDisplay) remainingDisplay.textContent = inrCompact(remaining);
+
+  const burnDisplay = document.getElementById('pulseBurnDisplay');
+  if (burnDisplay) burnDisplay.textContent = `${inrCompact(metrics.dailyBurn)}/day`;
+
+  const monthEndDisplay = document.getElementById('pulseMonthEndDisplay');
+  if (monthEndDisplay) monthEndDisplay.textContent = inrCompact(metrics.projectedMonthEnd);
+
+  // Section Heading
+  const feedHeading = document.getElementById('activityFeedHeading');
+  if (feedHeading) feedHeading.textContent = isDaywise ? "Today's Activity" : "Monthly Transactions";
+
+  // Filtered Activity List
+  let list = isDaywise ? metrics.todayExpenses : metrics.monthExpenses;
+
+  if (activeCategoryFilter !== 'all') {
+    list = list.filter(e => e.category === activeCategoryFilter);
+  }
+
   if (searchQuery.trim()) {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     list = list.filter(e =>
       e.title.toLowerCase().includes(q) ||
       (e.notes && e.notes.toLowerCase().includes(q)) ||
-      (CATEGORIES[e.category]?.name.toLowerCase().includes(q))
+      (CATEGORIES[e.category] && CATEGORIES[e.category].name.toLowerCase().includes(q))
     );
   }
-  setText('activitySubheading', `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`);
-  renderTxList(list);
+
+  const feedSubheading = document.getElementById('activityFeedSubheading');
+  if (feedSubheading) {
+    feedSubheading.textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+  }
+
+  renderTransactionList(list);
 }
 
-// ── Transaction List (slide-to-delete) ────────────────────────────────────
-function renderTxList(list) {
-  const el = document.getElementById('transactionList');
-  if (!el) return;
+// ── Transaction Feed with Material 3 Slide-to-Delete ─────────────────────
+function renderTransactionList(list) {
+  const container = document.getElementById('transactionList');
+  if (!container) return;
 
-  if (!list.length) {
-    el.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state__icon">📭</div>
-        <div class="empty-state__title">No Transactions</div>
-        <p class="empty-state__sub">Nothing recorded for this period.</p>
-      </div>`;
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="m3-empty-state">
+        <div class="m3-empty-icon">📭</div>
+        <div class="m3-empty-title">No Transactions Recorded</div>
+        <p class="m3-empty-desc">No activities found matching your current filter criteria.</p>
+      </div>
+    `;
     return;
   }
 
-  el.innerHTML = list.map(item => {
+  container.innerHTML = list.map(item => {
     const cat = CATEGORIES[item.category] || CATEGORIES.other;
     return `
-      <div class="tx-row" data-id="${item.id}">
-        <div class="tx-delete-reveal">
-          <button type="button" data-del="${item.id}" aria-label="Delete">Delete</button>
+      <div class="m3-tx-row" data-id="${item.id}">
+        <div class="m3-tx-delete-reveal">
+          <button type="button" data-del="${item.id}" aria-label="Delete entry">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+            <span>Delete</span>
+          </button>
         </div>
-        <div class="tx-card" data-id="${item.id}">
-          <div class="tx-card__icon">${cat.icon}</div>
-          <div class="tx-card__body">
-            <div class="tx-card__title">${esc(item.title)}</div>
-            <div class="tx-card__meta">${cat.name} · ${fmtDate(item.date)}${item.notes ? ' · '+esc(item.notes) : ''}</div>
+
+        <div class="m3-tx-card" data-id="${item.id}">
+          <div class="m3-tx-icon-badge">${cat.icon}</div>
+          <div class="m3-tx-info">
+            <span class="m3-tx-title">${escapeHtml(item.title)}</span>
+            <span class="m3-tx-meta">${cat.name} • ${formatDate(item.date)}${item.notes ? ' • ' + escapeHtml(item.notes) : ''}</span>
           </div>
-          <div class="tx-card__amount">${inr(item.amount)}</div>
+          <div class="m3-tx-amount">${inr(item.amount)}</div>
         </div>
-      </div>`;
+      </div>
+    `;
   }).join('');
 
-  attachSwipe();
+  attachSwipeListeners();
 }
 
-function attachSwipe() {
-  document.querySelectorAll('.tx-card').forEach(card => {
-    let sx = 0, cx = 0, open = false, active = false;
-    const BW = 72, FULL = -150;
+function attachSwipeListeners() {
+  document.querySelectorAll('.m3-tx-card').forEach(card => {
+    let startX = 0, currentX = 0, isSwiping = false, isSwipedOpen = false;
+    const buttonWidth = 80;
+    const fullSwipeThreshold = -150;
 
-    card.addEventListener('touchstart', e => { sx = e.touches[0].clientX; active = true; card.style.transition = 'none'; }, { passive: true });
-    card.addEventListener('touchmove', e => {
-      if (!active) return;
-      cx = e.touches[0].clientX;
-      const dx = cx - sx;
-      if (dx < 0) card.style.transform = `translateX(${open ? Math.max(-BW*1.5, -BW+dx) : Math.max(-BW*1.2, dx)}px)`;
-      else if (open) card.style.transform = `translateX(${Math.min(0, -BW+dx)}px)`;
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+      card.style.transition = 'none';
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+      if (!isSwiping) return;
+      currentX = e.touches[0].clientX;
+      const diffX = currentX - startX;
+
+      if (diffX < 0) {
+        card.style.transform = `translateX(${isSwipedOpen ? Math.max(-buttonWidth * 1.5, -buttonWidth + diffX) : diffX}px)`;
+      } else if (isSwipedOpen && diffX > 0) {
+        card.style.transform = `translateX(${Math.min(0, -buttonWidth + diffX)}px)`;
+      }
     }, { passive: true });
 
     card.addEventListener('touchend', () => {
-      if (!active) return;
-      active = false;
-      card.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
-      const dx = cx - sx;
+      if (!isSwiping) return;
+      isSwiping = false;
+      card.style.transition = 'transform 0.28s cubic-bezier(0.05, 0.7, 0.1, 1.0)';
+
+      const diffX = currentX - startX;
       const id = card.dataset.id;
-      if (dx < FULL) {
-        haptic(); card.style.transform = 'translateX(-100%)';
-        setTimeout(() => deleteTx(id), 220);
-      } else if (dx < -BW / 2) {
-        haptic(); card.style.transform = `translateX(${-BW}px)`; open = true;
+
+      if (diffX < fullSwipeThreshold) {
+        triggerHaptic();
+        card.style.transform = 'translateX(-100%)';
+        setTimeout(() => deleteTransaction(id), 220);
+      } else if (diffX < -buttonWidth / 2) {
+        triggerHaptic();
+        card.style.transform = `translateX(${-buttonWidth}px)`;
+        isSwipedOpen = true;
       } else {
-        card.style.transform = 'translateX(0)'; open = false;
+        card.style.transform = 'translateX(0px)';
+        isSwipedOpen = false;
       }
     });
 
-    card.addEventListener('click', () => { if (open) { card.style.transform = 'translateX(0)'; card.style.transition = 'transform 0.25s ease'; open = false; } });
+    card.addEventListener('click', () => {
+      if (isSwipedOpen) {
+        card.style.transform = 'translateX(0px)';
+        card.style.transition = 'transform 0.25s ease';
+        isSwipedOpen = false;
+      }
+    });
   });
 
+  // Action button tap handler
   document.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); haptic(); deleteTx(btn.dataset.del); });
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerHaptic();
+      deleteTransaction(btn.dataset.del);
+    });
   });
 }
 
-function deleteTx(id) {
+function deleteTransaction(id) {
   expenses = expenses.filter(e => String(e.id) !== String(id));
   saveExpenses();
   render();
 }
 
-// ── Budgets Tab ───────────────────────────────────────────────────────────
-function renderBudgets(m) {
-  const pct = monthlyBudget > 0 ? Math.min(100, Math.round((m.monthTotal / monthlyBudget) * 100)) : 0;
-  setText('allocationTotalDisplay', inr(monthlyBudget));
-  setText('allocationStatusBadge', `${pct}% used`);
-  setText('allocationSpentText', inrS(m.monthTotal));
-  setText('allocationRemainingText', inrS(Math.max(0, monthlyBudget - m.monthTotal)));
+// ── Tab 2: Budgets & Category Envelopes ────────────────────────────────────
+function renderBudgets(metrics) {
+  const allocationTotal = document.getElementById('allocationTotalDisplay');
+  if (allocationTotal) allocationTotal.textContent = inr(monthlyBudget);
 
-  const fill = document.getElementById('allocationProgressFill');
-  if (fill) { fill.style.width = `${pct}%`; fill.classList.toggle('over', pct >= 100); }
+  const pct = monthlyBudget > 0 ? Math.min(100, Math.round((metrics.monthTotal / monthlyBudget) * 100)) : 0;
+  const statusBadge = document.getElementById('allocationStatusBadge');
+  if (statusBadge) {
+    statusBadge.textContent = `${pct}% Used`;
+    statusBadge.classList.toggle('warning', pct >= 100);
+  }
 
+  const progressFill = document.getElementById('allocationProgressFill');
+  if (progressFill) {
+    progressFill.style.width = `${pct}%`;
+    progressFill.classList.toggle('warning', pct >= 100);
+  }
+
+  const spentText = document.getElementById('allocationSpentText');
+  if (spentText) spentText.textContent = `${inrCompact(metrics.monthTotal)} spent`;
+
+  const remainingText = document.getElementById('allocationRemainingText');
+  if (remainingText) remainingText.textContent = `${inrCompact(Math.max(0, monthlyBudget - metrics.monthTotal))} remaining`;
+
+  // Envelope Grid
   const grid = document.getElementById('envelopesGrid');
   if (!grid) return;
 
   grid.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
     const target = categoryBudgets[key] || 3000;
-    const spent = m.monthExp.filter(e => e.category === key).reduce((s,e) => s+e.amount, 0);
-    const p = target > 0 ? Math.min(100, Math.round((spent/target)*100)) : 0;
-    const over = spent > target;
+    const spent = metrics.monthExpenses
+      .filter(e => e.category === key)
+      .reduce((s, e) => s + e.amount, 0);
+
+    const usage = target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+    const isOver = spent > target;
+
     return `
-      <div class="envelope-row" data-cat="${key}">
-        <div class="envelope-row__top">
-          <span class="envelope-row__icon">${cat.icon}</span>
-          <span class="envelope-row__name">${cat.name}</span>
-          <span class="envelope-row__pct ${over ? 'over' : ''}">${p}%</span>
+      <div class="m3-envelope-card" data-cat="${key}">
+        <div class="m3-envelope-top">
+          <span class="m3-envelope-icon">${cat.icon}</span>
+          <span class="m3-envelope-name">${cat.name}</span>
+          <span class="m3-envelope-pct ${isOver ? 'over' : ''}">${usage}%</span>
         </div>
-        <div class="envelope-row__bar"><div class="envelope-row__fill ${over ? 'over' : ''}" style="width:${p}%"></div></div>
-        <div class="envelope-row__amounts">
-          <span>${inrS(spent)} spent</span>
-          <span>Target: ${inrS(target)}</span>
+
+        <div class="m3-progress-track">
+          <div class="m3-progress-indicator ${isOver ? 'warning' : ''}" style="width: ${usage}%;"></div>
         </div>
-      </div>`;
+
+        <div class="m3-envelope-meta">
+          <span>${inrCompact(spent)} spent</span>
+          <span>Target: ${inrCompact(target)}</span>
+        </div>
+      </div>
+    `;
   }).join('');
 
-  grid.querySelectorAll('.envelope-row').forEach(row => {
-    row.addEventListener('click', () => { haptic(); openBudgetModal(row.dataset.cat); });
+  grid.querySelectorAll('.m3-envelope-card').forEach(card => {
+    card.addEventListener('click', () => {
+      triggerHaptic();
+      openBudgetEditModal(card.dataset.cat);
+    });
   });
 }
 
-function openBudgetModal(key) {
-  editingCatKey = key;
-  setText('budgetEditTitle', `Edit ${CATEGORIES[key]?.name || key}`);
-  const inp = document.getElementById('budgetEditInput');
-  if (inp) inp.value = categoryBudgets[key] || 3000;
-  openOverlay('budgetModalBackdrop');
+function openBudgetEditModal(catKey) {
+  editingCategoryKey = catKey;
+  const cat = CATEGORIES[catKey];
+  const title = document.getElementById('budgetEditTitle');
+  if (title) title.textContent = `Edit ${cat?.name || catKey}`;
+
+  const input = document.getElementById('budgetEditInput');
+  if (input) input.value = categoryBudgets[catKey] || 3000;
+
+  openModal('budgetModalBackdrop');
 }
 
-// ── Trends Tab ────────────────────────────────────────────────────────────
-function renderTrends(m) {
-  setText('velBurnVal', inrS(m.dailyBurn));
-  setText('velProjectedVal', inrS(m.projMonthEnd));
-  setText('velRemainingVal', `${m.daysRemaining}d`);
+// ── Tab 3: Trends & Velocity Render ───────────────────────────────────────
+function renderTrends(metrics) {
+  const burnVal = document.getElementById('velBurnVal');
+  if (burnVal) burnVal.textContent = inrCompact(metrics.dailyBurn);
 
-  const burnPct = monthlyBudget > 0 ? Math.min(100, Math.round((m.projMonthEnd/monthlyBudget)*100)) : 0;
-  const bFill = document.getElementById('velocityBurnFill');
-  if (bFill) { bFill.style.width = `${burnPct}%`; bFill.classList.toggle('over', m.projMonthEnd > monthlyBudget); }
+  const projectedVal = document.getElementById('velProjectedVal');
+  if (projectedVal) projectedVal.textContent = inrCompact(metrics.projectedMonthEnd);
 
-  const statusEl = document.getElementById('velocityStatusMsg');
-  if (statusEl) {
-    if (m.projMonthEnd > monthlyBudget && monthlyBudget > 0) {
-      statusEl.textContent = `Over-budget trajectory. At ${inr(m.dailyBurn)}/day you'll exceed your limit by ${inr(m.projMonthEnd - monthlyBudget)}.`;
+  const remainingVal = document.getElementById('velRemainingVal');
+  if (remainingVal) remainingVal.textContent = `${metrics.daysRemaining}d`;
+
+  const burnPct = monthlyBudget > 0 ? Math.min(100, Math.round((metrics.projectedMonthEnd / monthlyBudget) * 100)) : 0;
+  const burnFill = document.getElementById('velocityBurnFill');
+  if (burnFill) {
+    burnFill.style.width = `${burnPct}%`;
+    burnFill.classList.toggle('warning', metrics.projectedMonthEnd > monthlyBudget);
+  }
+
+  const statusMsg = document.getElementById('velocityStatusMsg');
+  if (statusMsg) {
+    if (metrics.projectedMonthEnd > monthlyBudget && monthlyBudget > 0) {
+      statusMsg.innerHTML = `⚠️ <strong style="color:var(--md-error);">Over-budget run-rate:</strong> At your current burn of ${inr(metrics.dailyBurn)}/day, you are projected to exceed your envelope by ${inr(metrics.projectedMonthEnd - monthlyBudget)}.`;
     } else {
-      statusEl.textContent = `On track. Projected to finish with ${inr(Math.max(0, monthlyBudget - m.projMonthEnd))} surplus.`;
+      statusMsg.innerHTML = `✅ <strong style="color:var(--md-success);">Sustainable burn rate:</strong> Projected surplus of ${inr(Math.max(0, monthlyBudget - metrics.projectedMonthEnd))} by end of cycle.`;
     }
   }
 
-  const distEl = document.getElementById('categoryDistributionList');
-  if (distEl) {
-    const total = m.monthTotal || 1;
-    distEl.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
-      const spent = m.monthExp.filter(e => e.category === key).reduce((s,e) => s+e.amount, 0);
-      const p = Math.round((spent/total)*100);
+  // Distribution List
+  const distList = document.getElementById('categoryDistributionList');
+  if (distList) {
+    const totalSpent = metrics.monthTotal || 1;
+    distList.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+      const spent = metrics.monthExpenses
+        .filter(e => e.category === key)
+        .reduce((s, e) => s + e.amount, 0);
+
+      const pct = Math.round((spent / totalSpent) * 100);
+
       return `
-        <div class="dist-row">
-          <div class="dist-row__meta">
-            <span class="dist-row__label">${cat.icon} ${cat.name}</span>
-            <span class="dist-row__val">${inr(spent)} (${p}%)</span>
+        <div class="m3-dist-row">
+          <div class="m3-dist-meta">
+            <span>${cat.icon} ${cat.name}</span>
+            <span style="font-family:var(--font-mono);">${inr(spent)} (${pct}%)</span>
           </div>
-          <div class="dist-row__bar"><div class="dist-row__fill" style="width:${p}%"></div></div>
-        </div>`;
+          <div class="m3-progress-track">
+            <div class="m3-progress-indicator" style="width: ${pct}%;"></div>
+          </div>
+        </div>
+      `;
     }).join('');
   }
 
-  // Recurring bills
+  // Recurring Bills
   const today = new Date().getDate();
-  const upcoming = recurringBills.filter(b => !b.isPaid).reduce((s,b) => s+b.amount, 0);
-  setText('upcomingBillsTotalDisplay', inr(upcoming));
+  const upcomingTotal = recurringBills
+    .filter(b => !b.isPaid)
+    .reduce((s, b) => s + b.amount, 0);
 
-  const billsEl = document.getElementById('recurringBillsList');
-  if (billsEl) {
-    billsEl.innerHTML = recurringBills.map(bill => {
-      let dLeft = bill.dueDay - today;
-      if (dLeft < 0) { const last = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate(); dLeft = last - today + bill.dueDay; }
-      const dueTxt = dLeft === 0 ? 'Due Today' : `Due in ${dLeft}d`;
+  const upcomingDisplay = document.getElementById('upcomingBillsTotalDisplay');
+  if (upcomingDisplay) upcomingDisplay.textContent = inr(upcomingTotal);
+
+  const billsList = document.getElementById('recurringBillsList');
+  if (billsList) {
+    billsList.innerHTML = recurringBills.map(bill => {
+      let daysLeft = bill.dueDay - today;
+      if (daysLeft < 0) {
+        const lastDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        daysLeft = (lastDay - today) + bill.dueDay;
+      }
+      const dueLabel = daysLeft === 0 ? 'Due Today' : `Due in ${daysLeft}d`;
+
       return `
-        <div class="recurring-item ${bill.isPaid ? 'paid' : ''}">
-          <div class="recurring-item__body">
-            <div class="recurring-item__name">${esc(bill.title)}</div>
-            <div class="recurring-item__sub">${dueTxt} · Day ${bill.dueDay} of month</div>
+        <div class="m3-recurring-item ${bill.isPaid ? 'paid' : ''}">
+          <div class="m3-rec-info">
+            <div class="m3-rec-title-row">
+              <span class="m3-rec-title">${escapeHtml(bill.title)}</span>
+              <span class="m3-due-chip">${dueLabel}</span>
+            </div>
+            <span class="m3-rec-sub">Day ${bill.dueDay} of month</span>
           </div>
-          <div class="recurring-item__right">
-            <span class="recurring-item__amount">${inr(bill.amount)}</span>
-            <button type="button" class="recurring-item__toggle ${bill.isPaid ? 'paid' : ''}" data-bill="${bill.id}">
-              ${bill.isPaid ? 'Paid' : 'Mark Paid'}
+          <div class="m3-rec-right">
+            <span class="m3-rec-amount">${inr(bill.amount)}</span>
+            <button type="button" class="m3-rec-toggle-btn ${bill.isPaid ? 'paid' : ''}" data-bill="${bill.id}">
+              ${bill.isPaid ? '✓ Paid' : 'Mark Paid'}
             </button>
           </div>
-        </div>`;
+        </div>
+      `;
     }).join('');
 
-    billsEl.querySelectorAll('[data-bill]').forEach(btn => {
+    billsList.querySelectorAll('[data-bill]').forEach(btn => {
       btn.addEventListener('click', () => {
-        haptic();
-        const b = recurringBills.find(x => String(x.id) === btn.dataset.bill);
-        if (b) { b.isPaid = !b.isPaid; saveRecurringBills(); render(); }
+        triggerHaptic();
+        const bill = recurringBills.find(b => String(b.id) === btn.dataset.bill);
+        if (bill) {
+          bill.isPaid = !bill.isPaid;
+          saveRecurringBills();
+          render();
+        }
       });
     });
   }
 }
 
-// ── Settings Tab ──────────────────────────────────────────────────────────
+// ── Tab 4: Settings Render ────────────────────────────────────────────────
 function renderSettings() {
-  const mb = document.getElementById('settingMonthlyBudget');
-  if (mb) mb.value = monthlyBudget;
-  const cs = document.getElementById('settingCycleStartDay');
-  if (cs) cs.value = cycleStartDay;
-  const bi = document.getElementById('settingBaseIncome');
-  if (bi) bi.value = baseIncome;
+  const budgetInput = document.getElementById('settingMonthlyBudget');
+  if (budgetInput) budgetInput.value = monthlyBudget;
+
+  const cycleInput = document.getElementById('settingCycleStartDay');
+  if (cycleInput) cycleInput.value = cycleStartDay;
+
+  const incomeInput = document.getElementById('settingBaseIncome');
+  if (incomeInput) incomeInput.value = baseIncome;
 }
 
-// ── Modals ────────────────────────────────────────────────────────────────
-function openOverlay(id) { document.getElementById(id)?.classList.add('active'); }
-function closeOverlay(id) { document.getElementById(id)?.classList.remove('active'); }
-
-function openAddModal() {
-  const dateEl = document.getElementById('expenseDateInput');
-  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-  const amtEl = document.getElementById('expenseAmountInput');
-  if (amtEl) { amtEl.value = ''; }
-  document.getElementById('expenseTitleInput') && (document.getElementById('expenseTitleInput').value = '');
-  document.getElementById('expenseNotesInput') && (document.getElementById('expenseNotesInput').value = '');
-  renderModalCats();
-  openOverlay('modalBackdrop');
-  setTimeout(() => document.getElementById('expenseAmountInput')?.focus(), 100);
+// ── Modal Handlers ────────────────────────────────────────────────────────
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add('active');
 }
 
-function renderModalCats() {
-  const el = document.getElementById('modalCategoryGrid');
-  if (!el) return;
-  el.innerHTML = Object.entries(CATEGORIES).map(([k, cat]) => `
-    <button type="button" class="cat-btn ${k === selectedCatModal ? 'active' : ''}" data-c="${k}">
-      <span class="cat-btn__icon">${cat.icon}</span>
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('active');
+}
+
+function openAddExpenseModal() {
+  const dateInput = document.getElementById('expenseDateInput');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  const amountInput = document.getElementById('expenseAmountInput');
+  if (amountInput) amountInput.value = '';
+
+  const titleInput = document.getElementById('expenseTitleInput');
+  if (titleInput) titleInput.value = '';
+
+  const notesInput = document.getElementById('expenseNotesInput');
+  if (notesInput) notesInput.value = '';
+
+  renderModalCategories();
+  openModal('modalBackdrop');
+  setTimeout(() => amountInput && amountInput.focus(), 120);
+}
+
+function renderModalCategories() {
+  const grid = document.getElementById('modalCategoryGrid');
+  if (!grid) return;
+
+  grid.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
+    <button type="button" class="m3-modal-cat-pill ${key === selectedCategoryModal ? 'active' : ''}" data-cat="${key}">
+      <span class="m3-modal-cat-icon">${cat.icon}</span>
       <span>${cat.name.split(' ')[0]}</span>
-    </button>`).join('');
-  el.querySelectorAll('.cat-btn').forEach(b => {
-    b.addEventListener('click', () => { haptic(); selectedCatModal = b.dataset.c; renderModalCats(); });
+    </button>
+  `).join('');
+
+  grid.querySelectorAll('.m3-modal-cat-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      triggerHaptic();
+      selectedCategoryModal = pill.dataset.cat;
+      renderModalCategories();
+    });
   });
 }
 
-function saveExpense(e) {
+function handleSaveExpense(e) {
   e.preventDefault();
-  const amount = parseFloat(document.getElementById('expenseAmountInput').value);
-  const title  = document.getElementById('expenseTitleInput').value.trim();
-  const notes  = document.getElementById('expenseNotesInput').value.trim();
-  const date   = document.getElementById('expenseDateInput').value;
+  const amountStr = document.getElementById('expenseAmountInput').value.trim();
+  const title = document.getElementById('expenseTitleInput').value.trim();
+  const notes = document.getElementById('expenseNotesInput').value.trim();
+  const dateStr = document.getElementById('expenseDateInput').value;
 
-  if (!title || isNaN(amount) || amount <= 0) {
-    alert('Please enter a valid description and amount.'); return;
+  const amount = parseFloat(amountStr);
+
+  if (isNaN(amount) || amount <= 0 || !title) {
+    alert('Please enter a valid expense description and amount.');
+    return;
   }
-  haptic();
-  expenses.unshift({ id: Date.now(), title, amount, category: selectedCatModal, date: date ? new Date(date+'T12:00:00').toISOString() : new Date().toISOString(), notes });
+
+  triggerHaptic();
+
+  const newExpense = {
+    id: Date.now(),
+    title,
+    amount,
+    category: selectedCategoryModal,
+    date: dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString(),
+    notes
+  };
+
+  expenses.unshift(newExpense);
   saveExpenses();
-  closeOverlay('modalBackdrop');
+  closeModal('modalBackdrop');
   render();
 }
 
-// ── Events ────────────────────────────────────────────────────────────────
+// ── Event Handlers Setup ──────────────────────────────────────────────────
 function setupEvents() {
-  // Tab nav
-  document.querySelectorAll('.slink, .bnav-btn:not(.bnav-center)').forEach(btn => {
+  // Navigation (Rail & Bottom Nav)
+  document.querySelectorAll('.m3-rail-btn, .m3-bnav-item').forEach(btn => {
     btn.addEventListener('click', () => {
-      haptic(); currentTab = btn.dataset.tab;
-      localStorage.setItem(TAB_KEY, currentTab); render();
+      triggerHaptic();
+      currentTab = btn.dataset.tab;
+      localStorage.setItem(TAB_KEY, currentTab);
+      render();
     });
   });
 
-  // Mobile centre add button
-  const centreBtn = document.getElementById('mobileAddBtn');
-  if (centreBtn) centreBtn.addEventListener('click', () => { haptic(); openAddModal(); });
-
-  // Period toggle
-  document.getElementById('viewModeSwitcher')?.addEventListener('click', e => {
-    const btn = e.target.closest('.period-btn');
-    if (!btn) return;
-    haptic(); currentViewMode = btn.dataset.mode;
-    localStorage.setItem(VIEW_MODE_KEY, currentViewMode); render();
+  // Period Switcher
+  document.querySelectorAll('#viewModeSwitcher .m3-segment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      triggerHaptic();
+      currentViewMode = btn.dataset.mode;
+      localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
+      render();
+    });
   });
 
-  // Category filter chips
-  document.getElementById('categoryFilterChips')?.addEventListener('click', e => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    haptic();
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    activeCatFilter = chip.dataset.cat;
-    render();
+  // Filter Chips Carousel
+  document.querySelectorAll('.m3-filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      triggerHaptic();
+      document.querySelectorAll('.m3-filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeCategoryFilter = chip.dataset.cat;
+      render();
+    });
   });
 
-  // Search
-  document.getElementById('txSearchInput')?.addEventListener('input', e => {
-    searchQuery = e.target.value;
-    const m = calcMetrics(); renderOverview(m);
-  });
+  // Global Search Input
+  const searchInput = document.getElementById('globalSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      const metrics = calculateMetrics();
+      renderOverview(metrics);
+    });
+  }
 
-  // Add buttons
-  document.getElementById('openAddModalBtn')?.addEventListener('click',  () => { haptic(); openAddModal(); });
-  document.getElementById('openAddModalBtn2')?.addEventListener('click', () => { haptic(); openAddModal(); });
-  document.getElementById('sidebarAddBtn')?.addEventListener('click',   () => { haptic(); openAddModal(); });
+  // Add Transaction Triggers (Rail FAB, Top Bar, Center FAB, Inline)
+  const addButtons = [
+    document.getElementById('railAddBtn'),
+    document.getElementById('topAddBtn'),
+    document.getElementById('mobileAddFab'),
+    document.getElementById('inlineAddBtn')
+  ];
 
-  // Modal save/cancel
-  document.getElementById('modalCancelBtn')?.addEventListener('click', () => closeOverlay('modalBackdrop'));
-  document.getElementById('addExpenseForm')?.addEventListener('submit', saveExpense);
-  document.getElementById('modalSaveBtn')?.addEventListener('click', saveExpense);
-
-  // Budget modal
-  document.getElementById('budgetCancelBtn')?.addEventListener('click', () => closeOverlay('budgetModalBackdrop'));
-  document.getElementById('budgetSaveBtn')?.addEventListener('click', () => {
-    haptic();
-    const v = Number(document.getElementById('budgetEditInput').value) || 0;
-    if (editingCatKey) { categoryBudgets[editingCatKey] = v; saveCategoryBudgets(); }
-    closeOverlay('budgetModalBackdrop'); render();
-  });
-
-  // Bill modal
-  document.getElementById('openAddBillModalBtn')?.addEventListener('click', () => { haptic(); openOverlay('billModalBackdrop'); });
-  document.getElementById('billCancelBtn')?.addEventListener('click', () => closeOverlay('billModalBackdrop'));
-  document.getElementById('billSaveBtn')?.addEventListener('click', () => {
-    const title  = document.getElementById('billTitleInput').value.trim();
-    const amount = Number(document.getElementById('billAmountInput').value) || 0;
-    const dueDay = Number(document.getElementById('billDayInput').value) || 1;
-    if (title && amount > 0) {
-      haptic();
-      recurringBills.push({ id: Date.now(), title, amount, dueDay, isPaid: false });
-      saveRecurringBills();
-      closeOverlay('billModalBackdrop'); render();
+  addButtons.forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        triggerHaptic();
+        openAddExpenseModal();
+      });
     }
   });
 
-  // Overlay backdrop dismiss
-  document.querySelectorAll('.overlay').forEach(ov => {
-    ov.addEventListener('click', e => { if (e.target === ov) closeOverlay(ov.id); });
+  // Modal Cancel & Submit
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalDismissBtn = document.getElementById('modalDismissBtn');
+  [modalCancelBtn, modalDismissBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('modalBackdrop'));
   });
 
-  // Theme
-  document.getElementById('themeSelect')?.addEventListener('change', e => {
-    currentTheme = e.target.value;
-    localStorage.setItem(THEME_KEY, currentTheme);
-    applyTheme();
+  const addForm = document.getElementById('addExpenseForm');
+  if (addForm) addForm.addEventListener('submit', handleSaveExpense);
+
+  // Budget Modal Save & Close
+  const budgetCancelBtn = document.getElementById('budgetCancelBtn');
+  const budgetCloseBtn = document.getElementById('budgetCloseBtn');
+  [budgetCancelBtn, budgetCloseBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('budgetModalBackdrop'));
   });
 
-  // Settings save
-  document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
-    haptic();
-    monthlyBudget = Number(document.getElementById('settingMonthlyBudget').value) || 25000;
-    cycleStartDay = Number(document.getElementById('settingCycleStartDay').value) || 1;
-    baseIncome    = Number(document.getElementById('settingBaseIncome').value)    || 50000;
-    localStorage.setItem(BUDGET_KEY, monthlyBudget);
-    localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
-    localStorage.setItem(BASE_INCOME_KEY, baseIncome);
-    render();
+  const budgetSaveBtn = document.getElementById('budgetSaveBtn');
+  if (budgetSaveBtn) {
+    budgetSaveBtn.addEventListener('click', () => {
+      triggerHaptic();
+      const input = document.getElementById('budgetEditInput');
+      const val = Number(input.value) || 0;
+      if (editingCategoryKey) {
+        categoryBudgets[editingCategoryKey] = val;
+        saveCategoryBudgets();
+      }
+      closeModal('budgetModalBackdrop');
+      render();
+    });
+  }
+
+  // Recurring Bill Modal Save & Close
+  const openAddBillModalBtn = document.getElementById('openAddBillModalBtn');
+  if (openAddBillModalBtn) {
+    openAddBillModalBtn.addEventListener('click', () => {
+      triggerHaptic();
+      openModal('billModalBackdrop');
+    });
+  }
+
+  const billCancelBtn = document.getElementById('billCancelBtn');
+  const billCloseBtn = document.getElementById('billCloseBtn');
+  [billCancelBtn, billCloseBtn].forEach(b => {
+    if (b) b.addEventListener('click', () => closeModal('billModalBackdrop'));
   });
 
-  // Data Export / Import
+  const billSaveBtn = document.getElementById('billSaveBtn');
+  if (billSaveBtn) {
+    billSaveBtn.addEventListener('click', () => {
+      const title = document.getElementById('billTitleInput').value.trim();
+      const amount = Number(document.getElementById('billAmountInput').value) || 0;
+      const dueDay = Number(document.getElementById('billDayInput').value) || 1;
+
+      if (title && amount > 0) {
+        triggerHaptic();
+        recurringBills.push({ id: Date.now(), title, amount, dueDay, isPaid: false });
+        saveRecurringBills();
+        closeModal('billModalBackdrop');
+        render();
+      }
+    });
+  }
+
+  // Scrim Dismiss Handlers
+  document.querySelectorAll('.m3-scrim-backdrop').forEach(scrim => {
+    scrim.addEventListener('click', (e) => {
+      if (e.target === scrim) closeModal(scrim.id);
+    });
+  });
+
+  // Theme & Palette Selectors
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => {
+      currentTheme = e.target.value;
+      localStorage.setItem(THEME_KEY, currentTheme);
+      applyThemeAndPalette();
+    });
+  }
+
+  const railThemeToggle = document.getElementById('railThemeToggle');
+  if (railThemeToggle) {
+    railThemeToggle.addEventListener('click', () => {
+      triggerHaptic();
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, currentTheme);
+      applyThemeAndPalette();
+    });
+  }
+
+  document.querySelectorAll('.m3-palette-circle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      triggerHaptic();
+      currentPalette = btn.dataset.pal;
+      localStorage.setItem(PALETTE_KEY, currentPalette);
+      applyThemeAndPalette();
+    });
+  });
+
+  // Settings Save
+  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', () => {
+      triggerHaptic();
+      monthlyBudget = Number(document.getElementById('settingMonthlyBudget').value) || 25000;
+      cycleStartDay = Number(document.getElementById('settingCycleStartDay').value) || 1;
+      baseIncome = Number(document.getElementById('settingBaseIncome').value) || 50000;
+
+      localStorage.setItem(BUDGET_KEY, monthlyBudget);
+      localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
+      localStorage.setItem(BASE_INCOME_KEY, baseIncome);
+
+      alert('Parameters saved successfully.');
+      render();
+    });
+  }
+
+  // Data Actions (CSV & Vault)
   document.getElementById('exportCsvBtn')?.addEventListener('click', exportCSV);
-  const csvInp = document.getElementById('importCsvInput');
-  document.getElementById('importCsvBtn')?.addEventListener('click', () => csvInp?.click());
-  csvInp?.addEventListener('change', importCSV);
+  const csvInput = document.getElementById('importCsvInput');
+  document.getElementById('importCsvBtn')?.addEventListener('click', () => csvInput?.click());
+  csvInput?.addEventListener('change', importCSV);
 
-  document.getElementById('exportVaultBtn')?.addEventListener('click', exportVault);
-  const vaultInp = document.getElementById('importVaultInput');
-  document.getElementById('importVaultBtn')?.addEventListener('click', () => vaultInp?.click());
-  vaultInp?.addEventListener('change', importVault);
+  document.getElementById('exportVaultBtn')?.addEventListener('click', exportVaultBackup);
+  const vaultInput = document.getElementById('importVaultInput');
+  document.getElementById('importVaultBtn')?.addEventListener('click', () => vaultInput?.click());
+  vaultInput?.addEventListener('change', handleImportVault);
 
   document.getElementById('clearAllDataBtn')?.addEventListener('click', () => {
-    if (confirm('Erase all transaction records? This cannot be undone.')) {
-      expenses = []; saveExpenses(); render();
+    if (confirm('Erase all transaction records? This action cannot be undone.')) {
+      expenses = [];
+      saveExpenses();
+      render();
     }
   });
 
-  // Keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (!e.metaKey && !e.ctrlKey) return;
-    const k = e.key;
-    if (k==='1') { e.preventDefault(); currentTab='overview';    render(); }
-    if (k==='2') { e.preventDefault(); currentTab='categories';  render(); }
-    if (k==='3') { e.preventDefault(); currentTab='insights';    render(); }
-    if (k==='4'||k===',') { e.preventDefault(); currentTab='settings'; render(); }
-    if (k==='n'||k==='N') { e.preventDefault(); openAddModal(); }
-    if (k==='Escape') { document.querySelectorAll('.overlay.active').forEach(o => o.classList.remove('active')); }
-  });
-
-  // System theme change listener
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (currentTheme === 'system') applyTheme();
+  // Universal Keyboard Shortcuts (Mac / Windows / ChromeOS / Linux)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput?.focus();
+    }
+    if ((e.metaKey || e.ctrlKey) || (e.altKey)) {
+      if (e.key === '1') { e.preventDefault(); currentTab = 'overview'; render(); }
+      if (e.key === '2') { e.preventDefault(); currentTab = 'categories'; render(); }
+      if (e.key === '3') { e.preventDefault(); currentTab = 'insights'; render(); }
+      if (e.key === '4' || e.key === ',') { e.preventDefault(); currentTab = 'settings'; render(); }
+      if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openAddExpenseModal(); }
+    }
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.m3-scrim-backdrop.active').forEach(modal => {
+        modal.classList.remove('active');
+      });
+    }
   });
 }
 
-// ── CSV Export / Import (Fixed for macOS export format) ───────────────────
-function exportCSV() {
-  if (!expenses.length) { alert('No transactions to export.'); return; }
-  const rows = [['ID','Title','Amount (INR)','Category','Date (ISO)','Notes']];
-  expenses.forEach(e => {
-    rows.push([
-      e.id,
-      `"${(e.title||'').replace(/"/g,'""')}"`,
-      e.amount,
-      e.category,
-      e.date,
-      `"${(e.notes||'').replace(/"/g,'""')}"`,
-    ]);
-  });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  downloadBlob(csv, `WellSpent_${isoDate()}.csv`, 'text/csv;charset=utf-8;');
-}
-
-/**
- * Maps any category string to a PWA key.
- * Handles macOS rawValues: utilities→bills, health→healthcare, housing→other
- * The `type` column ("expense"/"income") must be excluded before calling this.
- */
+// ── Universal Category Resolver & CSV Importer ───────────────────────────
 function resolveCategoryKey(raw) {
   if (!raw) return 'other';
   const s = raw.toLowerCase().trim();
 
-  // 1. Direct PWA key match (food, transport, bills, shopping, healthcare, entertainment, invest, other)
+  // Direct Key Match
   if (CATEGORIES[s]) return s;
 
-  // 2. Explicit macOS rawValue → PWA key
-  const exact = { utilities:'bills', health:'healthcare', housing:'other', invest:'invest' };
-  if (exact[s]) return exact[s];
+  // macOS / Windows / Flutter RawValue Mapping
+  const exactMap = {
+    utilities: 'bills',
+    health: 'healthcare',
+    housing: 'other',
+    invest: 'invest'
+  };
+  if (exactMap[s]) return exactMap[s];
 
-  // 3. Keyword fallback
-  if (/food|dining|restaurant|cafe|grocery|groceries|coffee/.test(s)) return 'food';
-  if (/transport|transit|travel|fuel|cab|uber|metro|commute/.test(s)) return 'transport';
-  if (/utilit|bill|electric|power|wifi|water|gas|internet/.test(s)) return 'bills';
+  // Regex Keyword Matching
+  if (/food|dining|restaurant|cafe|grocery|groceries|coffee|lunch|dinner|snack/.test(s)) return 'food';
+  if (/transport|transit|travel|fuel|pertol|petrol|diesel|cab|uber|metro|commute/.test(s)) return 'transport';
+  if (/utilit|bill|electric|power|wifi|water|gas|internet|broadband/.test(s)) return 'bills';
   if (/entertain|movie|music|netflix|spotify|game|cinema|streaming/.test(s)) return 'entertainment';
   if (/health|medic|doctor|gym|pharma|fitness|clinic|hospital/.test(s)) return 'healthcare';
-  if (/shop|cloth|retail|amazon|store|electronics|mall/.test(s)) return 'shopping';
-  if (/invest|stock|mutual|sip|fund|trading/.test(s)) return 'invest';
+  if (/shop|cloth|retail|amazon|store|electronics|mall|milk|fruit/.test(s)) return 'shopping';
+  if (/invest|stock|mutual|sip|fund|trading|gold/.test(s)) return 'invest';
 
   return 'other';
+}
+
+function exportCSV() {
+  if (expenses.length === 0) {
+    alert('No transactions available to export.');
+    return;
+  }
+
+  let csv = 'date,type,title,category,amount,notes\n';
+  expenses.forEach(e => {
+    const row = [
+      `"${e.date}"`,
+      '"expense"',
+      `"${(e.title || '').replace(/"/g, '""')}"`,
+      `"${e.category}"`,
+      e.amount.toFixed(2),
+      `"${(e.notes || '').replace(/"/g, '""')}"`
+    ];
+    csv += row.join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `WellSpent_Export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 function importCSV(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const text = ev.target.result;
-    const lines = parseCSVLines(text);
-    if (lines.length < 2) { alert('CSV appears empty or invalid.'); return; }
 
-    // ── Header detection ─────────────────────────────────────────────────
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const text = event.target.result;
+    const lines = parseCSVLines(text);
+    if (lines.length < 2) {
+      alert('CSV appears empty or invalid.');
+      return;
+    }
+
     const rawHeader = lines[0];
     const hdr = rawHeader.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
 
-    // "type" column (macOS: "expense"/"income") must NOT map to category
-    const iType  = hdr.findIndex(h => h === 'type' || h === 'kind');
-    const iTitle = hdr.findIndex(h =>
-      h.includes('title') || h.includes('name') || h.includes('description') || h.includes('desc') || h.includes('item'));
-    const iAmount = hdr.findIndex(h =>
-      h.includes('amount') || h.includes('cost') || h.includes('price') || h.includes('total') || h.includes('val'));
-    // Exclude iType index from category detection
+    const iType = hdr.findIndex(h => h === 'type' || h === 'kind');
+    const iTitle = hdr.findIndex(h => h.includes('title') || h.includes('name') || h.includes('description') || h.includes('desc') || h.includes('item'));
+    const iAmount = hdr.findIndex(h => h.includes('amount') || h.includes('cost') || h.includes('price') || h.includes('total') || h.includes('val'));
     const iCategory = hdr.findIndex((h, i) => i !== iType && (h.includes('categ') || h === 'cat'));
     const iDate = hdr.findIndex(h => h.includes('date') || h.includes('time'));
-    const iNotes = hdr.findIndex(h =>
-      h.includes('note') || h.includes('memo') || h.includes('comment') || h.includes('remark'));
+    const iNotes = hdr.findIndex(h => h.includes('note') || h.includes('memo') || h.includes('comment') || h.includes('remark'));
 
     if (iTitle < 0 && iAmount < 0) {
-      alert(`Could not detect columns.\nFound: ${rawHeader.join(', ')}\n\nExpect columns: title/name/description, amount/cost, category (optional), date (optional).`);
+      alert(`Could not detect required columns.\nHeaders found: ${rawHeader.join(', ')}`);
       return;
     }
 
@@ -684,8 +1043,7 @@ function importCSV(e) {
       if (!cols || cols.length < 2) continue;
 
       // Amount
-      const amtIdx = iAmount >= 0 ? iAmount
-        : cols.findIndex(c => /^[\d.,]+$/.test(c.replace(/[₹$€£,\s]/g, '')));
+      const amtIdx = iAmount >= 0 ? iAmount : cols.findIndex(c => /^[\d.,]+$/.test(c.replace(/[₹$€£,\s]/g, '')));
       if (amtIdx < 0) { skipped++; continue; }
       const amount = parseFloat((cols[amtIdx] || '').replace(/[₹$€£,\s]/g, ''));
       if (isNaN(amount) || amount <= 0) { skipped++; continue; }
@@ -704,7 +1062,7 @@ function importCSV(e) {
       }
       if (!title) { skipped++; continue; }
 
-      // Category — use the dedicated resolver with macOS rawValue awareness
+      // Category
       const catRaw = iCategory >= 0 ? (cols[iCategory] || '') : '';
       const category = resolveCategoryKey(catRaw);
 
@@ -716,7 +1074,15 @@ function importCSV(e) {
       }
 
       const notes = iNotes >= 0 ? (cols[iNotes] || '').trim() : '';
-      expenses.push({ id: Date.now() + Math.random(), title, amount, category, date, notes });
+
+      expenses.push({
+        id: Date.now() + Math.random(),
+        title,
+        amount,
+        category,
+        date,
+        notes
+      });
       count++;
     }
 
@@ -730,9 +1096,6 @@ function importCSV(e) {
   reader.readAsText(file, 'utf-8');
 }
 
-/**
- * Robust CSV line parser that handles quoted fields with commas and newlines.
- */
 function parseCSVLines(text) {
   const rows = [];
   const lines = text.split(/\r?\n/);
@@ -750,7 +1113,7 @@ function parseCSVRow(line) {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { field += '"'; i++; }
+      if (inQuotes && line[i + 1] === '"') { field += '"'; i++; }
       else inQuotes = !inQuotes;
     } else if (ch === ',' && !inQuotes) {
       fields.push(field.trim());
@@ -763,94 +1126,93 @@ function parseCSVRow(line) {
   return fields;
 }
 
-/**
- * Try multiple date formats used by macOS, Numbers, and Excel exports.
- */
 function parseDateFlexible(raw) {
   if (!raw) return null;
-
-  // Already ISO 8601 (2025-01-15T10:30:00.000Z or 2025-01-15)
   if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
     const d = new Date(raw);
     return isNaN(d) ? null : d.toISOString();
   }
-
-  // DD/MM/YYYY or D/M/YYYY (common in Indian/macOS locale)
   const dmy = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
   if (dmy) {
-    let [,d,mo,y] = dmy;
+    let [, d, mo, y] = dmy;
     if (y.length === 2) y = '20' + y;
-    const dt = new Date(`${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
+    const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
     return isNaN(dt) ? null : dt.toISOString();
   }
-
-  // MM/DD/YYYY (US format)
-  const mdy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if (mdy) {
-    let [,mo,d,y] = mdy;
-    if (y.length === 2) y = '20' + y;
-    const dt = new Date(`${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
-    return isNaN(dt) ? null : dt.toISOString();
-  }
-
-  // "15 Jan 2025" or "Jan 15, 2025"
   const d = new Date(raw);
   return isNaN(d) ? null : d.toISOString();
 }
 
-// ── Vault Export / Import ─────────────────────────────────────────────────
-function exportVault() {
+// ── Encrypted Vault Operations ────────────────────────────────────────────
+function exportVaultBackup() {
   const data = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
-    expenses, monthlyBudget, cycleStartDay, baseIncome, categoryBudgets, recurringBills,
+    expenses,
+    monthlyBudget,
+    cycleStartDay,
+    baseIncome,
+    categoryBudgets,
+    recurringBills,
+    currentPalette,
+    currentTheme
   };
-  downloadBlob(JSON.stringify(data, null, 2), `WellSpent_Backup_${isoDate()}.wsbackup`, 'application/json');
-}
 
-function importVault(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!Array.isArray(data.expenses)) throw new Error('Invalid backup file.');
-      expenses        = data.expenses;
-      monthlyBudget   = data.monthlyBudget   || monthlyBudget;
-      cycleStartDay   = data.cycleStartDay   || cycleStartDay;
-      baseIncome      = data.baseIncome      || baseIncome;
-      categoryBudgets = data.categoryBudgets || categoryBudgets;
-      recurringBills  = data.recurringBills  || recurringBills;
-      saveExpenses(); saveCategoryBudgets(); saveRecurringBills();
-      localStorage.setItem(BUDGET_KEY, monthlyBudget);
-      localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
-      localStorage.setItem(BASE_INCOME_KEY, baseIncome);
-      e.target.value = '';
-      alert('Vault restored successfully.');
-      render();
-    } catch (err) { alert('Failed to restore vault: ' + err.message); }
-  };
-  reader.readAsText(file, 'utf-8');
-}
-
-// ── Utilities ─────────────────────────────────────────────────────────────
-function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-function isoDate() { return new Date().toISOString().split('T')[0]; }
-function downloadBlob(content, filename, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `WellSpent_Vault_${new Date().toISOString().split('T')[0]}.wsbackup`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-// ── Service Worker ────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+function handleImportVault(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data && Array.isArray(data.expenses)) {
+        expenses = data.expenses;
+        monthlyBudget = data.monthlyBudget || monthlyBudget;
+        cycleStartDay = data.cycleStartDay || cycleStartDay;
+        baseIncome = data.baseIncome || baseIncome;
+        categoryBudgets = data.categoryBudgets || categoryBudgets;
+        recurringBills = data.recurringBills || recurringBills;
+        currentPalette = data.currentPalette || currentPalette;
+        currentTheme = data.currentTheme || currentTheme;
+
+        saveExpenses();
+        saveCategoryBudgets();
+        saveRecurringBills();
+        localStorage.setItem(BUDGET_KEY, monthlyBudget);
+        localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
+        localStorage.setItem(BASE_INCOME_KEY, baseIncome);
+        localStorage.setItem(PALETTE_KEY, currentPalette);
+        localStorage.setItem(THEME_KEY, currentTheme);
+
+        alert('Vault backup restored successfully.');
+        render();
+      }
+    } catch {
+      alert('Invalid vault backup file.');
+    }
+  };
+  reader.readAsText(file);
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────
+// ── Service Worker Registration ───────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ── App Initialization ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   render();

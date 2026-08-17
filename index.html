@@ -2,443 +2,739 @@
 <html lang="en-IN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Well Spent – Private, offline-first personal expense tracker.">
-  <title>Well Spent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Well Spent – Sleek, privacy-first personal expense tracker with ChromeOS Material 3 interface, budget forecasting, and encrypted backup.">
+  <title>Well Spent — Expense &amp; Budget Manager</title>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#131318" id="metaThemeColor">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Well Spent">
   <link rel="apple-touch-icon" href="icon.jpg">
   <link rel="icon" type="image/jpeg" href="icon.jpg">
 
+  <!-- Google Material Fonts: Google Sans & Plus Jakarta Sans & Roboto Flex -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-theme="dark" data-palette="blue">
 
-  <div class="shell">
+  <!-- Ambient Dynamic Tonal Glow -->
+  <div class="m3-ambient-glow" aria-hidden="true"></div>
 
-    <!-- ── Sidebar (Desktop) ─────────────────────────────────────────────── -->
-    <aside class="sidebar" id="sidebar" aria-label="Navigation">
-      <div class="sidebar-top">
-        <div class="app-mark">
-          <span class="app-mark__logo">W</span>
-          <span class="app-mark__name">Well Spent</span>
+  <div class="m3-app-shell">
+
+    <!-- ── Desktop / Chromebook Navigation Rail (Material 3) ─────────────── -->
+    <aside class="m3-nav-rail" id="m3NavRail" aria-label="Main Navigation">
+      <div class="m3-rail-top">
+        <!-- Logo & Brand -->
+        <div class="m3-rail-brand" title="Well Spent v4.0">
+          <div class="m3-brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <span class="m3-brand-name">Well Spent</span>
         </div>
 
-        <nav class="sidebar-links" aria-label="Main navigation">
-          <button type="button" class="slink active" data-tab="overview">
-            <span class="slink__dot"></span>
-            <span>Overview</span>
+        <!-- Extended Floating Action Button (FAB) -->
+        <button type="button" class="m3-fab-extended" id="railAddBtn" aria-label="New Transaction" title="New Transaction (Ctrl/⌘ + N)">
+          <svg class="m3-fab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span class="m3-fab-text">New Entry</span>
+        </button>
+
+        <!-- Navigation Rail Links with Animated Tonal Pill -->
+        <nav class="m3-rail-menu" aria-label="Navigation Links">
+          <button type="button" class="m3-rail-btn active" data-tab="overview" title="Overview (⌘1 / Alt+1)">
+            <div class="m3-pill-target">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+              </svg>
+            </div>
+            <span class="m3-rail-label">Overview</span>
           </button>
-          <button type="button" class="slink" data-tab="categories">
-            <span class="slink__dot"></span>
-            <span>Budgets</span>
+
+          <button type="button" class="m3-rail-btn" data-tab="categories" title="Budgets (⌘2 / Alt+2)">
+            <div class="m3-pill-target">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              </svg>
+            </div>
+            <span class="m3-rail-label">Budgets</span>
           </button>
-          <button type="button" class="slink" data-tab="insights">
-            <span class="slink__dot"></span>
-            <span>Trends</span>
+
+          <button type="button" class="m3-rail-btn" data-tab="insights" title="Trends &amp; Insights (⌘3 / Alt+3)">
+            <div class="m3-pill-target">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <span class="m3-rail-label">Trends</span>
           </button>
-          <button type="button" class="slink" data-tab="settings">
-            <span class="slink__dot"></span>
-            <span>Settings</span>
+
+          <button type="button" class="m3-rail-btn" data-tab="settings" title="Settings (⌘4 / ⌘,)">
+            <div class="m3-pill-target">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </div>
+            <span class="m3-rail-label">Settings</span>
           </button>
         </nav>
       </div>
 
-      <div class="sidebar-bottom">
-        <div class="sidebar-gauge" id="sidebarGauge">
-          <div class="sidebar-gauge__labels">
-            <span id="sidebarSpentMeta">₹0 spent</span>
-            <span id="sidebarGaugePct">0%</span>
+      <!-- Rail Footer Gauge & Quick Controls -->
+      <div class="m3-rail-bottom">
+        <div class="m3-rail-gauge-card">
+          <div class="m3-gauge-header">
+            <span class="m3-gauge-title">Cycle Budget</span>
+            <span class="m3-gauge-pct" id="railGaugePct">0%</span>
           </div>
-          <div class="gauge-track">
-            <div class="gauge-fill" id="sidebarGaugeFill"></div>
+          <div class="m3-progress-track">
+            <div class="m3-progress-indicator" id="railGaugeFill"></div>
           </div>
-          <span class="sidebar-gauge__sub" id="sidebarLeftMeta">₹0 remaining</span>
+          <div class="m3-gauge-meta">
+            <span id="railSpentMeta">₹0 spent</span>
+            <span id="railLeftMeta">₹0 left</span>
+          </div>
         </div>
-        <button type="button" class="add-btn" id="sidebarAddBtn">+ New Transaction</button>
+
+        <button type="button" class="m3-icon-action-btn" id="railThemeToggle" title="Toggle Theme" aria-label="Toggle Theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
       </div>
     </aside>
 
-    <!-- ── Main Content ──────────────────────────────────────────────────── -->
-    <div class="main-wrap">
-      <main class="main" id="main">
+    <!-- ── Main Workspace Body ────────────────────────────────────────────── -->
+    <div class="m3-main-container">
+
+      <!-- ChromeOS Modern Top App Bar -->
+      <header class="m3-top-app-bar">
+        <div class="m3-app-bar-left">
+          <button type="button" class="m3-menu-icon-btn" id="mobileMenuBtn" aria-label="Navigation Menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <span class="m3-app-bar-title" id="pageHeadingTitle">Overview</span>
+        </div>
+
+        <!-- Google-Style Global Search Pill -->
+        <div class="m3-search-pill-wrapper">
+          <div class="m3-search-pill">
+            <svg class="m3-search-pill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="globalSearchInput" class="m3-search-input" placeholder="Search transactions, tags, merchants…" autocomplete="off">
+            <span class="m3-search-shortcut" title="Keyboard Shortcut">/</span>
+          </div>
+        </div>
+
+        <!-- Top Right Actions -->
+        <div class="m3-app-bar-right">
+          <div class="m3-status-chip" id="topBarCycleChip" title="Active Cycle Window">
+            <span class="m3-pulse-dot"></span>
+            <span id="topBarCycleText">Cycle Day 1</span>
+          </div>
+
+          <button type="button" class="m3-tonal-circle-btn" id="topAddBtn" aria-label="Quick Add (⌘N)" title="Add Transaction (⌘N)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Main Content -->
+      <main class="m3-content-scroll" id="m3ContentScroll">
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB: OVERVIEW                                                   -->
+        <!-- TAB 1: OVERVIEW                                                 -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section id="tabOverview" class="tab active">
-          <header class="page-head">
-            <div class="page-head__left">
-              <h1 class="page-h1">Overview</h1>
-              <div class="period-toggle" id="viewModeSwitcher">
-                <button class="period-btn active" data-mode="monthwise">Month</button>
-                <button class="period-btn" data-mode="daywise">Today</button>
-              </div>
-            </div>
-            <button type="button" class="icon-btn" id="openAddModalBtn" aria-label="Add transaction">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
-              </svg>
-            </button>
-          </header>
+        <section id="tabOverview" class="m3-tab-pane active" aria-labelledby="pageHeadingTitle">
+          <div class="m3-pane-inner">
 
-          <!-- Summary Block -->
-          <div class="summary-block">
-            <div class="summary-amount">
-              <span class="summary-eyebrow" id="pulseEyebrow">Monthly Spend</span>
-              <span class="summary-figure" id="pulseAmountDisplay">₹0.00</span>
-              <span class="summary-sub" id="pulseSubDisplay">of ₹0 monthly budget</span>
-            </div>
-            <div class="summary-bar-wrap">
-              <div class="summary-bar">
-                <div class="summary-bar__fill" id="pulseProgressFill"></div>
-              </div>
-              <span class="summary-bar__label" id="pulseStatusBadge">On Track</span>
-            </div>
-            <div class="summary-stats">
-              <div class="stat">
-                <span class="stat__val" id="pulseRemainingDisplay">₹0</span>
-                <span class="stat__lbl">Remaining</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat">
-                <span class="stat__val" id="pulseBurnDisplay">₹0/day</span>
-                <span class="stat__lbl">Daily Burn</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat">
-                <span class="stat__val" id="pulseMonthEndDisplay">₹0</span>
-                <span class="stat__lbl">Est. Month-End</span>
+            <!-- Dynamic Segmented Period Controller with Sliding Pill -->
+            <div class="m3-segmented-control-wrap">
+              <div class="m3-segmented-control" id="viewModeSwitcher" role="radiogroup" aria-label="View Period">
+                <button type="button" class="m3-segment-btn active" data-mode="monthwise" role="radio" aria-checked="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>Monthwise</span>
+                </button>
+                <button type="button" class="m3-segment-btn" data-mode="daywise" role="radio" aria-checked="false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>Daywise</span>
+                </button>
+                <div class="m3-segment-slider" id="segmentSlider"></div>
               </div>
             </div>
+
+            <!-- Responsive Dashboard Grid -->
+            <div class="m3-dashboard-grid">
+
+              <!-- Left Column: Hero Pulse Card & Quick Velocity -->
+              <div class="m3-grid-col-left">
+
+                <!-- Hero Pulse Card -->
+                <article class="m3-card m3-hero-card" aria-label="Spending Pulse">
+                  <div class="m3-card-header">
+                    <div class="m3-badge-pill" id="pulseEyebrowBadge">Monthly Envelope</div>
+                    <span class="m3-status-indicator-pill" id="pulseStatusPill">On Track</span>
+                  </div>
+
+                  <div class="m3-hero-figure-wrap">
+                    <div class="m3-hero-amount" id="pulseAmountDisplay">₹0.00</div>
+                    <div class="m3-hero-sub" id="pulseSubDisplay">of ₹25,000 monthly allowance</div>
+                  </div>
+
+                  <!-- Multi-layer Material Progress Bar -->
+                  <div class="m3-progress-track m3-hero-track">
+                    <div class="m3-progress-indicator" id="pulseProgressFill"></div>
+                  </div>
+
+                  <!-- 3 Tonal Stat Pods -->
+                  <div class="m3-stat-pods-row">
+                    <div class="m3-stat-pod">
+                      <span class="m3-pod-label">Remaining</span>
+                      <span class="m3-pod-value" id="pulseRemainingDisplay">₹0</span>
+                    </div>
+                    <div class="m3-stat-pod-divider"></div>
+                    <div class="m3-stat-pod">
+                      <span class="m3-pod-label">Daily Burn</span>
+                      <span class="m3-pod-value" id="pulseBurnDisplay">₹0/day</span>
+                    </div>
+                    <div class="m3-stat-pod-divider"></div>
+                    <div class="m3-stat-pod">
+                      <span class="m3-pod-label">Month-End Est.</span>
+                      <span class="m3-pod-value" id="pulseMonthEndDisplay">₹0</span>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Quick Category Filter Chips Carousel -->
+                <div class="m3-chips-carousel-wrap">
+                  <div class="m3-chips-carousel" id="categoryFilterChips" role="tablist">
+                    <button type="button" class="m3-filter-chip active" data-cat="all">
+                      <span>✨ All Activity</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="food">
+                      <span>🍽️ Food &amp; Dining</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="transport">
+                      <span>🚗 Transport</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="bills">
+                      <span>⚡ Bills &amp; Utilities</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="shopping">
+                      <span>🛍️ Shopping</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="healthcare">
+                      <span>🏥 Healthcare</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="entertainment">
+                      <span>🎬 Entertainment</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="invest">
+                      <span>💰 Investments</span>
+                    </button>
+                    <button type="button" class="m3-filter-chip" data-cat="other">
+                      <span>🌐 Other</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div><!-- /col-left -->
+
+              <!-- Right Column: Recent Activity Feed with Slide-to-Delete -->
+              <div class="m3-grid-col-right">
+
+                <div class="m3-section-title-bar">
+                  <div class="m3-section-headings">
+                    <h2 class="m3-section-title" id="activityFeedHeading">Transactions</h2>
+                    <span class="m3-section-subtitle" id="activityFeedSubheading">0 entries</span>
+                  </div>
+                  <button type="button" class="m3-text-btn" id="inlineAddBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add Entry</span>
+                  </button>
+                </div>
+
+                <!-- Transaction List Container -->
+                <div class="m3-tx-feed" id="transactionList">
+                  <!-- Rendered dynamically by app.js with slide-to-delete support -->
+                </div>
+
+              </div><!-- /col-right -->
+
+            </div><!-- /m3-dashboard-grid -->
+
           </div>
-
-          <!-- Search & Filters -->
-          <div class="filter-row">
-            <div class="search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input type="text" id="txSearchInput" class="search-input" placeholder="Search transactions…" autocomplete="off">
-            </div>
-          </div>
-
-          <div class="chip-row" id="categoryFilterChips">
-            <button type="button" class="chip active" data-cat="all">All</button>
-            <button type="button" class="chip" data-cat="food">Food</button>
-            <button type="button" class="chip" data-cat="transport">Transport</button>
-            <button type="button" class="chip" data-cat="bills">Bills</button>
-            <button type="button" class="chip" data-cat="shopping">Shopping</button>
-            <button type="button" class="chip" data-cat="healthcare">Health</button>
-            <button type="button" class="chip" data-cat="entertainment">Entertainment</button>
-            <button type="button" class="chip" data-cat="invest">Invest</button>
-            <button type="button" class="chip" data-cat="other">Other</button>
-          </div>
-
-          <!-- Transaction List -->
-          <div class="list-head">
-            <span class="list-head__title" id="activityHeading">Transactions</span>
-            <span class="list-head__count" id="activitySubheading">0 entries</span>
-          </div>
-
-          <div class="tx-list" id="transactionList"></div>
         </section>
 
-
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB: BUDGETS                                                    -->
+        <!-- TAB 2: BUDGETS & CATEGORY ENVELOPES                             -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section id="tabCategories" class="tab">
-          <header class="page-head">
-            <h1 class="page-h1">Budgets</h1>
-            <button type="button" class="icon-btn" id="openAddModalBtn2" aria-label="Add transaction">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
-              </svg>
-            </button>
-          </header>
+        <section id="tabCategories" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
+          <div class="m3-pane-inner">
 
-          <div class="summary-block">
-            <div class="summary-amount">
-              <span class="summary-eyebrow">Monthly Allocation</span>
-              <span class="summary-figure" id="allocationTotalDisplay">₹0.00</span>
-            </div>
-            <div class="summary-bar-wrap">
-              <div class="summary-bar">
-                <div class="summary-bar__fill" id="allocationProgressFill"></div>
+            <!-- Budget Allocation Summary Card -->
+            <article class="m3-card m3-allocation-card" aria-label="Budget Allocation">
+              <div class="m3-card-header">
+                <div>
+                  <span class="m3-badge-pill">ALLOCATION SUMMARY</span>
+                  <div class="m3-hero-amount" id="allocationTotalDisplay">₹0.00</div>
+                </div>
+                <span class="m3-status-indicator-pill" id="allocationStatusBadge">0% Used</span>
               </div>
-              <span class="summary-bar__label" id="allocationStatusBadge">0% used</span>
-            </div>
-            <div class="summary-stats">
-              <div class="stat">
-                <span class="stat__val" id="allocationSpentText">₹0</span>
-                <span class="stat__lbl">Spent</span>
+
+              <div class="m3-progress-track m3-hero-track">
+                <div class="m3-progress-indicator" id="allocationProgressFill"></div>
               </div>
-              <div class="stat-divider"></div>
-              <div class="stat">
-                <span class="stat__val" id="allocationRemainingText">₹0</span>
-                <span class="stat__lbl">Remaining</span>
+
+              <div class="m3-allocation-meta-row">
+                <span id="allocationSpentText">₹0 spent</span>
+                <span id="allocationRemainingText">₹0 remaining</span>
+              </div>
+            </article>
+
+            <!-- Envelope Section Title -->
+            <div class="m3-section-title-bar" style="margin-top: 24px;">
+              <div class="m3-section-headings">
+                <h2 class="m3-section-title">Category Envelopes</h2>
+                <span class="m3-section-subtitle">Click any category card to customize spending limit</span>
               </div>
             </div>
-          </div>
 
-          <div class="section-label">Category Envelopes <span class="section-label__hint">tap to edit</span></div>
-          <div class="envelope-list" id="envelopesGrid"></div>
-        </section>
-
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB: TRENDS                                                     -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section id="tabInsights" class="tab">
-          <header class="page-head">
-            <h1 class="page-h1">Trends</h1>
-          </header>
-
-          <!-- Velocity -->
-          <div class="card">
-            <div class="card__label">Spending Velocity</div>
-            <div class="vel-stats">
-              <div class="stat">
-                <span class="stat__val" id="velBurnVal">₹0</span>
-                <span class="stat__lbl">Daily Burn</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat">
-                <span class="stat__val" id="velProjectedVal">₹0</span>
-                <span class="stat__lbl">Projected Total</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat">
-                <span class="stat__val" id="velRemainingVal">0d</span>
-                <span class="stat__lbl">Days Left</span>
-              </div>
+            <!-- Envelope Cards Grid (Filled Material 3 Cards) -->
+            <div class="m3-envelopes-grid" id="envelopesGrid">
+              <!-- Rendered dynamically by app.js -->
             </div>
-            <div class="vel-bar">
-              <div class="vel-bar__fill" id="velocityBurnFill"></div>
-            </div>
-            <p class="vel-status" id="velocityStatusMsg">Calculating…</p>
-          </div>
 
-          <!-- Distribution -->
-          <div class="section-label">Category Breakdown</div>
-          <div class="card">
-            <div class="dist-list" id="categoryDistributionList"></div>
-          </div>
-
-          <!-- Recurring Bills -->
-          <div class="section-label">
-            Recurring Bills
-            <button type="button" class="text-btn" id="openAddBillModalBtn">+ Add</button>
-          </div>
-
-          <div class="card">
-            <div class="recurring-summary">
-              <span>Upcoming this cycle</span>
-              <span class="mono" id="upcomingBillsTotalDisplay">₹0.00</span>
-            </div>
-            <div class="recurring-list" id="recurringBillsList"></div>
           </div>
         </section>
 
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB 3: TRENDS & VELOCITY                                        -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="tabInsights" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
+          <div class="m3-pane-inner">
+
+            <div class="m3-trends-grid">
+
+              <!-- Left Column: Spending Velocity & Forecast -->
+              <div class="m3-trends-col">
+                <article class="m3-card m3-velocity-card">
+                  <div class="m3-card-header">
+                    <span class="m3-badge-pill">SPENDING TRAJECTORY</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                      <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                  </div>
+
+                  <div class="m3-velocity-stats-row">
+                    <div class="m3-vel-stat">
+                      <span class="m3-vel-val" id="velBurnVal">₹0</span>
+                      <span class="m3-vel-lbl">Daily Burn</span>
+                    </div>
+                    <div class="m3-vel-divider"></div>
+                    <div class="m3-vel-stat">
+                      <span class="m3-vel-val" id="velProjectedVal">₹0</span>
+                      <span class="m3-vel-lbl">Projected Total</span>
+                    </div>
+                    <div class="m3-vel-divider"></div>
+                    <div class="m3-vel-stat">
+                      <span class="m3-vel-val" id="velRemainingVal">0d</span>
+                      <span class="m3-vel-lbl">Days Left</span>
+                    </div>
+                  </div>
+
+                  <div class="m3-progress-track" style="margin: 16px 0 10px;">
+                    <div class="m3-progress-indicator" id="velocityBurnFill"></div>
+                  </div>
+
+                  <div class="m3-velocity-status-bubble" id="velocityStatusMsg">
+                    Calculating trajectory…
+                  </div>
+                </article>
+
+                <!-- Category Breakdown Distribution Card -->
+                <article class="m3-card m3-distribution-card" style="margin-top: 18px;">
+                  <div class="m3-card-header">
+                    <span class="m3-badge-pill">CATEGORY DISTRIBUTION</span>
+                  </div>
+                  <div class="m3-distribution-list" id="categoryDistributionList">
+                    <!-- Rendered dynamically by app.js -->
+                  </div>
+                </article>
+              </div>
+
+              <!-- Right Column: Subscriptions & Recurring Commitments -->
+              <div class="m3-trends-col">
+                <article class="m3-card m3-recurring-card">
+                  <div class="m3-card-header">
+                    <div>
+                      <span class="m3-badge-pill">FIXED COMMITMENTS</span>
+                      <h3 class="m3-card-heading">Recurring Bills &amp; Subs</h3>
+                    </div>
+                    <button type="button" class="m3-tonal-pill-btn" id="openAddBillModalBtn">
+                      <span>＋ Add Bill</span>
+                    </button>
+                  </div>
+
+                  <div class="m3-recurring-summary-row">
+                    <span>Upcoming this cycle:</span>
+                    <strong class="m3-mono-figure" id="upcomingBillsTotalDisplay">₹0.00</strong>
+                  </div>
+
+                  <div class="m3-recurring-list" id="recurringBillsList">
+                    <!-- Rendered dynamically by app.js -->
+                  </div>
+                </article>
+              </div>
+
+            </div><!-- /m3-trends-grid -->
+
+          </div>
+        </section>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- TAB: SETTINGS                                                   -->
+        <!-- TAB 4: SETTINGS & DATA MANAGEMENT                              -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section id="tabSettings" class="tab">
-          <header class="page-head">
-            <h1 class="page-h1">Settings</h1>
-          </header>
+        <section id="tabSettings" class="m3-tab-pane" aria-labelledby="pageHeadingTitle">
+          <div class="m3-pane-inner" style="max-width: 860px;">
 
-          <div class="settings-stack">
+            <div class="m3-settings-stack">
 
-            <div class="settings-group">
-              <div class="settings-group__label">Budget & Cycle</div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <span class="setting-info__title">Monthly Budget</span>
-                  <span class="setting-info__sub">Total spending allowance</span>
+              <!-- Material You Dynamic Theme & Palette -->
+              <article class="m3-card m3-setting-card">
+                <div class="m3-card-header">
+                  <span class="m3-badge-pill">MATERIAL YOU PALETTE</span>
                 </div>
-                <div class="setting-input-wrap">
-                  <span class="setting-prefix">₹</span>
-                  <input type="number" id="settingMonthlyBudget" class="setting-input" min="0" step="500" placeholder="25000">
-                </div>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <span class="setting-info__title">Cycle Reset Day</span>
-                  <span class="setting-info__sub">Day of month budget restarts</span>
-                </div>
-                <input type="number" id="settingCycleStartDay" class="setting-input setting-input--short" min="1" max="28" value="1">
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <span class="setting-info__title">Monthly Income</span>
-                  <span class="setting-info__sub">For net savings calculation</span>
-                </div>
-                <div class="setting-input-wrap">
-                  <span class="setting-prefix">₹</span>
-                  <input type="number" id="settingBaseIncome" class="setting-input" min="0" step="1000" placeholder="50000">
-                </div>
-              </div>
-              <button type="button" class="primary-btn" id="saveSettingsBtn">Save</button>
-            </div>
 
-            <div class="settings-group">
-              <div class="settings-group__label">Appearance</div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <span class="setting-info__title">Theme</span>
+                <div class="m3-setting-item">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Theme Appearance</span>
+                    <span class="m3-setting-desc">Switch between Light, Dark, or System mode</span>
+                  </div>
+                  <select id="themeSelect" class="m3-select-input">
+                    <option value="dark">Dark Obsidian</option>
+                    <option value="light">Porcelain Light</option>
+                    <option value="system">System Default</option>
+                  </select>
                 </div>
-                <select id="themeSelect" class="setting-select">
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="system">System</option>
-                </select>
-              </div>
-            </div>
 
-            <div class="settings-group">
-              <div class="settings-group__label">Data</div>
-              <div class="data-actions">
-                <button type="button" class="data-btn" id="exportCsvBtn">Export CSV</button>
-                <button type="button" class="data-btn" id="importCsvBtn">Import CSV</button>
-                <button type="button" class="data-btn" id="exportVaultBtn">Export Backup</button>
-                <button type="button" class="data-btn" id="importVaultBtn">Restore Backup</button>
-              </div>
-              <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
-              <input id="importVaultInput" type="file" accept=".wsbackup,.json" hidden>
-              <button type="button" class="danger-btn" id="clearAllDataBtn">Erase All Records</button>
-            </div>
+                <div class="m3-setting-item" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Accent Palette</span>
+                    <span class="m3-setting-desc">Dynamic tonal color scheme</span>
+                  </div>
+                  <div class="m3-palette-selector" id="paletteSelector">
+                    <button type="button" class="m3-palette-circle active" data-pal="blue" style="background:#7cacf8;" title="Google Blue" aria-label="Google Blue"></button>
+                    <button type="button" class="m3-palette-circle" data-pal="emerald" style="background:#6dd58c;" title="Emerald Green" aria-label="Emerald Green"></button>
+                    <button type="button" class="m3-palette-circle" data-pal="coral" style="background:#ff897d;" title="Sunset Coral" aria-label="Sunset Coral"></button>
+                    <button type="button" class="m3-palette-circle" data-pal="amethyst" style="background:#d0bcff;" title="Deep Amethyst" aria-label="Deep Amethyst"></button>
+                    <button type="button" class="m3-palette-circle" data-pal="amber" style="background:#ffb951;" title="Solar Amber" aria-label="Solar Amber"></button>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Budget & Cycle Configuration -->
+              <article class="m3-card m3-setting-card">
+                <div class="m3-card-header">
+                  <span class="m3-badge-pill">BUDGET &amp; CYCLE PARAMETERS</span>
+                </div>
+
+                <div class="m3-setting-item">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Monthly Budget Limit</span>
+                    <span class="m3-setting-desc">Total monthly spending allowance</span>
+                  </div>
+                  <div class="m3-input-affix-wrapper">
+                    <span>₹</span>
+                    <input type="number" id="settingMonthlyBudget" class="m3-text-field-clean" min="0" step="500" placeholder="25000">
+                  </div>
+                </div>
+
+                <div class="m3-setting-item" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Cycle Reset Day</span>
+                    <span class="m3-setting-desc">Day of the month the budget cycle restarts</span>
+                  </div>
+                  <input type="number" id="settingCycleStartDay" class="m3-text-field-clean m3-num-sm" min="1" max="28" value="1">
+                </div>
+
+                <div class="m3-setting-item" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+                  <div class="m3-setting-info">
+                    <span class="m3-setting-title">Monthly Base Income</span>
+                    <span class="m3-setting-desc">Used for calculating projected net savings</span>
+                  </div>
+                  <div class="m3-input-affix-wrapper">
+                    <span>₹</span>
+                    <input type="number" id="settingBaseIncome" class="m3-text-field-clean" min="0" step="1000" placeholder="50000">
+                  </div>
+                </div>
+
+                <button type="button" class="m3-filled-btn" id="saveSettingsBtn" style="margin-top: 14px;">
+                  Save Parameters
+                </button>
+              </article>
+
+              <!-- Universal Data Management & Encrypted Vault -->
+              <article class="m3-card m3-setting-card">
+                <div class="m3-card-header">
+                  <span class="m3-badge-pill">DATA VAULT &amp; PORTABILITY</span>
+                </div>
+
+                <div class="m3-vault-actions-grid">
+                  <button type="button" class="m3-tonal-action-btn" id="exportCsvBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Export CSV</span>
+                  </button>
+
+                  <button type="button" class="m3-tonal-action-btn" id="importCsvBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Import CSV</span>
+                  </button>
+
+                  <button type="button" class="m3-tonal-action-btn" id="exportVaultBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span>Backup Vault (.wsbackup)</span>
+                  </button>
+
+                  <button type="button" class="m3-tonal-action-btn" id="importVaultBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                    <span>Restore Vault</span>
+                  </button>
+                </div>
+
+                <input id="importCsvInput" type="file" accept=".csv,text/csv" hidden>
+                <input id="importVaultInput" type="file" accept=".wsbackup,.json" hidden>
+
+                <button type="button" class="m3-danger-btn" id="clearAllDataBtn" style="margin-top: 16px;">
+                  Erase All Transaction Records
+                </button>
+              </article>
+
+            </div><!-- /m3-settings-stack -->
 
           </div>
         </section>
 
       </main>
 
-      <!-- ── Mobile Bottom Nav ─────────────────────────────────────────── -->
-      <nav class="bottom-nav" id="bottomNav" aria-label="Mobile navigation">
-        <button type="button" class="bnav-btn active" data-tab="overview">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
+      <!-- ── Mobile / Tablet Bottom Navigation Bar (Material 3) ──────────── -->
+      <nav class="m3-bottom-nav" id="m3BottomNav" aria-label="Mobile Navigation">
+        <button type="button" class="m3-bnav-item active" data-tab="overview">
+          <div class="m3-bnav-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+          </div>
           <span>Overview</span>
         </button>
-        <button type="button" class="bnav-btn" data-tab="categories">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="9" height="9"/><rect x="13" y="3" width="9" height="9"/><rect x="2" y="14" width="9" height="7"/><rect x="13" y="14" width="9" height="7"/>
-          </svg>
+
+        <button type="button" class="m3-bnav-item" data-tab="categories">
+          <div class="m3-bnav-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+            </svg>
+          </div>
           <span>Budgets</span>
         </button>
-        <button type="button" class="bnav-btn bnav-center" data-tab="overview" id="mobileAddBtn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+
+        <!-- Centered Elevated FAB -->
+        <button type="button" class="m3-bnav-center-fab" id="mobileAddFab" aria-label="Add Transaction">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
         </button>
-        <button type="button" class="bnav-btn" data-tab="insights">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
+
+        <button type="button" class="m3-bnav-item" data-tab="insights">
+          <div class="m3-bnav-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+          </div>
           <span>Trends</span>
         </button>
-        <button type="button" class="bnav-btn" data-tab="settings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+
+        <button type="button" class="m3-bnav-item" data-tab="settings">
+          <div class="m3-bnav-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
           <span>Settings</span>
         </button>
       </nav>
-    </div>
-  </div>
+
+    </div><!-- /m3-main-container -->
+
+  </div><!-- /m3-app-shell -->
 
 
-  <!-- ── Add Transaction Modal ──────────────────────────────────────────── -->
-  <div class="overlay" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <div class="modal__bar"></div>
-      <div class="modal__head">
-        <button type="button" class="modal__dismiss" id="modalCancelBtn">Cancel</button>
-        <span class="modal__title" id="modalTitle">New Entry</span>
-        <button type="button" class="modal__confirm" id="modalSaveBtn">Save</button>
+  <!-- ── Material 3 Dynamic Modal Dialog / Bottom Sheet ──────────────────── -->
+  <div class="m3-scrim-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="m3-bottom-sheet">
+      <div class="m3-drag-handle"></div>
+
+      <div class="m3-sheet-header">
+        <h2 class="m3-sheet-title" id="modalTitle">New Entry</h2>
+        <button type="button" class="m3-close-sheet-btn" id="modalCancelBtn" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
-      <form id="addExpenseForm" class="modal__body">
-        <div class="amount-field">
-          <span class="amount-field__cur">₹</span>
-          <input type="text" id="expenseAmountInput" inputmode="decimal" placeholder="0.00" required autocomplete="off">
+
+      <form id="addExpenseForm" class="m3-sheet-body">
+        <!-- Giant Amount Input -->
+        <div class="m3-amount-field-container">
+          <span class="m3-currency-symbol">₹</span>
+          <input type="text" id="expenseAmountInput" class="m3-amount-field" inputmode="decimal" placeholder="0.00" required autocomplete="off">
         </div>
-        <div class="field-group">
-          <div class="field-row">
-            <label class="field-row__label">Description</label>
-            <input type="text" id="expenseTitleInput" placeholder="Coffee, groceries…" required autocomplete="off">
+
+        <!-- Text Fields Card -->
+        <div class="m3-fields-card">
+          <div class="m3-field-row">
+            <label class="m3-field-label">Description</label>
+            <input type="text" id="expenseTitleInput" class="m3-field-input" placeholder="e.g. Filter Coffee, Metro Pass" required autocomplete="off">
           </div>
-          <div class="field-row field-row--divider">
-            <label class="field-row__label">Notes</label>
-            <input type="text" id="expenseNotesInput" placeholder="Optional" autocomplete="off">
+
+          <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+            <label class="m3-field-label">Notes</label>
+            <input type="text" id="expenseNotesInput" class="m3-field-input" placeholder="Optional context or merchant" autocomplete="off">
           </div>
-          <div class="field-row field-row--divider">
-            <label class="field-row__label">Date</label>
-            <input type="date" id="expenseDateInput" required>
+
+          <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+            <label class="m3-field-label">Date</label>
+            <input type="date" id="expenseDateInput" class="m3-field-input m3-date-input" required>
           </div>
         </div>
-        <div class="field-group">
-          <div class="cat-label">Category</div>
-          <div class="cat-grid" id="modalCategoryGrid"></div>
+
+        <!-- Category Grid Selector -->
+        <div class="m3-category-picker-section">
+          <div class="m3-picker-label">SELECT CATEGORY</div>
+          <div class="m3-modal-cat-grid" id="modalCategoryGrid">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Actions Row -->
+        <div class="m3-sheet-actions">
+          <button type="button" class="m3-tonal-btn" id="modalDismissBtn">Cancel</button>
+          <button type="submit" class="m3-filled-btn" id="modalSaveBtn">Save Transaction</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ── Budget Edit Modal ──────────────────────────────────────────────── -->
-  <div class="overlay" id="budgetModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal modal--compact">
-      <div class="modal__bar"></div>
-      <div class="modal__head">
-        <button type="button" class="modal__dismiss" id="budgetCancelBtn">Cancel</button>
-        <span class="modal__title" id="budgetEditTitle">Edit Target</span>
-        <button type="button" class="modal__confirm" id="budgetSaveBtn">Update</button>
+
+  <!-- ── Material 3 Category Budget Edit Modal ────────────────────────────── -->
+  <div class="m3-scrim-backdrop" id="budgetModalBackdrop" role="dialog" aria-modal="true">
+    <div class="m3-dialog-card">
+      <div class="m3-sheet-header">
+        <h3 class="m3-sheet-title" id="budgetEditTitle">Edit Target</h3>
+        <button type="button" class="m3-close-sheet-btn" id="budgetCancelBtn" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
-      <div class="modal__body">
-        <p class="modal__desc">Set spending envelope limit for this category.</p>
-        <div class="amount-field">
-          <span class="amount-field__cur">₹</span>
-          <input type="number" id="budgetEditInput" min="0" step="100" placeholder="5000">
-        </div>
+      <p class="m3-dialog-desc">Set monthly envelope limit for this category.</p>
+      
+      <div class="m3-input-affix-wrapper m3-dialog-amount-wrap">
+        <span>₹</span>
+        <input type="number" id="budgetEditInput" class="m3-text-field-clean" min="0" step="100" placeholder="5000">
+      </div>
+
+      <div class="m3-sheet-actions" style="margin-top: 20px;">
+        <button type="button" class="m3-tonal-btn" id="budgetCloseBtn">Cancel</button>
+        <button type="button" class="m3-filled-btn" id="budgetSaveBtn">Update Target</button>
       </div>
     </div>
   </div>
 
-  <!-- ── Add Bill Modal ────────────────────────────────────────────────── -->
-  <div class="overlay" id="billModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal modal--compact">
-      <div class="modal__bar"></div>
-      <div class="modal__head">
-        <button type="button" class="modal__dismiss" id="billCancelBtn">Cancel</button>
-        <span class="modal__title">Add Bill</span>
-        <button type="button" class="modal__confirm" id="billSaveBtn">Add</button>
+
+  <!-- ── Material 3 Add Recurring Commitment Modal ────────────────────────── -->
+  <div class="m3-scrim-backdrop" id="billModalBackdrop" role="dialog" aria-modal="true">
+    <div class="m3-dialog-card">
+      <div class="m3-sheet-header">
+        <h3 class="m3-sheet-title">Add Recurring Bill</h3>
+        <button type="button" class="m3-close-sheet-btn" id="billCancelBtn" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
-      <div class="modal__body">
-        <div class="field-group">
-          <div class="field-row">
-            <label class="field-row__label">Name</label>
-            <input type="text" id="billTitleInput" placeholder="Netflix, Spotify…" required>
-          </div>
-          <div class="field-row field-row--divider">
-            <label class="field-row__label">Amount (₹)</label>
-            <input type="number" id="billAmountInput" min="0" placeholder="499" required>
-          </div>
-          <div class="field-row field-row--divider">
-            <label class="field-row__label">Due Day</label>
-            <input type="number" id="billDayInput" min="1" max="31" value="1" required>
-          </div>
+
+      <div class="m3-fields-card" style="margin-top: 14px;">
+        <div class="m3-field-row">
+          <label class="m3-field-label">Bill Name</label>
+          <input type="text" id="billTitleInput" class="m3-field-input" placeholder="e.g. YouTube Premium, Fiber Net" required>
         </div>
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+          <label class="m3-field-label">Amount (₹)</label>
+          <input type="number" id="billAmountInput" class="m3-field-input" min="0" placeholder="299" required>
+        </div>
+        <div class="m3-field-row" style="border-top: 1px solid var(--md-sys-color-outline-variant);">
+          <label class="m3-field-label">Due Day</label>
+          <input type="number" id="billDayInput" class="m3-field-input" min="1" max="31" value="1" required>
+        </div>
+      </div>
+
+      <div class="m3-sheet-actions" style="margin-top: 20px;">
+        <button type="button" class="m3-tonal-btn" id="billCloseBtn">Cancel</button>
+        <button type="button" class="m3-filled-btn" id="billSaveBtn">Save Commitment</button>
       </div>
     </div>
   </div>
