@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 
+@objc(MainFlutterWindow)
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
     let hostingController = NSHostingController(rootView: WellSpentRootView())
@@ -16,5 +17,6 @@ class MainFlutterWindow: NSWindow {
     self.isMovableByWindowBackground = true
 
     super.awakeFromNib()
+    self.makeKeyAndOrderFront(nil)
   }
 }

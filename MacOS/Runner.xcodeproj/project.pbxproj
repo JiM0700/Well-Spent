@@ -31,7 +31,6 @@
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		B345C392EFCC87316F44D065 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1948926AFA7CA34B38522296 /* Pods_Runner.framework */; };
 		C00200000000000000000001 /* MessagesDatabaseReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00200000000000000000003 /* MessagesDatabaseReader.swift */; };
-		C00200000000000000000002 /* MessageFetchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00200000000000000000004 /* MessageFetchHandler.swift */; };
 		A00100000000000000000001 /* Expense.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Expense.swift */; };
 		A00100000000000000000002 /* ExpenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* ExpenseStore.swift */; };
 		A00100000000000000000003 /* PlatformHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* PlatformHelpers.swift */; };
@@ -108,7 +107,6 @@
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		C00200000000000000000003 /* MessagesDatabaseReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesDatabaseReader.swift; sourceTree = "<group>"; };
-		C00200000000000000000004 /* MessageFetchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageFetchHandler.swift; sourceTree = "<group>"; };
 		A00200000000000000000001 /* Expense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expense.swift; sourceTree = "<group>"; };
 		A00200000000000000000002 /* ExpenseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpenseStore.swift; sourceTree = "<group>"; };
 		A00200000000000000000003 /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelpers.swift; sourceTree = "<group>"; };
@@ -232,7 +230,6 @@
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				C00200000000000000000003 /* MessagesDatabaseReader.swift */,
-				C00200000000000000000004 /* MessageFetchHandler.swift */,
 				A00300000000000000000001 /* SwiftUI */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
@@ -443,27 +440,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"$PRODUCT_NAME.app\" > \"$PROJECT_DIR\"/Flutter/ephemeral/.app_filename && \"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh embed\n";
+			shellScript = "exit 0\n";
 		};
 		33CC111E2044C6BF0003C045 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputFileListPaths = (
-				Flutter/ephemeral/FlutterInputs.xcfilelist,
-			);
-			inputPaths = (
-				Flutter/ephemeral/tripwire,
-			);
-			outputFileListPaths = (
-				Flutter/ephemeral/FlutterOutputs.xcfilelist,
-			);
-			outputPaths = (
-			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh && touch Flutter/ephemeral/tripwire";
+			shellScript = "exit 0\n";
 		};
 		86F4D18356EF61F8B5212542 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -545,7 +531,6 @@
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 				C00200000000000000000001 /* MessagesDatabaseReader.swift in Sources */,
-				C00200000000000000000002 /* MessageFetchHandler.swift in Sources */,
 				A00100000000000000000001 /* Expense.swift in Sources */,
 				A00100000000000000000002 /* ExpenseStore.swift in Sources */,
 				A00100000000000000000003 /* PlatformHelpers.swift in Sources */,

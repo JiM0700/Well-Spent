@@ -1,20 +1,21 @@
 import Cocoa
-import FlutterMacOS
+import SwiftUI
 
+@objc(AppDelegate)
 @main
-class AppDelegate: FlutterAppDelegate {
-  private var messageHandler: MessageFetchHandler?
-  override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+class AppDelegate: NSObject, NSApplicationDelegate {
+  @IBOutlet weak var mainFlutterWindow: NSWindow?
+
+  func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
   }
 
-  override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+  func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
   }
 
-  override func applicationDidFinishLaunching(_ notification: Notification) {
-    super.applicationDidFinishLaunching(notification)
-    // Flutter's generated registrar is available once the implicit engine is created;
-    // registration is also safe to repeat from the plugin registrar.
+  func applicationDidFinishLaunching(_ notification: Notification) {
+    self.mainFlutterWindow?.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
 }
