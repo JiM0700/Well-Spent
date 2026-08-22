@@ -544,7 +544,9 @@ function syncNav() {
 
 function renderTopBar(metrics) {
   const cycleText = document.getElementById('topBarCycleText');
-  if (cycleText) cycleText.textContent = `Cycle Day ${metrics.daysElapsed} of ${metrics.totalDays}`;
+  if (cycleText) {
+    cycleText.innerHTML = `<span class="cycle-text-full">Cycle Day ${metrics.daysElapsed} of ${metrics.totalDays}</span><span class="cycle-text-compact">Day ${metrics.daysElapsed} of ${metrics.totalDays}</span><span class="cycle-text-short">Day ${metrics.daysElapsed}/${metrics.totalDays}</span>`;
+  }
 }
 
 function renderRail(metrics) {

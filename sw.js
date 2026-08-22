@@ -1,6 +1,6 @@
 // Service Worker for Well Spent PWA (Offline-First, Material 3 Expressive)
 
-const CACHE_NAME = 'well-spent-v20';
+const CACHE_NAME = 'well-spent-v21';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
