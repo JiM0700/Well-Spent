@@ -27,9 +27,9 @@ public struct MacDesktopRootView: View {
                 Group {
                     switch selectedTab ?? .overview {
                     case .overview:
-                        OverviewView()
+                        OverviewView(showQuickAdd: $showQuickAdd)
                     case .categories:
-                        CategoriesView()
+                        CategoriesView(showQuickAdd: $showQuickAdd)
                     case .insights:
                         InsightsView()
                     case .settings:
@@ -80,11 +80,11 @@ public struct MacDesktopRootView: View {
                     Label {
                         Text("Budgets")
                     } icon: {
-                        Image(systemName: "square.grid.2x2.fill")
+                        Image(systemName: "chart.pie.fill")
                             .foregroundStyle(Color.orange)
                     }
                 }
-                .badge(ExpenseCategory.allCases.count)
+                .badge(store.allCategories.count)
                 .keyboardShortcut("2", modifiers: .command)
 
                 NavigationLink(value: TabSelection.insights) {

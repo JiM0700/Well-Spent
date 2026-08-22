@@ -3,10 +3,8 @@ import UniformTypeIdentifiers
 
 public struct SettingsView: View {
     @EnvironmentObject var store: ExpenseStore
-    @State private var showExportShareSheet: Bool = false
-    @State private var exportCsvString: String = ""
-    @State private var showImportConfirmation: Bool = false
     @State private var showFileImporter: Bool = false
+    @State private var importMode: ImportMode = .csv
     @State private var showPasteAlert: Bool = false
     @State private var importInputString: String = ""
     @State private var importMessage: String = ""
@@ -14,370 +12,411 @@ public struct SettingsView: View {
     @State private var showDeleteAllConfirmation: Bool = false
     @Environment(\.colorScheme) var colorScheme
 
+    private enum ImportMode {
+        case csv, json
+    }
+
     public init() {}
 
     public var body: some View {
+        #if os(macOS)
+        macOSDesktopBody
+        #else
+        iOSBody
+        #endif
+    }
+
+    // ── iOS Body ──────────────────────────────────────────────────────────
+
+    #if os(iOS)
+    private var iOSBody: some View {
         NavigationStack {
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 16) {
-                    // ── Clean Page Header (No empty space above page name) ─
-                    HStack(alignment: .center) {
-                        Text("Settings")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.primary)
-
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 4)
-
-                    #if os(macOS)
-                    // ── Widescreen Balanced 2-Column Desktop Grid ─────────
-                    HStack(alignment: .top, spacing: 20) {
-                        // Left Column (50% Width)
-                        VStack(spacing: 18) {
-                            appearanceSection
-                            dataManagementSection
-                        }
-                        .frame(maxWidth: .infinity, alignment: .top)
-
-                        // Right Column (50% Width)
-                        VStack(spacing: 18) {
-                            budgetingSection
-                            summariesSection
-                            aboutSection
-                        }
-                        .frame(maxWidth: .infinity, alignment: .top)
-                    }
-                    .padding(.horizontal, 20)
-                    #else
-                    // ── Mobile Single Column Stack ────────────────────────
-                    VStack(spacing: 16) {
-                        appearanceSection
-                        budgetingSection
-                        summariesSection
-                        dataManagementSection
-                        aboutSection
-                    }
-                    .padding(.horizontal, 20)
-                    #endif
-                }
-                .padding(.vertical, 8)
-            }
-            #if os(iOS)
-            .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $showExportShareSheet) {
-                ShareSheet(activityItems: [exportCsvString])
-            }
-            .confirmationDialog("Import CSV", isPresented: $showImportConfirmation, titleVisibility: .visible) {
-                Button("Choose File from Files") {
-                    showFileImporter = true
-                }
-                Button("Paste CSV Text") {
-                    showPasteAlert = true
-                }
-                Button("Cancel", role: .cancel) {}
-            }
-            #endif
-            .fileImporter(
-                isPresented: $showFileImporter,
-                allowedContentTypes: [.commaSeparatedText, .plainText, UTType(filenameExtension: "csv") ?? .plainText],
-                allowsMultipleSelection: false
-            ) { result in
-                handleFileImport(result: result)
-            }
-            .background(Color.appGroupedBackground)
-            .alert("Paste CSV Data", isPresented: $showPasteAlert) {
-                TextField("Paste CSV text here", text: $importInputString)
-                Button("Import") {
-                    let count = store.importCsv(content: importInputString)
-                    importMessage = "Successfully imported \(count) entries."
-                    showImportResult = true
-                }
-                Button("Cancel", role: .cancel) {}
-            }
-            .alert("Import Status", isPresented: $showImportResult) {
-                Button("OK") {}
-            } message: {
-                Text(importMessage)
-            }
-            .alert("Delete All Data?", isPresented: $showDeleteAllConfirmation) {
-                Button("Delete All Data", role: .destructive) {
-                    PlatformFeedback.warning()
-                    store.deleteAllData()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will permanently remove all transactions and custom category targets. This action cannot be undone.")
-            }
+            settingsForm
+                .navigationTitle("Settings")
+                .navigationBarTitleDisplayMode(.large)
         }
     }
+    #endif
 
-    // ── Appearance & Color Theme ──────────────────────────────────────────
+    // ── macOS Desktop Body ────────────────────────────────────────────────
 
-    private var appearanceSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Appearance & Accent")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
+    #if os(macOS)
+    private var macOSDesktopBody: some View {
+        settingsForm
+            .padding()
+    }
+    #endif
 
-            // Theme Mode Selector
-            Picker("Appearance", selection: $store.appThemeMode) {
-                Text("System").tag("system")
-                Text("Light").tag("light")
-                Text("Dark").tag("dark")
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: store.appThemeMode) { _, _ in
-                PlatformFeedback.selection()
-                store.saveData()
-            }
+    // ── Shared Settings Form ──────────────────────────────────────────────
 
-            // Accent Color Palette
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Accent Color")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-
-                let colorOptions: [(name: String, color: Color, title: String)] = [
-                    ("green", Color.green, "Green"),
-                    ("blue", Color.blue, "Blue"),
-                    ("indigo", Color.indigo, "Indigo"),
-                    ("purple", Color.purple, "Purple"),
-                    ("orange", Color.orange, "Orange"),
-                    ("teal", Color.teal, "Teal"),
-                ]
-
-                HStack(spacing: 12) {
-                    ForEach(colorOptions, id: \.name) { opt in
-                        Button(action: {
-                            PlatformFeedback.selection()
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
-                                store.appAccentColorName = opt.name
-                                store.saveData()
-                            }
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(opt.color)
-                                    .frame(width: 32, height: 32)
-                                    .shadow(color: Color.black.opacity(0.12), radius: 3, x: 0, y: 1)
-
-                                if store.appAccentColorName == opt.name {
-                                    Circle()
-                                        .strokeBorder(Color.white, lineWidth: 2.5)
-                                        .frame(width: 32, height: 32)
-
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundStyle(.white)
-                                }
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                .padding(.vertical, 4)
-            }
+    private var settingsForm: some View {
+        Form {
+            budgetSection
+            netWorthSection
+            appearanceSection
+            soundAndHapticsSection
+            notificationsSection
+            dataSection
+            aboutSection
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .liquidGlassCard(cornerRadius: 20)
+        .fileImporter(
+            isPresented: $showFileImporter,
+            allowedContentTypes: [.commaSeparatedText, .plainText, .json, UTType(filenameExtension: "csv") ?? .plainText, UTType(filenameExtension: "json") ?? .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleFileImport(result: result)
+        }
+        .alert("Paste CSV Data", isPresented: $showPasteAlert) {
+            TextField("Paste CSV text here", text: $importInputString)
+            Button("Import") {
+                let count = store.importCsv(content: importInputString)
+                importMessage = "Successfully imported \(count) entries."
+                showImportResult = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Import Status", isPresented: $showImportResult) {
+            Button("OK") {}
+        } message: {
+            Text(importMessage)
+        }
+        .confirmationDialog("Delete All Data?", isPresented: $showDeleteAllConfirmation, titleVisibility: .visible) {
+            Button("Delete All Data", role: .destructive) {
+                PlatformFeedback.warning()
+                store.deleteAllData()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently remove all transactions, goals, and recurring bills. This action cannot be undone.")
+        }
+        #if os(iOS)
+        .scrollContentBackground(.hidden)
+        .background(Color.appGroupedBackground.ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
+        .keyboardDismissToolbar()
+        #endif
+        .onChange(of: store.monthlyBudget) { _, _ in store.saveData() }
+        .onChange(of: store.cycleStartDay) { _, _ in store.saveData() }
+        .onChange(of: store.baseMonthlyIncome) { _, _ in store.saveData() }
+        .onChange(of: store.payDay) { _, _ in store.saveData() }
+        .onChange(of: store.netWorth.assets) { _, _ in store.saveData() }
+        .onChange(of: store.netWorth.liabilities) { _, _ in store.saveData() }
+        .onChange(of: store.appThemeMode) { _, _ in store.saveData() }
+        .onChange(of: store.hapticsEnabled) { _, _ in store.saveData() }
+        .onChange(of: store.soundsEnabled) { _, _ in store.saveData() }
+        .onChange(of: store.summaryEnabled) { _, _ in store.saveData() }
+        .onChange(of: store.summaryPeriod) { _, _ in store.saveData() }
     }
 
-    // ── Budgeting & Cycles ────────────────────────────────────────────────
+    // ── Modular Settings Sections with Unified Apple Icon Badges ──────────
 
-    private var budgetingSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Budget & Income Cycles")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            HStack {
+    private var budgetSection: some View {
+        Section {
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "banknote.fill", background: Color.green)
                 Text("Monthly Budget")
-                    .font(.system(size: 13.5))
                 Spacer()
-                TextField("Budget", value: $store.monthlyBudget, format: .currency(code: "INR"))
-                    .multilineTextAlignment(.trailing)
+                TextField("Budget", value: $store.monthlyBudget, format: .number)
                     #if os(iOS)
                     .keyboardType(.decimalPad)
                     #endif
-                    .frame(width: 140)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            Divider()
-                .opacity(0.3)
-
-            Picker("Cycle Starts On", selection: $store.cycleStartDay) {
-                ForEach(1...28, id: \.self) { day in
-                    Text("Day \(day)").tag(day)
-                }
-            }
-
-            Divider()
-                .opacity(0.3)
-
-            HStack {
-                Text("Monthly Income")
-                    .font(.system(size: 13.5))
-                Spacer()
-                TextField("Income", value: $store.baseMonthlyIncome, format: .currency(code: "INR"))
                     .multilineTextAlignment(.trailing)
-                    #if os(iOS)
-                    .keyboardType(.decimalPad)
-                    #endif
-                    .frame(width: 140)
-                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 120)
             }
-
-            Divider()
-                .opacity(0.3)
-
-            Picker("Payday", selection: $store.payDay) {
-                ForEach(1...28, id: \.self) { day in
-                    Text("Day \(day)").tag(day)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .liquidGlassCard(cornerRadius: 20)
-    }
-
-    // ── Summaries & Notifications ─────────────────────────────────────────
-
-    private var summariesSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Notifications & Summaries")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            Toggle("Spending Summaries", isOn: $store.summaryEnabled)
-                .toggleStyle(LiquidGlassToggleStyle())
-
-            if store.summaryEnabled {
-                Divider()
-                    .opacity(0.3)
-
-                Picker("Summary Frequency", selection: $store.summaryPeriod) {
-                    Text("Daily").tag("daily")
-                    Text("Weekly").tag("weekly")
-                    Text("Monthly").tag("monthly")
-                }
-                .pickerStyle(.segmented)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .liquidGlassCard(cornerRadius: 20)
-    }
-
-    // ── Data Management ───────────────────────────────────────────────────
-
-    private var dataManagementSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Data Management & Backup")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
-                Button(action: exportCsv) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.up.doc.fill")
-                        Text("Export CSV")
+                SettingsIconBadge(icon: "calendar", background: Color.blue)
+                Text("Cycle Start Day")
+                Spacer()
+                Picker("", selection: $store.cycleStartDay) {
+                    ForEach(1...28, id: \.self) { day in
+                        Text("\(day)\(daySuffix(day)) of month").tag(day)
                     }
-                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
-
-                Button(action: initiateCsvImport) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.down.doc.fill")
-                        Text("Import CSV")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
+                .labelsHidden()
             }
 
-            Divider()
-                .opacity(0.3)
-
-            Button(role: .destructive, action: {
-                showDeleteAllConfirmation = true
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "trash.fill")
-                    Text("Delete All Data")
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "calendar.badge.clock", background: Color.indigo)
+                Text("Pay Day")
+                Spacer()
+                Picker("", selection: $store.payDay) {
+                    ForEach(1...28, id: \.self) { day in
+                        Text("\(day)\(daySuffix(day)) of month").tag(day)
+                    }
                 }
-                .frame(maxWidth: .infinity)
+                .labelsHidden()
             }
-            .buttonStyle(LiquidGlassButtonStyle(cornerRadius: 12))
+
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "arrow.down.left.circle.fill", background: Color.teal)
+                Text("Monthly Base Income")
+                Spacer()
+                TextField("Income", value: $store.baseMonthlyIncome, format: .number)
+                    #if os(iOS)
+                    .keyboardType(.decimalPad)
+                    #endif
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 120)
+            }
+        } header: {
+            Text("Monthly Budget & Cycle")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .liquidGlassCard(cornerRadius: 20)
     }
 
-    // ── About & Privacy ───────────────────────────────────────────────────
+    private var netWorthSection: some View {
+        Section {
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "chart.line.uptrend.xyaxis", background: Color.green)
+                Text("Total Assets")
+                Spacer()
+                TextField("Assets", value: $store.netWorth.assets, format: .number)
+                    #if os(iOS)
+                    .keyboardType(.decimalPad)
+                    #endif
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 120)
+            }
+
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "chart.line.downtrend.xyaxis", background: Color.red)
+                Text("Total Liabilities")
+                Spacer()
+                TextField("Liabilities", value: $store.netWorth.liabilities, format: .number)
+                    #if os(iOS)
+                    .keyboardType(.decimalPad)
+                    #endif
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 120)
+            }
+
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "building.columns.fill", background: Color.purple)
+                Text("Calculated Net Worth")
+                    .font(.system(size: 13.5, weight: .medium))
+                Spacer()
+                Text("₹\(formatCurrency(store.netWorth.total))")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(store.netWorth.total >= 0 ? Color.green : Color.red)
+            }
+        } header: {
+            Text("Net Worth Balance Sheet")
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section {
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "circle.lefthalf.filled", background: Color.indigo)
+                Text("Theme Mode")
+                Spacer()
+                Picker("Theme Mode", selection: $store.appThemeMode) {
+                    Text("System").tag("system")
+                    Text("Dark").tag("dark")
+                    Text("Light").tag("light")
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 200)
+            }
+        } header: {
+            Text("Appearance")
+        }
+    }
+
+    private var soundAndHapticsSection: some View {
+        Section {
+            Toggle(isOn: $store.hapticsEnabled) {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "iphone.radiowaves.left.and.right", background: Color.pink)
+                    Text("Haptic Feedback")
+                }
+            }
+
+            Toggle(isOn: $store.soundsEnabled) {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "speaker.wave.2.fill", background: Color.orange)
+                    Text("Sound Effects")
+                }
+            }
+        } header: {
+            Text("Sound & Haptics")
+        }
+    }
+
+    private var notificationsSection: some View {
+        Section {
+            Toggle(isOn: $store.summaryEnabled) {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "bell.badge.fill", background: Color.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Daily Spending Digest")
+                        Text("Evening summary notification")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if store.summaryEnabled {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "clock.fill", background: Color.blue)
+                    Text("Frequency")
+                    Spacer()
+                    Picker("Notification Frequency", selection: $store.summaryPeriod) {
+                        Text("Daily").tag("daily")
+                        Text("Weekly").tag("weekly")
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 180)
+                }
+            }
+        } header: {
+            Text("Daily Spending Digest")
+        } footer: {
+            Text("Sends a quiet notification summarizing your spending for the day and your remaining daily allowance runway.")
+                .font(.system(size: 11.5))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var csvExportUrl: URL {
+        let content = store.exportCsv()
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("well_spent_expenses.csv")
+        try? content.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
+
+    private var jsonExportUrl: URL {
+        let content = store.exportJsonVault()
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("well_spent_vault.json")
+        try? content.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
+
+    private var dataSection: some View {
+        Section {
+            // CSV Export
+            ShareLink(
+                item: csvExportUrl,
+                preview: SharePreview("well_spent_expenses.csv")
+            ) {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "arrow.up.doc.fill", background: Color.blue)
+                    Text("Export CSV Spreadsheet")
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // CSV Import
+            Menu {
+                Button {
+                    PlatformFeedback.selection()
+                    importMode = .csv
+                    showFileImporter = true
+                } label: {
+                    Label("Choose CSV from Files...", systemImage: "doc.badge.plus")
+                }
+                Button {
+                    PlatformFeedback.selection()
+                    importMode = .csv
+                    showPasteAlert = true
+                } label: {
+                    Label("Paste CSV Text...", systemImage: "doc.on.clipboard")
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "arrow.down.doc.fill", background: Color.cyan)
+                    Text("Import CSV Transactions")
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // JSON Backup Vault
+            ShareLink(
+                item: jsonExportUrl,
+                preview: SharePreview("well_spent_vault.json")
+            ) {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "archivebox.fill", background: Color.purple)
+                    Text("Backup JSON Vault")
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // JSON Restore Vault
+            Button {
+                PlatformFeedback.selection()
+                importMode = .json
+                showFileImporter = true
+            } label: {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "arrow.counterclockwise.circle.fill", background: Color.indigo)
+                    Text("Restore JSON Vault")
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                }
+            }
+
+            // Destructive Delete All
+            Button(role: .destructive) {
+                PlatformFeedback.warning()
+                showDeleteAllConfirmation = true
+            } label: {
+                HStack(spacing: 12) {
+                    SettingsIconBadge(icon: "trash.fill", background: Color.red)
+                    Text("Delete All Data")
+                        .foregroundStyle(Color.red)
+                }
+            }
+        } header: {
+            Text("Data Management & Portability")
+        } footer: {
+            Text("Your financial data is stored 100% locally on your device. Export regular backups to prevent data loss.")
+                .font(.system(size: 11.5))
+                .foregroundStyle(.secondary)
+        }
+    }
 
     private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("About")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            HStack {
-                Text("Well Spent")
-                    .font(.system(size: 13.5, weight: .semibold))
+        Section {
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "info.circle.fill", background: Color.gray)
+                Text("Version")
                 Spacer()
-                Text("v1.0.0 Native SwiftUI")
-                    .font(.system(size: 12))
+                Text("0.1.0")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
 
-            HStack {
-                Text("Data Privacy")
-                    .font(.system(size: 13.5))
+            HStack(spacing: 12) {
+                SettingsIconBadge(icon: "lock.shield.fill", background: Color.green)
+                Text("Privacy & Storage")
                 Spacer()
-                Text("100% Offline & Local")
-                    .font(.system(size: 12, weight: .semibold))
+                Text("100% On-Device & Private")
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.green)
             }
+        } header: {
+            Text("About")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .liquidGlassCard(cornerRadius: 16)
     }
 
-    // ── CSV Export & Import Handlers ──────────────────────────────────────
-
-    private func exportCsv() {
-        PlatformFeedback.selection()
-        exportCsvString = store.exportCsv()
-        #if os(iOS)
-        showExportShareSheet = true
-        #elseif os(macOS)
-        let savePanel = NSSavePanel()
-        savePanel.allowedContentTypes = [.commaSeparatedText, .plainText]
-        savePanel.nameFieldStringValue = "well_spent_expenses.csv"
-        savePanel.begin { response in
-            if response == .OK, let url = savePanel.url {
-                try? exportCsvString.write(to: url, atomically: true, encoding: .utf8)
-            }
-        }
-        #endif
-    }
-
-    private func initiateCsvImport() {
-        PlatformFeedback.selection()
-        #if os(macOS)
-        showFileImporter = true
-        #elseif os(iOS)
-        showImportConfirmation = true
-        #endif
-    }
+    // ── Handlers ──────────────────────────────────────────────────────────
 
     private func handleFileImport(result: Result<[URL], Error>) {
         switch result {
@@ -391,9 +430,19 @@ public struct SettingsView: View {
             }
             do {
                 let content = try String(contentsOf: url, encoding: .utf8)
-                let count = store.importCsv(content: content)
-                PlatformFeedback.success()
-                importMessage = "Successfully imported \(count) transactions from file."
+                if importMode == .json || url.pathExtension.lowercased() == "json" {
+                    let success = store.importJsonVault(content: content)
+                    if success {
+                        PlatformFeedback.success()
+                        importMessage = "Successfully restored JSON vault backup."
+                    } else {
+                        importMessage = "Failed to parse JSON backup file."
+                    }
+                } else {
+                    let count = store.importCsv(content: content)
+                    PlatformFeedback.success()
+                    importMessage = "Successfully imported \(count) transactions from CSV."
+                }
                 showImportResult = true
             } catch {
                 importMessage = "Could not read file: \(error.localizedDescription)"
@@ -404,17 +453,38 @@ public struct SettingsView: View {
             showImportResult = true
         }
     }
-}
 
-#if os(iOS)
-struct ShareSheet: UIViewControllerRepresentable {
-    var activityItems: [Any]
-    var applicationActivities: [UIActivity]? = nil
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    private func daySuffix(_ day: Int) -> String {
+        switch day {
+        case 1, 21: return "st"
+        case 2, 22: return "nd"
+        case 3, 23: return "rd"
+        default: return "th"
+        }
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
 }
-#endif
+
+// ── Reusable Apple-Style Settings Icon Badge ─────────────────────────────────
+
+private struct SettingsIconBadge: View {
+    let icon: String
+    let background: Color
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(background)
+                .frame(width: 28, height: 28)
+            Image(systemName: icon)
+                .font(.system(size: 13.5, weight: .semibold))
+                .foregroundStyle(Color.white)
+        }
+    }
+}

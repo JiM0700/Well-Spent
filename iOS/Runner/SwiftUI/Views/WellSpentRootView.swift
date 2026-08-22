@@ -3,6 +3,7 @@ import SwiftUI
 public struct WellSpentRootView: View {
     @StateObject private var store = ExpenseStore()
     @State private var selectedTab: TabSelection = .overview
+    @State private var previousTab: TabSelection = .overview
     @State private var showQuickAdd: Bool = false
 
     public init() {}
@@ -13,28 +14,46 @@ public struct WellSpentRootView: View {
             .environmentObject(store)
             .preferredColorScheme(store.colorSchemeForTheme)
         #else
-        TabView(selection: $selectedTab) {
+        TabView(selection: Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if newTab == .quickAdd {
+                    PlatformFeedback.impact(.medium)
+                    showQuickAdd = true
+                } else {
+                    PlatformFeedback.selection()
+                    selectedTab = newTab
+                    previousTab = newTab
+                }
+            }
+        )) {
             OverviewView(showQuickAdd: $showQuickAdd)
                 .tabItem {
-                    Label("Home", systemImage: selectedTab == .overview ? "house.fill" : "house")
+                    Label(TabSelection.overview.title, systemImage: selectedTab == .overview ? TabSelection.overview.activeIcon : TabSelection.overview.inactiveIcon)
                 }
                 .tag(TabSelection.overview)
 
             CategoriesView(showQuickAdd: $showQuickAdd)
                 .tabItem {
-                    Label("Budgets", systemImage: selectedTab == .categories ? "square.grid.2x2.fill" : "square.grid.2x2")
+                    Label(TabSelection.categories.title, systemImage: selectedTab == .categories ? TabSelection.categories.activeIcon : TabSelection.categories.inactiveIcon)
                 }
                 .tag(TabSelection.categories)
 
+            Color.clear
+                .tabItem {
+                    Label(TabSelection.quickAdd.title, systemImage: TabSelection.quickAdd.activeIcon)
+                }
+                .tag(TabSelection.quickAdd)
+
             InsightsView()
                 .tabItem {
-                    Label("Trends", systemImage: "chart.bar.xaxis")
+                    Label(TabSelection.insights.title, systemImage: selectedTab == .insights ? TabSelection.insights.activeIcon : TabSelection.insights.inactiveIcon)
                 }
                 .tag(TabSelection.insights)
 
             SettingsView()
                 .tabItem {
-                    Label("Settings", systemImage: selectedTab == .settings ? "gearshape.fill" : "gearshape")
+                    Label(TabSelection.settings.title, systemImage: selectedTab == .settings ? TabSelection.settings.activeIcon : TabSelection.settings.inactiveIcon)
                 }
                 .tag(TabSelection.settings)
         }
@@ -44,6 +63,8 @@ public struct WellSpentRootView: View {
         .sheet(isPresented: $showQuickAdd) {
             QuickAddView()
                 .environmentObject(store)
+                .presentationDetents([.fraction(0.85), .large])
+                .presentationDragIndicator(.visible)
         }
         #endif
     }

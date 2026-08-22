@@ -1,18 +1,12 @@
-//
-//  Generated file. Do not edit.
-//
-
-// clang-format off
-
 #ifndef GeneratedPluginRegistrant_h
 #define GeneratedPluginRegistrant_h
 
-#import <Flutter/Flutter.h>
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface GeneratedPluginRegistrant : NSObject
-+ (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry;
++ (void)registerWithRegistry:(NSObject*)registry;
 @end
 
 NS_ASSUME_NONNULL_END

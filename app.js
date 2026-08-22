@@ -29,21 +29,96 @@ const CATEGORIES = {
   other:         { name: 'Other',              icon: '🌐', color: '#78909c' },
 };
 
+// ── Security Fortress & Robust Storage Engine ─────────────────────────────
+const SafeStorage = {
+  get(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      if (val === null || val === undefined) return fallback;
+      const parsed = JSON.parse(val);
+      return parsed !== null && parsed !== undefined ? parsed : fallback;
+    } catch (e) {
+      console.warn(`[SafeStorage] Failed to read ${key}, using fallback:`, e);
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.error(`[SafeStorage] Storage quota exceeded or blocked for ${key}:`, e);
+      showToast('⚠️ Storage quota full. Please export a backup.', 4000);
+      return false;
+    }
+  },
+  getString(key, fallback = '') {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null && val !== undefined ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  setString(key, val) {
+    try {
+      localStorage.setItem(key, String(val));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+function sanitizeText(v, maxLen = 300) {
+  if (typeof v !== 'string') return '';
+  return v.trim().slice(0, maxLen);
+}
+
+function sanitizeNumber(val, fallback = 0, min = 0, max = 1e9) {
+  const n = Number(val);
+  if (isNaN(n) || !isFinite(n)) return fallback;
+  return Math.min(Math.max(n, min), max);
+}
+
+function escapeHtml(v) {
+  return String(v || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function sanitizeCsvCell(val) {
+  let str = String(val ?? '');
+  // Neutralize CSV Formula Injection (=, +, -, @, \t, \r)
+  if (/^[=\+\-@\t\r%|]/.test(str)) {
+    str = "'" + str;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+function generateFingerprint(date, title, amount, account = '') {
+  const d = (date || '').split('T')[0];
+  const t = (title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const a = Number(amount || 0).toFixed(2);
+  const acc = (account || '').trim().toLowerCase();
+  return `${d}|${t}|${a}|${acc}`;
+}
+
 // ── State Store ───────────────────────────────────────────────────────────
-let expenses          = loadJSON(STORAGE_KEY, []);
-let monthlyBudget     = Number(localStorage.getItem(BUDGET_KEY))          || 25000;
-let cycleStartDay     = Number(localStorage.getItem(CYCLE_START_DAY_KEY)) || 1;
-let baseIncome        = Number(localStorage.getItem(BASE_INCOME_KEY))     || 50000;
-let currentViewMode   = localStorage.getItem(VIEW_MODE_KEY)               || 'monthwise';
-let selectedPeriod    = localStorage.getItem(PERIOD_KEY)                  || 'this-month';
-let currentTab        = localStorage.getItem(TAB_KEY)                     || 'overview';
+let expenses          = SafeStorage.get(STORAGE_KEY, []);
+let monthlyBudget     = sanitizeNumber(SafeStorage.getString(BUDGET_KEY), 25000, 100, 1e8);
+let cycleStartDay     = sanitizeNumber(SafeStorage.getString(CYCLE_START_DAY_KEY), 1, 1, 28);
+let baseIncome        = sanitizeNumber(SafeStorage.getString(BASE_INCOME_KEY), 50000, 0, 1e9);
+let currentViewMode   = SafeStorage.getString(VIEW_MODE_KEY, 'monthwise');
+let selectedPeriod    = SafeStorage.getString(PERIOD_KEY, 'this-month');
+let currentTab        = SafeStorage.getString(TAB_KEY, 'overview');
 let categoryBudgets   = loadCategoryBudgets();
 let recurringBills    = loadRecurringBills();
-let dismissedPatterns = loadJSON(DISMISSED_PATTERNS_KEY, []);
-let netWorth          = loadJSON(NET_WORTH_KEY, { assets: 0, liabilities: 0, configured: false });
-let goals             = loadJSON(GOALS_KEY, []);
-let globalTags        = loadJSON(TAGS_KEY, ['personal', 'work', 'subscription', 'essential', 'discretionary', 'travel']);
-let currentPalette    = localStorage.getItem(PALETTE_KEY)                 || 'blue';
+let dismissedPatterns = SafeStorage.get(DISMISSED_PATTERNS_KEY, []);
+let netWorth          = SafeStorage.get(NET_WORTH_KEY, { assets: 0, liabilities: 0, configured: false });
+let goals             = SafeStorage.get(GOALS_KEY, []);
+let globalTags        = SafeStorage.get(TAGS_KEY, ['personal', 'work', 'subscription', 'essential', 'discretionary', 'travel']);
+let currentPalette    = SafeStorage.getString(PALETTE_KEY, 'blue');
 
 let activeCategoryFilter  = 'all';
 let activeTagFilter       = null;
@@ -73,23 +148,14 @@ if (Array.isArray(expenses) && expenses.length > 0) {
   if (modified) saveExpenses();
 }
 
-// ── Core Helpers ──────────────────────────────────────────────────────────
-function loadJSON(key, fallback) {
-  try {
-    const val = JSON.parse(localStorage.getItem(key));
-    return val !== null && val !== undefined ? val : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveExpenses()          { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
-function saveCategoryBudgets()   { localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(categoryBudgets)); }
-function saveRecurringBills()    { localStorage.setItem(RECURRING_BILLS_KEY, JSON.stringify(recurringBills)); }
-function saveDismissedPatterns() { localStorage.setItem(DISMISSED_PATTERNS_KEY, JSON.stringify(dismissedPatterns)); }
-function saveNetWorth()          { localStorage.setItem(NET_WORTH_KEY, JSON.stringify(netWorth)); }
-function saveGoals()             { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); }
-function saveTags()              { localStorage.setItem(TAGS_KEY, JSON.stringify(globalTags)); }
+// ── Storage Persistence Helpers ───────────────────────────────────────────
+function saveExpenses()          { SafeStorage.set(STORAGE_KEY, expenses); }
+function saveCategoryBudgets()   { SafeStorage.set(CATEGORY_BUDGETS_KEY, categoryBudgets); }
+function saveRecurringBills()    { SafeStorage.set(RECURRING_BILLS_KEY, recurringBills); }
+function saveDismissedPatterns() { SafeStorage.set(DISMISSED_PATTERNS_KEY, dismissedPatterns); }
+function saveNetWorth()          { SafeStorage.set(NET_WORTH_KEY, netWorth); }
+function saveGoals()             { SafeStorage.set(GOALS_KEY, goals); }
+function saveTags()              { SafeStorage.set(TAGS_KEY, globalTags); }
 
 let toastTimeout = null;
 function showToast(msg, duration = 3000) {
@@ -112,11 +178,6 @@ function inrCompact(n) {
 function formatDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
-function escapeHtml(v) {
-  return String(v || '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
-}
 function triggerHaptic() {
   if (navigator.vibrate) {
     try { navigator.vibrate(14); } catch {}
@@ -128,12 +189,12 @@ function loadCategoryBudgets() {
     food: 8000, transport: 4000, bills: 6000, shopping: 4000,
     healthcare: 2000, entertainment: 2000, invest: 5000, other: 2000
   };
-  const stored = loadJSON(CATEGORY_BUDGETS_KEY, {});
+  const stored = SafeStorage.get(CATEGORY_BUDGETS_KEY, {});
   return Object.assign(defaults, stored);
 }
 
 function loadRecurringBills() {
-  const stored = loadJSON(RECURRING_BILLS_KEY, null);
+  const stored = SafeStorage.get(RECURRING_BILLS_KEY, null);
   if (Array.isArray(stored) && stored.length > 0) return stored;
   return [
     { id: 1, title: 'iCloud Storage', amount: 299, dueDay: 5, isPaid: true },
@@ -175,13 +236,6 @@ function normalizeMerchant(name) {
     .trim();
 }
 
-function generateFingerprint(date, title, amount, account = '') {
-  const d = (date || '').split('T')[0];
-  const t = (title || '').trim().toLowerCase().replace(/\s+/g, ' ');
-  const a = Number(amount || 0).toFixed(2);
-  const acc = (account || '').trim().toLowerCase();
-  return `${d}|${t}|${a}|${acc}`;
-}
 
 function detectRecurringPatterns(expensesList, dismissedList, confirmedList) {
   if (!Array.isArray(expensesList) || expensesList.length < 2) return [];
@@ -337,7 +391,7 @@ function seedSampleData() {
   saveExpenses();
 }
 
-// ── Metrics Calculation & Trajectory Generation ───────────────────────────
+// ── Metrics Calculation & Trajectory Generation (Single-Pass O(N) Engine) ──
 function calculateMetrics() {
   const now = new Date();
   const y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
@@ -348,32 +402,83 @@ function calculateMetrics() {
     if (startMonth < 0) { startMonth = 11; startYear--; }
   }
   const cycleStart = new Date(startYear, startMonth, cycleStartDay, 0, 0, 0, 0);
+  const cycleStartMs = cycleStart.getTime();
 
   let endYear = startYear, endMonth = startMonth + 1;
   if (endMonth > 11) { endMonth = 0; endYear++; }
   const cycleEnd = new Date(endYear, endMonth, cycleStartDay, 0, 0, 0, 0);
+  const cycleEndMs = cycleEnd.getTime();
 
-  // Monthwise cycle expenses
-  const monthExpenses = expenses.filter(e => {
-    const ed = new Date(e.date);
-    return ed >= cycleStart && ed < cycleEnd;
-  });
-  const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-  // Daywise expenses (Today)
   const todayStart = new Date(y, mo, d, 0, 0, 0, 0);
-  const todayEnd   = new Date(y, mo, d, 23, 59, 59, 999);
-  const todayExpenses = expenses.filter(e => {
-    const ed = new Date(e.date);
-    return ed >= todayStart && ed <= todayEnd;
-  });
-  const todayTotal = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const todayStartMs = todayStart.getTime();
+  const todayEndMs   = new Date(y, mo, d, 23, 59, 59, 999).getTime();
 
-  // Cycle pacing & forecasting
-  const totalDays = Math.max(1, Math.round((cycleEnd - cycleStart) / 86400000));
-  const daysElapsed = Math.max(1, Math.min(totalDays, Math.ceil((now - cycleStart) / 86400000)));
+  const totalDays = Math.max(1, Math.round((cycleEndMs - cycleStartMs) / 86400000));
+  const daysElapsed = Math.max(1, Math.min(totalDays, Math.ceil((now.getTime() - cycleStartMs) / 86400000)));
   const daysRemaining = Math.max(0, totalDays - daysElapsed);
   const daysRemainingIncludingToday = Math.max(1, totalDays - daysElapsed + 1);
+
+  // Previous cycle boundaries
+  let prevStartYear = startYear, prevStartMonth = startMonth - 1;
+  if (prevStartMonth < 0) { prevStartMonth = 11; prevStartYear--; }
+  const prevCycleStartMs = new Date(prevStartYear, prevStartMonth, cycleStartDay, 0, 0, 0, 0).getTime();
+  const prevCycleEndMs = cycleStartMs;
+
+  const cutoff90Ms = now.getTime() - 90 * 86400000;
+  const cutoff180Ms = now.getTime() - 180 * 86400000;
+  const yearStartMs = new Date(y, 0, 1, 0, 0, 0, 0).getTime();
+
+  // Buckets & single-pass accumulation
+  const daySpendBuckets = new Float64Array(totalDays + 1);
+  let monthTotal = 0;
+  let todayTotal = 0;
+  const monthExpenses = [];
+  const todayExpenses = [];
+  const lastMonthExpenses = [];
+  const last3MonthsExpenses = [];
+  const last6MonthsExpenses = [];
+  const thisYearExpenses = [];
+
+  for (let i = 0; i < expenses.length; i++) {
+    const e = expenses[i];
+    const amt = typeof e.amount === 'number' && !isNaN(e.amount) ? e.amount : Number(e.amount) || 0;
+    let ed = e._cachedTime;
+    if (typeof ed !== 'number') {
+      ed = new Date(e.date).getTime();
+      Object.defineProperty(e, '_cachedTime', { value: ed, writable: true, enumerable: false, configurable: true });
+    }
+    if (isNaN(ed)) continue;
+
+    // Monthwise
+    if (ed >= cycleStartMs && ed < cycleEndMs) {
+      monthTotal += amt;
+      monthExpenses.push(e);
+      const dayIndex = Math.floor((ed - cycleStartMs) / 86400000) + 1;
+      if (dayIndex >= 1 && dayIndex <= totalDays) {
+        daySpendBuckets[dayIndex] += amt;
+      }
+    }
+
+    // Today
+    if (ed >= todayStartMs && ed <= todayEndMs) {
+      todayTotal += amt;
+      todayExpenses.push(e);
+    }
+
+    // Multi-period accumulation
+    if (ed >= prevCycleStartMs && ed < prevCycleEndMs) {
+      lastMonthExpenses.push(e);
+    }
+    if (ed >= cutoff90Ms) {
+      last3MonthsExpenses.push(e);
+    }
+    if (ed >= cutoff180Ms) {
+      last6MonthsExpenses.push(e);
+    }
+    if (ed >= yearStartMs) {
+      thisYearExpenses.push(e);
+    }
+  }
 
   // Dynamic daily allowance calculated based strictly on the remaining monthly balance
   const previousSpendBeforeToday = Math.max(0, monthTotal - todayTotal);
@@ -387,36 +492,27 @@ function calculateMetrics() {
   const dailyBurn = monthTotal / daysElapsed;
   const projectedMonthEnd = monthTotal + (dailyBurn * daysRemaining);
 
-  // Cumulative Trajectory Data per Day for the Sparkline
-  const trajectoryDays = [];
+  // Cumulative Trajectory Data per Day for the Sparkline in O(D)
+  const trajectoryDays = new Array(totalDays);
   let runningCumulative = 0;
 
   for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
     const dayDate = new Date(startYear, startMonth, cycleStartDay + (dayIndex - 1), 0, 0, 0, 0);
-    const dayEndDate = new Date(startYear, startMonth, cycleStartDay + (dayIndex - 1), 23, 59, 59, 999);
-
     const isPastOrToday = dayIndex <= daysElapsed;
     if (isPastOrToday) {
-      const daySpend = expenses
-        .filter(e => {
-          const ed = new Date(e.date);
-          return ed >= dayDate && ed <= dayEndDate;
-        })
-        .reduce((sum, e) => sum + e.amount, 0);
-
-      runningCumulative += daySpend;
+      runningCumulative += daySpendBuckets[dayIndex];
     }
 
-    trajectoryDays.push({
+    trajectoryDays[dayIndex - 1] = {
       dayIndex,
       dateStr: dayDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
       cumulativeSpend: isPastOrToday ? runningCumulative : null,
       idealPace: dailyBudget * dayIndex
-    });
+    };
   }
 
-  // ── Multi-Period Analytics Engine ─────────────────────────────────────────
-  let periodExpenses = [];
+  // Multi-Period Analytics selection
+  let periodExpenses = monthExpenses;
   let periodBudget = monthlyBudget;
   let periodLabel = 'This Month';
 
@@ -425,33 +521,23 @@ function calculateMetrics() {
     periodBudget = dynamicDailyBudget;
     periodLabel = 'Today';
   } else if (selectedPeriod === 'last-month') {
-    let prevStartYear = startYear, prevStartMonth = startMonth - 1;
-    if (prevStartMonth < 0) { prevStartMonth = 11; prevStartYear--; }
-    const prevCycleStart = new Date(prevStartYear, prevStartMonth, cycleStartDay, 0, 0, 0, 0);
-    const prevCycleEnd = cycleStart;
-    periodExpenses = expenses.filter(e => {
-      const ed = new Date(e.date);
-      return ed >= prevCycleStart && ed < prevCycleEnd;
-    });
+    periodExpenses = lastMonthExpenses;
     periodBudget = monthlyBudget;
     periodLabel = 'Last Month';
   } else if (selectedPeriod === 'last-3-months') {
-    const cutoff = new Date(now.getTime() - 90 * 86400000);
-    periodExpenses = expenses.filter(e => new Date(e.date) >= cutoff);
+    periodExpenses = last3MonthsExpenses;
     periodBudget = monthlyBudget * 3;
     periodLabel = 'Last 3 Months';
   } else if (selectedPeriod === 'last-6-months') {
-    const cutoff = new Date(now.getTime() - 180 * 86400000);
-    periodExpenses = expenses.filter(e => new Date(e.date) >= cutoff);
+    periodExpenses = last6MonthsExpenses;
     periodBudget = monthlyBudget * 6;
     periodLabel = 'Last 6 Months';
   } else if (selectedPeriod === 'this-year') {
-    const yearStart = new Date(y, 0, 1, 0, 0, 0, 0);
-    periodExpenses = expenses.filter(e => new Date(e.date) >= yearStart);
+    periodExpenses = thisYearExpenses;
     periodBudget = monthlyBudget * (mo + 1);
     periodLabel = 'This Year';
   } else if (selectedPeriod === 'all-time') {
-    periodExpenses = [...expenses];
+    periodExpenses = expenses;
     periodBudget = monthlyBudget > 0 ? monthlyBudget * Math.max(1, Math.ceil(expenses.length / 8)) : 0;
     periodLabel = 'All Time';
   } else {
@@ -460,7 +546,7 @@ function calculateMetrics() {
     periodLabel = 'This Month';
   }
 
-  const periodTotal = periodExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const periodTotal = periodExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
   return {
     monthTotal,
@@ -598,7 +684,7 @@ function renderOverview(metrics) {
     periodSelect.onchange = (e) => {
       triggerHaptic();
       selectedPeriod = e.target.value;
-      localStorage.setItem(PERIOD_KEY, selectedPeriod);
+      SafeStorage.setString(PERIOD_KEY, selectedPeriod);
       render();
     };
   }
@@ -1162,7 +1248,7 @@ function renderGoals() {
       <div class="m3-goal-card ${isCompleted ? 'completed' : ''}" data-goal="${goal.id}">
         <div class="m3-goal-header">
           <div class="m3-goal-title-wrap">
-            <span class="m3-goal-icon">${goal.icon || '🎯'}</span>
+            <span class="m3-goal-icon">${escapeHtml(goal.icon || '🎯')}</span>
             <span class="m3-goal-name" title="${escapeHtml(goal.name)}">${escapeHtml(goal.name)}</span>
           </div>
           <span class="m3-goal-due ${isCompleted ? 'completed' : ''}">${dueText}</span>
@@ -1705,7 +1791,7 @@ function renderTagModalList() {
   container.innerHTML = globalTags.map(tag => {
     const hasTag = currentTxTags.includes(tag);
     return `
-      <button type="button" class="m3-tag-toggle-chip ${hasTag ? 'active' : ''}" data-tag="${tag}">
+      <button type="button" class="m3-tag-toggle-chip ${hasTag ? 'active' : ''}" data-tag="${escapeHtml(tag)}">
         <span>${hasTag ? '✓' : '＋'}</span>
         <span>#${escapeHtml(tag)}</span>
       </button>
@@ -1760,7 +1846,7 @@ function setCleanVault() {
     dismissedPatterns = [];
     netWorth = { assets: 0, liabilities: 0, configured: false };
     goals = [];
-    localStorage.setItem(FIRST_RUN_KEY, 'true');
+    SafeStorage.setString(FIRST_RUN_KEY, 'true');
     saveExpenses();
     saveRecurringBills();
     saveDismissedPatterns();
@@ -1783,7 +1869,7 @@ function loadDemoData() {
     { id: 1, name: 'Emergency Reserve', targetAmount: 150000, currentAmount: 85000, targetDate: '2026-12-31', icon: '🛡️' },
     { id: 2, name: 'Japan Travel Fund', targetAmount: 200000, currentAmount: 60000, targetDate: '2027-04-15', icon: '🏖️' }
   ];
-  localStorage.setItem(FIRST_RUN_KEY, 'true');
+  SafeStorage.setString(FIRST_RUN_KEY, 'true');
   saveExpenses();
   saveRecurringBills();
   saveNetWorth();
@@ -1844,13 +1930,13 @@ function renderModalCategories() {
 function handleSaveExpense(e) {
   e.preventDefault();
   const amountStr = document.getElementById('expenseAmountInput').value.trim();
-  const title = document.getElementById('expenseTitleInput').value.trim();
-  const notes = document.getElementById('expenseNotesInput').value.trim();
+  const title = sanitizeText(document.getElementById('expenseTitleInput').value, 120);
+  const notes = sanitizeText(document.getElementById('expenseNotesInput').value, 300);
   const dateStr = document.getElementById('expenseDateInput').value;
 
-  const amount = parseFloat(amountStr);
+  const amount = sanitizeNumber(amountStr, 0, 0.01, 1e8);
 
-  if (isNaN(amount) || amount <= 0 || !title) {
+  if (amount <= 0 || !title) {
     alert('Please enter a valid expense description and amount.');
     return;
   }
@@ -1864,16 +1950,18 @@ function handleSaveExpense(e) {
     id: Date.now(),
     title,
     amount,
-    category: selectedCategoryModal,
+    category: selectedCategoryModal || 'other',
     date: expDate,
     notes,
-    fingerprint: fp
+    fingerprint: fp,
+    tags: []
   };
 
   expenses.unshift(newExpense);
   saveExpenses();
+
   closeModal('modalBackdrop');
-  showToast(`✓ Logged ${inr(amount)} for ${title}.`);
+  showToast('✓ Expense recorded.');
   render();
 }
 
@@ -1883,19 +1971,12 @@ function setupEvents() {
     btn.addEventListener('click', () => {
       triggerHaptic();
       currentTab = btn.dataset.tab;
-      localStorage.setItem(TAB_KEY, currentTab);
+      SafeStorage.setString(TAB_KEY, currentTab);
       render();
     });
   });
 
-  document.querySelectorAll('#viewModeSwitcher .m3-mode-icon-btn, #viewModeSwitcher .m3-segment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      triggerHaptic();
-      currentViewMode = btn.dataset.mode;
-      localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
-      render();
-    });
-  });
+
 
   document.querySelectorAll('.m3-filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1908,11 +1989,15 @@ function setupEvents() {
   });
 
   const searchInput = document.getElementById('globalSearchInput');
+  let searchDebounceTimer = null;
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
-      const metrics = calculateMetrics();
-      renderOverview(metrics);
+      if (searchDebounceTimer) cancelAnimationFrame(searchDebounceTimer);
+      searchDebounceTimer = requestAnimationFrame(() => {
+        const metrics = calculateMetrics();
+        renderOverview(metrics);
+      });
     });
   }
 
@@ -1951,7 +2036,7 @@ function setupEvents() {
     budgetSaveBtn.addEventListener('click', () => {
       triggerHaptic();
       const input = document.getElementById('budgetEditInput');
-      const val = Number(input.value) || 0;
+      const val = sanitizeNumber(input.value, 0, 0, 1e8);
       if (editingCategoryKey) {
         categoryBudgets[editingCategoryKey] = val;
         saveCategoryBudgets();
@@ -1978,16 +2063,21 @@ function setupEvents() {
   const billSaveBtn = document.getElementById('billSaveBtn');
   if (billSaveBtn) {
     billSaveBtn.addEventListener('click', () => {
-      const title = document.getElementById('billTitleInput').value.trim();
-      const amount = Number(document.getElementById('billAmountInput').value) || 0;
-      const dueDay = Number(document.getElementById('billDayInput').value) || 1;
+      const title = sanitizeText(document.getElementById('billTitleInput').value, 100);
+      const amount = sanitizeNumber(document.getElementById('billAmountInput').value, 0, 0, 1e8);
+      const dueDay = sanitizeNumber(document.getElementById('billDayInput').value, 1, 1, 31);
 
       if (title && amount > 0) {
         triggerHaptic();
         recurringBills.push({ id: Date.now(), title, amount, dueDay, isPaid: false });
         saveRecurringBills();
+        document.getElementById('billTitleInput').value = '';
+        document.getElementById('billAmountInput').value = '';
+        document.getElementById('billDayInput').value = '';
         closeModal('billModalBackdrop');
         render();
+      } else {
+        showToast('Please enter a valid title and amount.');
       }
     });
   }
@@ -2083,7 +2173,7 @@ function setupEvents() {
     btn.addEventListener('click', () => {
       triggerHaptic();
       currentPalette = btn.dataset.pal;
-      localStorage.setItem(PALETTE_KEY, currentPalette);
+      SafeStorage.setString(PALETTE_KEY, currentPalette);
       applyPalette();
     });
   });
@@ -2092,15 +2182,15 @@ function setupEvents() {
   if (saveSettingsBtn) {
     saveSettingsBtn.addEventListener('click', () => {
       triggerHaptic();
-      monthlyBudget = Number(document.getElementById('settingMonthlyBudget').value) || 25000;
-      cycleStartDay = Number(document.getElementById('settingCycleStartDay').value) || 1;
-      baseIncome = Number(document.getElementById('settingBaseIncome').value) || 50000;
+      monthlyBudget = sanitizeNumber(document.getElementById('settingMonthlyBudget').value, 25000, 100, 1e8);
+      cycleStartDay = sanitizeNumber(document.getElementById('settingCycleStartDay').value, 1, 1, 28);
+      baseIncome    = sanitizeNumber(document.getElementById('settingBaseIncome').value, 50000, 0, 1e9);
 
-      localStorage.setItem(BUDGET_KEY, monthlyBudget);
-      localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
-      localStorage.setItem(BASE_INCOME_KEY, baseIncome);
+      SafeStorage.setString(BUDGET_KEY, monthlyBudget);
+      SafeStorage.setString(CYCLE_START_DAY_KEY, cycleStartDay);
+      SafeStorage.setString(BASE_INCOME_KEY, baseIncome);
 
-      alert('Parameters saved successfully.');
+      showToast('✓ Settings saved successfully.');
       render();
     });
   }
@@ -2180,10 +2270,10 @@ function exportCSV() {
     const row = [
       `"${e.date}"`,
       '"expense"',
-      `"${(e.title || '').replace(/"/g, '""')}"`,
+      sanitizeCsvCell(e.title || ''),
       `"${e.category}"`,
-      e.amount.toFixed(2),
-      `"${(e.notes || '').replace(/"/g, '""')}"`
+      (Number(e.amount) || 0).toFixed(2),
+      sanitizeCsvCell(e.notes || '')
     ];
     csv += row.join(',') + '\n';
   });
@@ -2194,7 +2284,7 @@ function exportCSV() {
   a.href = url;
   a.download = `WellSpent_Export_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 function importCSV(e) {
@@ -2383,7 +2473,7 @@ function exportVaultBackup() {
   a.href = url;
   a.download = `WellSpent_Vault_${new Date().toISOString().split('T')[0]}.wsbackup`;
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
   showToast('✓ Vault backup downloaded.');
 }
 
@@ -2396,17 +2486,17 @@ function handleImportVault(e) {
     try {
       const data = JSON.parse(event.target.result);
       if (data && Array.isArray(data.expenses)) {
-        expenses = data.expenses;
-        monthlyBudget = data.monthlyBudget || monthlyBudget;
-        cycleStartDay = data.cycleStartDay || cycleStartDay;
-        baseIncome = data.baseIncome || baseIncome;
-        categoryBudgets = data.categoryBudgets || categoryBudgets;
-        recurringBills = data.recurringBills || recurringBills;
-        dismissedPatterns = data.dismissedPatterns || dismissedPatterns;
-        netWorth = data.netWorth || netWorth;
-        goals = data.goals || goals;
-        globalTags = data.globalTags || globalTags;
-        currentPalette = data.currentPalette || currentPalette;
+        expenses = Array.isArray(data.expenses) ? data.expenses : [];
+        monthlyBudget = sanitizeNumber(data.monthlyBudget, monthlyBudget, 100, 1e8);
+        cycleStartDay = sanitizeNumber(data.cycleStartDay, cycleStartDay, 1, 28);
+        baseIncome    = sanitizeNumber(data.baseIncome, baseIncome, 0, 1e9);
+        categoryBudgets = (data.categoryBudgets && typeof data.categoryBudgets === 'object') ? data.categoryBudgets : categoryBudgets;
+        recurringBills = Array.isArray(data.recurringBills) ? data.recurringBills : recurringBills;
+        dismissedPatterns = Array.isArray(data.dismissedPatterns) ? data.dismissedPatterns : dismissedPatterns;
+        netWorth = (data.netWorth && typeof data.netWorth === 'object') ? data.netWorth : netWorth;
+        goals = Array.isArray(data.goals) ? data.goals : goals;
+        globalTags = Array.isArray(data.globalTags) ? data.globalTags : globalTags;
+        currentPalette = typeof data.currentPalette === 'string' ? sanitizeText(data.currentPalette, 20) : currentPalette;
 
         // Ensure all restored expenses have fingerprints and tag arrays
         expenses.forEach(exp => {
@@ -2428,8 +2518,8 @@ function handleImportVault(e) {
         localStorage.setItem(BUDGET_KEY, monthlyBudget);
         localStorage.setItem(CYCLE_START_DAY_KEY, cycleStartDay);
         localStorage.setItem(BASE_INCOME_KEY, baseIncome);
-        localStorage.setItem(PALETTE_KEY, currentPalette);
-        localStorage.setItem(FIRST_RUN_KEY, 'true');
+        SafeStorage.setString(PALETTE_KEY, currentPalette);
+        SafeStorage.setString(FIRST_RUN_KEY, 'true');
 
         showToast('✓ Vault backup restored successfully.');
         alert('Vault backup restored successfully.');
@@ -2439,7 +2529,8 @@ function handleImportVault(e) {
       alert('Invalid vault backup file.');
     }
   };
-  reader.readAsText(file);
+  reader.onerror = () => showToast('Failed to read backup file.');
+      reader.readAsText(file);
 }
 
 // ── Service Worker Registration ───────────────────────────────────────────
@@ -2455,7 +2546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
 
   // First Run Onboarding Check
-  const hasRun = localStorage.getItem(FIRST_RUN_KEY);
+  const hasRun = SafeStorage.getString(FIRST_RUN_KEY);
   if (!hasRun && expenses.length === 0) {
     openModal('firstRunModalBackdrop');
   }

@@ -1,2 +1,6 @@
-#include "../../Flutter/Flutter-Debug.xcconfig"
-#include "Warnings.xcconfig"
+PRODUCT_NAME = WellSpent
+PRODUCT_MODULE_NAME = well_spent
+PRODUCT_BUNDLE_IDENTIFIER = com.example.wellSpent
+EXECUTABLE_NAME = well_spent
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1

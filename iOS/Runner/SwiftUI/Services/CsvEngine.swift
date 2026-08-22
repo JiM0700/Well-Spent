@@ -3,16 +3,24 @@ import Foundation
 /// Universal CSV engine supporting arbitrary column ordering, quotes, multi-format dates, and currency tokens
 public final class CsvEngine {
 
+    public static func sanitizeCsvCell(_ string: String) -> String {
+        var str = string.replacingOccurrences(of: "\"", with: "\"\"")
+        if let first = str.first, ["=", "+", "-", "@", "\t", "\r"].contains(first) {
+            str = "'" + str
+        }
+        return str
+    }
+
     public static func exportCsv(from expenses: [Expense]) -> String {
         var csv = "date,type,title,category,amount,notes\n"
         let formatter = ISO8601DateFormatter()
         for exp in expenses {
             let dateStr = formatter.string(from: exp.date)
             let typeStr = exp.isExpense ? "expense" : "income"
-            let safeTitle = exp.title.replacingOccurrences(of: "\"", with: "\"\"")
-            let safeNotes = exp.notes.replacingOccurrences(of: "\"", with: "\"\"")
+            let safeTitle = sanitizeCsvCell(exp.title)
+            let safeNotes = sanitizeCsvCell(exp.notes)
             let catStr = exp.category.rawValue
-            let amtStr = String(format: "%.2f", exp.amount)
+            let amtStr = String(format: "%.2f", max(0.0, exp.amount))
             csv += "\"\(dateStr)\",\"\(typeStr)\",\"\(safeTitle)\",\"\(catStr)\",\(amtStr),\"\(safeNotes)\"\n"
         }
         return csv
@@ -54,7 +62,7 @@ public final class CsvEngine {
             }
         }
 
-        _ = typeIdx // Silence unused warning
+
 
         let dataRows = isHeaderDetected ? Array(rows.dropFirst()) : rows
         var parsedExpenses: [Expense] = []
@@ -124,13 +132,21 @@ public final class CsvEngine {
                 notes = row[notesIdx]
             }
 
+            var isExpense = true
+            if typeIdx >= 0 && typeIdx < row.count {
+                let typeStr = row[typeIdx].trimmingCharacters(in: .whitespaces).lowercased()
+                if typeStr.contains("income") || typeStr.contains("credit") {
+                    isExpense = false
+                }
+            }
+
             let expense = Expense(
                 title: title,
                 amount: amount,
                 category: category,
                 date: date,
                 notes: notes,
-                isExpense: true
+                isExpense: isExpense
             )
             parsedExpenses.append(expense)
         }
@@ -195,34 +211,46 @@ public final class CsvEngine {
         return Double(clean) ?? 0.0
     }
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        return f
+    }()
+
+    private static let isoFractionalFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let dateFormats = [
+        "yyyy-MM-dd",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd HH:mm:ss",
+        "dd/MM/yyyy",
+        "MM/dd/yyyy",
+        "dd-MM-yyyy",
+        "yyyy/MM/dd",
+        "dd MMM yyyy",
+        "MMM dd, yyyy"
+    ]
+
+    private static let cachedDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        return df
+    }()
+
     private static func parseDate(_ string: String) -> Date? {
         let clean = string.replacingOccurrences(of: "\"", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return nil }
 
-        let iso = ISO8601DateFormatter()
-        if let d = iso.date(from: clean) { return d }
+        if let d = isoFormatter.date(from: clean) { return d }
+        if let d = isoFractionalFormatter.date(from: clean) { return d }
 
-        let isoFull = ISO8601DateFormatter()
-        isoFull.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = isoFull.date(from: clean) { return d }
-
-        let formats = [
-            "yyyy-MM-dd",
-            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-            "yyyy-MM-dd'T'HH:mm:ssZ",
-            "yyyy-MM-dd HH:mm:ss",
-            "dd/MM/yyyy",
-            "MM/dd/yyyy",
-            "dd-MM-yyyy",
-            "yyyy/MM/dd",
-            "dd MMM yyyy",
-            "MMM dd, yyyy"
-        ]
-        let df = DateFormatter()
-        df.locale = Locale(identifier: "en_US_POSIX")
-        for fmt in formats {
-            df.dateFormat = fmt
-            if let d = df.date(from: clean) {
+        for fmt in dateFormats {
+            cachedDateFormatter.dateFormat = fmt
+            if let d = cachedDateFormatter.date(from: clean) {
                 return d
             }
         }

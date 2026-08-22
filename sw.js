@@ -1,7 +1,7 @@
-// Service Worker for Well Spent PWA (Offline-First, Material 3 Expressive)
+// Service Worker for Well Spent PWA (Offline-First Fortress Edition)
 
-const CACHE_NAME = 'well-spent-v21';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'well-spent-v23';
+const STATIC_ASSETS = [
   './',
   './index.html',
   './styles.css',
@@ -11,16 +11,16 @@ const ASSETS_TO_CACHE = [
   './icon.svg'
 ];
 
-// Install Event - Precache App Shell
+// Install Event - Precache Core App Shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(STATIC_ASSETS);
     }).then(() => self.skipWaiting())
   );
 });
 
-// Activate Event - Clean up old caches
+// Activate Event - Clean up stale caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
@@ -35,14 +35,30 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Stale-While-Revalidate Strategy
+// Fetch Event - Stale-While-Revalidate with Navigation Fallback
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+
+  // Skip non-HTTP schemes (browser extensions, data URIs, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
+  // Handle SPA navigation requests
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('./index.html').then(response => response || caches.match('./'));
+      })
+    );
+    return;
+  }
+
+  // Handle static assets & Google Fonts
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

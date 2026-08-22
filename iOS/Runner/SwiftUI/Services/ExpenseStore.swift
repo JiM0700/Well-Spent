@@ -3,6 +3,7 @@ import SwiftUI
 import Combine
 
 /// Central state store and persistence engine for the Well Spent application
+@MainActor
 public final class ExpenseStore: ObservableObject {
     @Published public var expenses: [Expense] = []
     @Published public var monthlyBudget: Double = 50000.0
@@ -17,8 +18,14 @@ public final class ExpenseStore: ObservableObject {
         "health": 4000.0,
         "shopping": 8000.0,
         "housing": 10000.0,
+        "investment": 15000.0,
         "other": 1000.0
     ]
+    @Published public var customCategories: [ExpenseCategory] = []
+    
+    public var allCategories: [ExpenseCategory] {
+        ExpenseCategory.builtInCategories + customCategories
+    }
     @Published public var summaryEnabled: Bool = true
     @Published public var summaryPeriod: String = "monthly"
     @Published public var recurringBills: [RecurringBill] = [
@@ -27,21 +34,31 @@ public final class ExpenseStore: ObservableObject {
         RecurringBill(title: "Gym Membership", amount: 2500.0, category: .health, dueDay: 18),
         RecurringBill(title: "Apartment Maintenance", amount: 3500.0, category: .housing, dueDay: 25)
     ]
+    @Published public var goals: [Goal] = [
+        Goal(title: "Emergency Fund", targetAmount: 150000.0, currentAmount: 65000.0, sfSymbol: "shield.fill", colorName: "green"),
+        Goal(title: "Japan Vacation", targetAmount: 200000.0, currentAmount: 45000.0, sfSymbol: "airplane", colorName: "blue"),
+        Goal(title: "New MacBook Pro", targetAmount: 180000.0, currentAmount: 120000.0, sfSymbol: "laptopcomputer", colorName: "purple")
+    ]
+    @Published public var netWorth: NetWorth = NetWorth(assets: 450000.0, liabilities: 85000.0)
+    @Published public var globalTags: [String] = ["food", "work", "travel", "weekend", "groceries", "coffee", "rent"]
     @Published public var selectedCategoryFilter: ExpenseCategory? = nil
-    @Published public var currentViewMode: String = "daywise" // "daywise" | "monthwise"
+    @Published public var selectedTagFilter: String? = nil
+    @Published public var currentViewMode: String = "monthwise" // "daywise" | "monthwise"
     @Published public var appThemeMode: String = "system" // "system" | "light" | "dark"
-    @Published public var appAccentColorName: String = "green"
+    @Published public var appAccentColorName: String = "blue"
+    @Published public var hapticsEnabled: Bool = true {
+        didSet {
+            PlatformFeedback.isHapticsEnabled = hapticsEnabled
+        }
+    }
+    @Published public var soundsEnabled: Bool = true {
+        didSet {
+            PlatformFeedback.isSoundsEnabled = soundsEnabled
+        }
+    }
 
     public var accentColor: Color {
-        switch appAccentColorName {
-        case "blue": return Color.blue
-        case "indigo": return Color.indigo
-        case "purple": return Color.purple
-        case "orange": return Color.orange
-        case "teal": return Color.teal
-        case "pink": return Color.pink
-        default: return Color.green
-        }
+        Color.blue
     }
 
     public var colorSchemeForTheme: ColorScheme? {
@@ -50,6 +67,16 @@ public final class ExpenseStore: ObservableObject {
         case "dark": return .dark
         default: return nil
         }
+    }
+
+    public var allUniqueTags: [String] {
+        var set = Set(globalTags)
+        for e in expenses {
+            for t in e.tags {
+                set.insert(t.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+            }
+        }
+        return Array(set).filter { !$0.isEmpty }.sorted()
     }
 
     private let fileURL: URL
@@ -72,8 +99,14 @@ public final class ExpenseStore: ObservableObject {
         var summaryEnabled: Bool
         var summaryPeriod: String
         var recurringBills: [RecurringBill]
+        var goals: [Goal]?
+        var netWorth: NetWorth?
+        var globalTags: [String]?
+        var customCategories: [ExpenseCategory]?
         var appThemeMode: String?
         var appAccentColorName: String?
+        var hapticsEnabled: Bool?
+        var soundsEnabled: Bool?
     }
 
     public func saveData() {
@@ -87,18 +120,22 @@ public final class ExpenseStore: ObservableObject {
             summaryEnabled: summaryEnabled,
             summaryPeriod: summaryPeriod,
             recurringBills: recurringBills,
+            goals: goals,
+            netWorth: netWorth,
+            globalTags: globalTags,
+            customCategories: customCategories,
             appThemeMode: appThemeMode,
-            appAccentColorName: appAccentColorName
+            appAccentColorName: appAccentColorName,
+            hapticsEnabled: hapticsEnabled,
+            soundsEnabled: soundsEnabled
         )
         do {
             let encoded = try JSONEncoder().encode(data)
+            #if os(iOS)
+            try encoded.write(to: fileURL, options: [.atomic, .completeFileProtection])
+            #else
             try encoded.write(to: fileURL, options: .atomic)
-            WidgetDataManager.shared.updateWidgetData(
-                expenses: expenses,
-                monthlyBudget: monthlyBudget,
-                accentColorName: appAccentColorName,
-                cycleStartDay: cycleStartDay
-            )
+            #endif
         } catch {
             print("Error saving data: \(error)")
         }
@@ -113,9 +150,6 @@ public final class ExpenseStore: ObservableObject {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(PersistedData.self, from: data)
             self.expenses = decoded.expenses
-            if self.expenses.isEmpty {
-                seedInitialData()
-            }
             self.monthlyBudget = decoded.monthlyBudget
             self.cycleStartDay = decoded.cycleStartDay
             self.baseMonthlyIncome = decoded.baseMonthlyIncome
@@ -124,11 +158,34 @@ public final class ExpenseStore: ObservableObject {
             self.summaryEnabled = decoded.summaryEnabled
             self.summaryPeriod = decoded.summaryPeriod
             self.recurringBills = decoded.recurringBills
+            if let loadedGoals = decoded.goals {
+                self.goals = loadedGoals
+            }
+            if let loadedNetWorth = decoded.netWorth {
+                self.netWorth = loadedNetWorth
+            }
+            if let loadedTags = decoded.globalTags {
+                self.globalTags = loadedTags
+            }
+            if let loadedCustom = decoded.customCategories {
+                self.customCategories = loadedCustom
+                // Reconcile custom category definitions on loaded expenses
+                for i in 0..<self.expenses.count {
+                    if let matched = loadedCustom.first(where: { $0.id == self.expenses[i].category.id }) {
+                        self.expenses[i].category = matched
+                    }
+                }
+            }
             self.appThemeMode = decoded.appThemeMode ?? "system"
-            self.appAccentColorName = decoded.appAccentColorName ?? "green"
+            self.appAccentColorName = decoded.appAccentColorName ?? "blue"
+            self.hapticsEnabled = decoded.hapticsEnabled ?? true
+            self.soundsEnabled = decoded.soundsEnabled ?? true
+            PlatformFeedback.isHapticsEnabled = self.hapticsEnabled
+            PlatformFeedback.isSoundsEnabled = self.soundsEnabled
         } catch {
             print("Error loading data: \(error)")
-            seedInitialData()
+            let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("well_spent_store.corrupt.json")
+            try? FileManager.default.copyItem(at: fileURL, to: backupURL)
         }
     }
 
@@ -167,6 +224,18 @@ public final class ExpenseStore: ObservableObject {
         }
     }
 
+    public func addRecurringBill(_ bill: RecurringBill) {
+        recurringBills.append(bill)
+        saveData()
+    }
+
+    public func updateRecurringBill(_ bill: RecurringBill) {
+        if let idx = recurringBills.firstIndex(where: { $0.id == bill.id }) {
+            recurringBills[idx] = bill
+            saveData()
+        }
+    }
+
     public func toggleBillPaid(id: String) {
         if let idx = recurringBills.firstIndex(where: { $0.id == id }) {
             recurringBills[idx].isPaid.toggle()
@@ -183,6 +252,47 @@ public final class ExpenseStore: ObservableObject {
         saveData()
     }
 
+    // ── Goals CRUD ────────────────────────────────────────────────────────
+
+    public func addGoal(_ goal: Goal) {
+        goals.append(goal)
+        saveData()
+    }
+
+    public func updateGoal(_ goal: Goal) {
+        if let idx = goals.firstIndex(where: { $0.id == goal.id }) {
+            goals[idx] = goal
+            saveData()
+        }
+    }
+
+    public func deleteGoal(id: String) {
+        goals.removeAll { $0.id == id }
+        saveData()
+    }
+
+    public func depositToGoal(id: String, amount: Double) {
+        if let idx = goals.firstIndex(where: { $0.id == id }) {
+            goals[idx].currentAmount = max(0, goals[idx].currentAmount + amount)
+            saveData()
+        }
+    }
+
+    // ── Net Worth & Tags ──────────────────────────────────────────────────
+
+    public func updateNetWorth(assets: Double, liabilities: Double) {
+        netWorth = NetWorth(assets: assets, liabilities: liabilities, lastUpdated: Date())
+        saveData()
+    }
+
+    public func addGlobalTag(_ tag: String) {
+        let clean = tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if !clean.isEmpty && !globalTags.contains(clean) {
+            globalTags.append(clean)
+            saveData()
+        }
+    }
+
     public func setCategoryBudget(category: ExpenseCategory, amount: Double) {
         categoryBudgets[category.rawValue] = amount
         saveData()
@@ -194,6 +304,35 @@ public final class ExpenseStore: ObservableObject {
 
     public func getCategoryBudget(category: ExpenseCategory) -> Double {
         categoryBudgets[category.rawValue] ?? 0.0
+    }
+
+    public func addCustomCategory(displayName: String, sfSymbol: String, colorHex: String, budget: Double = 0.0) -> ExpenseCategory {
+        let cleanName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let id = "custom_" + UUID().uuidString.prefix(8).lowercased()
+        let newCat = ExpenseCategory(
+            id: id,
+            displayName: cleanName.isEmpty ? "Custom" : cleanName,
+            sfSymbol: sfSymbol.isEmpty ? "tag.fill" : sfSymbol,
+            colorHex: colorHex.isEmpty ? "#007AFF" : colorHex,
+            isCustom: true
+        )
+        customCategories.append(newCat)
+        if budget > 0 {
+            categoryBudgets[newCat.rawValue] = budget
+        }
+        saveData()
+        return newCat
+    }
+
+    public func deleteCustomCategory(id: String) {
+        customCategories.removeAll { $0.id == id }
+        categoryBudgets.removeValue(forKey: id)
+        for i in 0..<expenses.count {
+            if expenses[i].category.id == id {
+                expenses[i].category = .other
+            }
+        }
+        saveData()
     }
 
     // ── Dynamic Cycle Pacing & Metrics ────────────────────────────────────
@@ -266,11 +405,13 @@ public final class ExpenseStore: ObservableObject {
         }
     }
 
-    public var todaySpend: Double {
+    public var todayExpenses: [Expense] {
         let calendar = Calendar.current
-        return expenses
-            .filter { calendar.isDateInToday($0.date) && $0.isExpense }
-            .reduce(0.0) { $0 + $1.amount }
+        return expenses.filter { calendar.isDateInToday($0.date) && $0.isExpense }
+    }
+
+    public var todaySpend: Double {
+        todayExpenses.reduce(0.0) { $0 + $1.amount }
     }
 
     public var currentPeriodTotal: Double {
@@ -321,11 +462,8 @@ public final class ExpenseStore: ObservableObject {
 
     public var categoryBreakdown: [ExpenseCategory: Double] {
         var map: [ExpenseCategory: Double] = [:]
-        for cat in ExpenseCategory.allCases {
-            let total = spentForCategory(cat)
-            if total > 0 {
-                map[cat] = total
-            }
+        for exp in currentPeriodExpenses {
+            map[exp.category, default: 0.0] += exp.amount
         }
         return map
     }
@@ -336,6 +474,59 @@ public final class ExpenseStore: ObservableObject {
 
     public var projectedMonthEnd: Double {
         currentPeriodTotal + (dailySpendAverage * Double(daysRemainingInCycle))
+    }
+
+    // ── Period Comparison Helpers (Trends & Analytics) ───────────────────
+
+    public var previousCycleStartDate: Date {
+        let calendar = Calendar.current
+        let currentStart = cycleStartDate
+        return calendar.date(byAdding: .month, value: -1, to: currentStart) ?? currentStart.addingTimeInterval(-86400 * 30)
+    }
+
+    public var previousCycleEndDate: Date {
+        cycleStartDate
+    }
+
+    public var previousPeriodExpenses: [Expense] {
+        let start = previousCycleStartDate
+        let end = previousCycleEndDate
+        return expenses.filter { exp in
+            exp.isExpense && exp.date >= start && exp.date < end
+        }
+    }
+
+    public var previousPeriodTotal: Double {
+        previousPeriodExpenses.reduce(0.0) { $0 + $1.amount }
+    }
+
+    public var previousPeriodPacedSpend: Double {
+        // Spend in the previous cycle up to the matching number of elapsed days
+        let calendar = Calendar.current
+        let start = previousCycleStartDate
+        let targetEnd = calendar.date(byAdding: .day, value: daysElapsedInCycle, to: start) ?? cycleStartDate
+        return expenses.filter { exp in
+            exp.isExpense && exp.date >= start && exp.date < targetEnd
+        }.reduce(0.0) { $0 + $1.amount }
+    }
+
+    public var last7DaysSpend: Double {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) ?? today
+        return expenses.filter { exp in
+            exp.isExpense && exp.date >= sevenDaysAgo && exp.date <= Date()
+        }.reduce(0.0) { $0 + $1.amount }
+    }
+
+    public var previous7DaysSpend: Double {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) ?? today
+        let fourteenDaysAgo = calendar.date(byAdding: .day, value: -13, to: today) ?? today
+        return expenses.filter { exp in
+            exp.isExpense && exp.date >= fourteenDaysAgo && exp.date < sevenDaysAgo
+        }.reduce(0.0) { $0 + $1.amount }
     }
 
     // ── Universal CSV Engine Delegation ───────────────────────────────────
@@ -352,9 +543,70 @@ public final class ExpenseStore: ObservableObject {
         return parsed.count
     }
 
+    public func exportJsonVault() -> String {
+        let data = PersistedData(
+            expenses: expenses,
+            monthlyBudget: monthlyBudget,
+            cycleStartDay: cycleStartDay,
+            baseMonthlyIncome: baseMonthlyIncome,
+            payDay: payDay,
+            categoryBudgets: categoryBudgets,
+            summaryEnabled: summaryEnabled,
+            summaryPeriod: summaryPeriod,
+            recurringBills: recurringBills,
+            goals: goals,
+            netWorth: netWorth,
+            globalTags: globalTags,
+            appThemeMode: appThemeMode,
+            appAccentColorName: appAccentColorName
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        if let raw = try? encoder.encode(data), let str = String(data: raw, encoding: .utf8) {
+            return str
+        }
+        return "{}"
+    }
+
+    public func importJsonVault(content: String) -> Bool {
+        guard let raw = content.data(using: .utf8) else { return false }
+        do {
+            let decoded = try JSONDecoder().decode(PersistedData.self, from: raw)
+            self.expenses = decoded.expenses
+            self.monthlyBudget = decoded.monthlyBudget
+            self.cycleStartDay = decoded.cycleStartDay
+            self.baseMonthlyIncome = decoded.baseMonthlyIncome
+            self.payDay = decoded.payDay
+            self.categoryBudgets = decoded.categoryBudgets
+            self.summaryEnabled = decoded.summaryEnabled
+            self.summaryPeriod = decoded.summaryPeriod
+            self.recurringBills = decoded.recurringBills
+            if let loadedGoals = decoded.goals {
+                self.goals = loadedGoals
+            }
+            if let loadedNetWorth = decoded.netWorth {
+                self.netWorth = loadedNetWorth
+            }
+            if let loadedTags = decoded.globalTags {
+                self.globalTags = loadedTags
+            }
+            self.appThemeMode = decoded.appThemeMode ?? "system"
+            self.appAccentColorName = decoded.appAccentColorName ?? "blue"
+            saveData()
+            return true
+        } catch {
+            print("Failed to import JSON vault: \(error)")
+            return false
+        }
+    }
+
     public func deleteAllData() {
         expenses.removeAll()
         categoryBudgets.removeAll()
+        recurringBills.removeAll()
+        goals.removeAll()
+        globalTags = ["food", "work", "travel", "weekend"]
+        netWorth = NetWorth(assets: 0, liabilities: 0)
         saveData()
     }
 }
